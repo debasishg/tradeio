@@ -35,7 +35,7 @@ object instrument {
 
   type ZeroToOne = Not[Less[W.`0.0`.T]] And Not[Greater[W.`1.0`.T]]
 
-  private[instrument] case class Instrument (
+  case class Instrument (
     isinCode: ISINCode,
     name: InstrumentName,
     instrumentType: InstrumentType,

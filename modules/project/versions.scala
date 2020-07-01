@@ -16,4 +16,6 @@ object Versions {
   val squantsVersion = "1.6.0"
   val skunkVersion = "0.0.11"
   val cirisVersion = "1.1.0"
+  val cormorantVersion = "0.3.0"
+  val fs2Version = "2.1.0"
 }

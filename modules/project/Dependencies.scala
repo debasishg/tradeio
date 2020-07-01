@@ -10,6 +10,16 @@ object Dependencies {
     val refinedCats       = "eu.timepit"                   %% "refined-cats"                     % refinedVersion
     val refinedShapeless  = "eu.timepit"                   %% "refined-shapeless"                % refinedVersion
     val squants           = "org.typelevel"                %% "squants"                          % squantsVersion
+    val fs2Core           = "co.fs2"                       %% "fs2-core"                         % fs2Version
+    val fs2IO             = "co.fs2"                       %% "fs2-io"                           % fs2Version
+  }
+
+  object Cormorant {
+    val core              = "io.chrisdavenport" %% "cormorant-core"     % cormorantVersion
+    val generic           = "io.chrisdavenport" %% "cormorant-generic"  % cormorantVersion
+    val parser            = "io.chrisdavenport" %% "cormorant-parser"   % cormorantVersion
+    val refined           = "io.chrisdavenport" %% "cormorant-refined"  % cormorantVersion
+    val fs2               = "io.chrisdavenport" %% "cormorant-fs2"      % cormorantVersion
   }
 
   object Cats {
@@ -43,5 +53,5 @@ object Dependencies {
   val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect)
 
   val tradeioDependencies: Seq[ModuleID] = 
-    commonDependencies ++ Seq(Cats.catsMtl) ++ Seq(kindProjector) ++ Seq(Misc.newtype, Misc.refinedCore, Misc.refinedCats, Misc.refinedShapeless, Misc.squants) ++ Seq(Ciris.cirisCore, Ciris.cirisEnum, Ciris.cirisRefined)
+    commonDependencies ++ Seq(Cats.catsMtl) ++ Seq(kindProjector) ++ Seq(Misc.newtype, Misc.refinedCore, Misc.refinedCats, Misc.refinedShapeless, Misc.squants) ++ Seq(Ciris.cirisCore, Ciris.cirisEnum, Ciris.cirisRefined) ++ Seq(Cormorant.core, Cormorant.generic, Cormorant.parser, Cormorant.refined, Cormorant.fs2) 
 }
