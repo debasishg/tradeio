@@ -2,10 +2,16 @@ package org.github.domain
 package model
 
 import java.time.LocalDateTime
+import java.io.InputStream
+import java.time.Instant
+import java.util.UUID
+
 import enumeratum._
 import enumeratum.EnumEntry._
 
 import cats.effect._
+import cats.data.NonEmptyList
+import cats.implicits._
 
 import eu.timepit.refined._
 import eu.timepit.refined.auto._
@@ -20,11 +26,6 @@ import io.chrisdavenport.cormorant._
 import io.chrisdavenport.cormorant.generic.semiauto._
 import io.chrisdavenport.cormorant.parser._
 import io.chrisdavenport.cormorant.implicits._
-import _root_.cats.data.NonEmptyList
-import _root_.cats.implicits._
-import java.io.InputStream
-import java.time.Instant
-import java.util.UUID
 
 import instrument._
 import account._

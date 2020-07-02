@@ -6,12 +6,15 @@ object Dependencies {
 
   object Misc {
     val newtype           = "io.estatico"                  %% "newtype"                          % newtypeVersion
-    val refinedCore       = "eu.timepit"                   %% "refined"                          % refinedVersion
-    val refinedCats       = "eu.timepit"                   %% "refined-cats"                     % refinedVersion
-    val refinedShapeless  = "eu.timepit"                   %% "refined-shapeless"                % refinedVersion
     val squants           = "org.typelevel"                %% "squants"                          % squantsVersion
     val fs2Core           = "co.fs2"                       %% "fs2-core"                         % fs2Version
     val fs2IO             = "co.fs2"                       %% "fs2-io"                           % fs2Version
+  }
+
+  object Refined {
+    val refinedCore       = "eu.timepit"                   %% "refined"                          % refinedVersion
+    val refinedCats       = "eu.timepit"                   %% "refined-cats"                     % refinedVersion
+    val refinedShapeless  = "eu.timepit"                   %% "refined-shapeless"                % refinedVersion
   }
 
   object Cormorant {
@@ -53,5 +56,9 @@ object Dependencies {
   val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect)
 
   val tradeioDependencies: Seq[ModuleID] = 
-    commonDependencies ++ Seq(Cats.catsMtl) ++ Seq(kindProjector) ++ Seq(Misc.newtype, Misc.refinedCore, Misc.refinedCats, Misc.refinedShapeless, Misc.squants) ++ Seq(Ciris.cirisCore, Ciris.cirisEnum, Ciris.cirisRefined) ++ Seq(Cormorant.core, Cormorant.generic, Cormorant.parser, Cormorant.refined, Cormorant.fs2) 
+    commonDependencies ++ Seq(Cats.catsMtl) ++ Seq(kindProjector) ++ 
+      Seq(Misc.newtype, Misc.squants) ++ 
+      Seq(Refined.refinedCore, Refined.refinedCats, Refined.refinedShapeless) ++ 
+      Seq(Ciris.cirisCore, Ciris.cirisEnum, Ciris.cirisRefined) ++ 
+      Seq(Cormorant.core, Cormorant.generic, Cormorant.parser, Cormorant.refined) 
 }
