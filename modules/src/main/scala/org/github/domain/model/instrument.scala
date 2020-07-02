@@ -3,25 +3,23 @@ package model
 
 import java.time.LocalDateTime
 
-import _root_.io.estatico.newtype.macros.newtype
+import cats._
+import cats.data._
+import cats.implicits._
+import cats.instances.all._
 
-import shapeless.{::, HNil}
-import eu.timepit.refined.api.Refined
-import eu.timepit.refined.numeric._
-import eu.timepit.refined.collection._
-import eu.timepit.refined.boolean._
-import eu.timepit.refined.generic._
-import eu.timepit.refined._
+import _root_.io.estatico.newtype.macros.newtype
 
 import enumeratum._
 import enumeratum.EnumEntry._
 import squants.market._
 
+import common._
+
 object instrument {
-  sealed trait InstrumentType extends EnumEntry 
+  sealed trait InstrumentType extends EnumEntry
 
   object InstrumentType extends Enum[InstrumentType] {
-
     case object CCY extends InstrumentType
     case object Equity extends InstrumentType
     case object FixedIncome extends InstrumentType
@@ -29,21 +27,27 @@ object instrument {
     val values = findValues
   }
 
-  @newtype case class ISINCode(value: String Refined AllOf[MaxSize[W.`16`.T] :: MinSize[W.`16`.T] :: HNil])
-  @newtype case class InstrumentName(value: String Refined NonEmpty)
-  @newtype case class LotSize(value: Int Refined Positive)
+  @newtype case class ISINCode(value: String)
+  @newtype case class InstrumentName(value: String)
+  @newtype case class LotSize(value: Int)
 
-  type ZeroToOne = Not[Less[W.`0.0`.T]] And Not[Greater[W.`1.0`.T]]
-
-  case class Instrument (
-    isinCode: ISINCode,
-    name: InstrumentName,
-    instrumentType: InstrumentType,
-    dateOfIssue: Option[LocalDateTime],                    // for non CCY
-    dateOfMaturity: Option[LocalDateTime],                 // for Fixed Income
-    lotSize: LotSize,
-    unitPrice: Option[Money],                              // for Equity
-    couponRate: Option[Money],                             // for Fixed Income
-    couponFrequency: Option[BigDecimal Refined ZeroToOne]  // for Fixed Income
+  case class Instrument(
+      isinCode: ISINCode,
+      name: InstrumentName,
+      instrumentType: InstrumentType,
+      dateOfIssue: Option[LocalDateTime], // for non CCY
+      dateOfMaturity: Option[LocalDateTime], // for Fixed Income
+      lotSize: LotSize,
+      unitPrice: Option[Money], // for Equity
+      couponRate: Option[Money], // for Fixed Income
+      couponFrequency: Option[BigDecimal] // for Fixed Income
   )
+
+  object Instrument {
+    private[model] def validateISINCode(isin: ISINCode): ValidationResult[ISINCode] =
+      if (isin.value.isEmpty || isin.value.size != 12)
+        s"ISIN code has to be 12 characters long: found $isin".invalidNec
+      else isin.validNec
+  }
+
 }

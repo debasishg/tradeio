@@ -10,5 +10,5 @@ object common {
   type ValidationResult[A] = ValidatedNec[String, A]
   type ErrorOr[A] = Either[NonEmptyChain[String], A]
 
-  def today = LocalDateTime.now  
+  def today = LocalDateTime.now
 }
