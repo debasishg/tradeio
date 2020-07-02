@@ -30,7 +30,7 @@ object account {
     val values = findValues
   }
 
-  private[account] final case class Account(
+  private[model] final case class Account(
       no: AccountNo,
       name: AccountName,
       dateOfOpen: LocalDateTime,

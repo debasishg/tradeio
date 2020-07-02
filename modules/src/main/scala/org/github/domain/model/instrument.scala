@@ -31,7 +31,7 @@ object instrument {
   @newtype case class InstrumentName(value: String)
   @newtype case class LotSize(value: Int)
 
-  case class Instrument(
+  private [model] final case class Instrument(
       isinCode: ISINCode,
       name: InstrumentName,
       instrumentType: InstrumentType,

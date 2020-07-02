@@ -41,9 +41,7 @@ object order {
     val values = findValues
   }
 
-  @newtype case class Quantity(value: BigDecimal)
-
-  case class LineItem(
+  private[model] final case class LineItem(
       instrument: ISINCode,
       quantity: Quantity,
       buySell: BuySell
@@ -51,14 +49,14 @@ object order {
 
   @newtype case class OrderNo(value: String)
 
-  case class Order(
+  private[model] final case class Order(
       no: OrderNo,
       date: LocalDateTime,
       accountNo: AccountNo,
       items: NonEmptyList[LineItem] 
   )
 
-  case class FrontOfficeOrder(
+  private[model] final case class FrontOfficeOrder(
       accountNo: String,
       date: Instant,
       isin: String,
