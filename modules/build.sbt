@@ -31,7 +31,8 @@ lazy val compilerOptions = {
     "-language:existentials",
     "-language:postfixOps",
     "-Ywarn-value-discard",
-    "-Ymacro-annotations"
+    "-Ymacro-annotations",
+    "-Ywarn-unused:imports"
   )
 
   scalacOptions ++= commonOptions 

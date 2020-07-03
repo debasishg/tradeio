@@ -60,7 +60,7 @@ object trade {
     taxFeeIds zip (taxFeeIds.map(valueAs(trade, _)))
   }
 
-  private [model] final case class Trade private[model] (
+  private [domain] final case class Trade (
     accountNo: AccountNo, 
     isin: ISINCode, 
     refNo: TradeReferenceNo, 

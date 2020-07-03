@@ -28,7 +28,7 @@ object account {
     val values = findValues
   }
 
-  private[model] final case class Account(
+  private[domain] final case class Account(
       no: AccountNo,
       name: AccountName,
       dateOfOpen: LocalDateTime,
