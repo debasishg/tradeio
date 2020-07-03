@@ -14,17 +14,9 @@ import squants.market._
 
 import common._
 import newtypes._
+import enums._
 
 object instrument {
-  sealed trait InstrumentType extends EnumEntry
-
-  object InstrumentType extends Enum[InstrumentType] {
-    case object CCY extends InstrumentType
-    case object Equity extends InstrumentType
-    case object FixedIncome extends InstrumentType
-
-    val values = findValues
-  }
 
   private [model] final case class Instrument(
       isinCode: ISINCode,

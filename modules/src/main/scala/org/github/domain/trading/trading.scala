@@ -24,7 +24,7 @@ trait Trading[F[_]] {
     * Execute an `Order` in the `Market` and book the execution in the 
     * broker account supplied.
     *
-    * @param order the order to execute
+    * @param orders the orders to execute
     * @param market the market of execution
     * @param brokerAccount the broker account where the execution will be booked
     * @return a List of `Execution` generated from the `Order`
@@ -35,7 +35,7 @@ trait Trading[F[_]] {
     * Allocate the `Execution` equally between the client accounts generating
     * a list of `Trade`s.
     *
-    * @param execution the execution to allocate
+    * @param executions the executions to allocate
     * @param clientAccounts the client accounts for which `Trade` will be generated
     * @return a list of `Trade`
     */

@@ -8,6 +8,7 @@ import newtypes._
 import account._
 import instrument._
 import market._
+import enums._
 
 object execution {
 
@@ -18,6 +19,7 @@ object execution {
     orderNo: OrderNo,
     isin: ISINCode, 
     market: Market,
+    buySell: BuySell,
     unitPrice: UnitPrice, 
     quantity: Quantity
   )
@@ -29,6 +31,7 @@ object execution {
     orderNo: String,
     isin: String, 
     market: String,
+    buySell: String,
     unitPrice: BigDecimal, 
     quantity: BigDecimal
   )
@@ -41,16 +44,18 @@ object execution {
 
         Account.validateAccountNo(exe.accountNo),
         Instrument.validateISINCode(exe.isin),
+        validateBuySell(exe.buySell.entryName),
         validateQuantity(exe.quantity),
         validateUnitPrice(exe.unitPrice)
 
-      ).mapN { (ano, ins, q, p) =>
+      ).mapN { (ano, ins, bs, q, p) =>
         Execution(
           exe.executionRefNo, 
           ano, 
           exe.orderNo,
           ins, 
           exe.market, 
+          BuySell.withName(bs),
           p, 
           q
         )
@@ -63,16 +68,18 @@ object execution {
 
         Account.validateAccountNo(AccountNo(eex.accountNo)),
         Instrument.validateISINCode(ISINCode(eex.isin)),
+        validateBuySell(eex.buySell),
         validateUnitPrice(UnitPrice(eex.unitPrice)),
         validateQuantity(Quantity(eex.quantity))
 
-      ).mapN { (ano, ins, up, q) =>
+      ).mapN { (ano, ins, bs, up, q) =>
         Execution(
           ExecutionReferenceNo(eex.executionRefNo), 
           ano, 
           OrderNo(eex.orderNo),
           ins, 
           Market.withName(eex.market), 
+          BuySell.withName(bs),
           up, 
           q
         )
@@ -88,5 +95,13 @@ object execution {
       if (price.value <= 0)
         s"Unit Price has to be positive: found $price".invalidNec
       else price.validNec
+
+    private[model] def validateBuySell(bs: String): ValidationResult[String] = {
+      BuySell
+        .withNameEither(bs)
+        .toValidatedNec
+        .map(_.entryName)
+        .leftMap(_.map(_.toString))
+    }
   }
 }

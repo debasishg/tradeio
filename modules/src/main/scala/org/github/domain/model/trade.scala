@@ -16,6 +16,7 @@ import account._
 import instrument._
 import execution._
 import market._
+import enums._
 
 object trade {
 
@@ -65,6 +66,7 @@ object trade {
     isin: ISINCode, 
     refNo: TradeReferenceNo, 
     market: Market,
+    buySell: BuySell,
     unitPrice: UnitPrice, 
     quantity: Quantity, 
     tradeDate: LocalDateTime = today,
@@ -79,6 +81,7 @@ object trade {
       isin: ISINCode, 
       refNo: TradeReferenceNo, 
       market: Market, 
+      buySell: BuySell,
       unitPrice: UnitPrice, 
       quantity: Quantity,
       td: LocalDateTime = today, 
@@ -91,7 +94,7 @@ object trade {
           Execution.validateUnitPrice(unitPrice)
 
         ).mapN {(a, i, q, u) =>
-          Trade(a, i, refNo, market, u, q, td, vd)
+          Trade(a, i, refNo, market, buySell, u, q, td, vd)
         }.toEither
       }
   }

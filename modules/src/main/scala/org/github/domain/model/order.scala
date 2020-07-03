@@ -5,9 +5,6 @@ import java.time.LocalDateTime
 import java.time.Instant
 import java.util.UUID
 
-import enumeratum._
-import enumeratum.EnumEntry._
-
 import cats.effect._
 import cats.data.NonEmptyList
 import cats.implicits._
@@ -16,16 +13,9 @@ import instrument._
 import account._
 import common._
 import newtypes._
+import enums._
 
 object order {
-  sealed abstract class BuySell(override val entryName: String) extends EnumEntry
-
-  object BuySell extends Enum[BuySell] {
-    case object Buy extends BuySell("B")
-    case object Sell extends BuySell("S")
-
-    val values = findValues
-  }
 
   private[domain] final case class LineItem(
       instrument: ISINCode,

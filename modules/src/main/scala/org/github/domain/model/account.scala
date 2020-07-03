@@ -10,23 +10,11 @@ import cats.instances.all._
 
 import squants.market._
 
-import enumeratum._
-import enumeratum.EnumEntry._
-
 import common._
 import newtypes._
+import enums._
 
 object account {
-
-  sealed trait AccountType extends EnumEntry
-
-  object AccountType extends Enum[AccountType] {
-    case object Trading extends AccountType
-    case object Settlement extends AccountType
-    case object Both extends AccountType
-
-    val values = findValues
-  }
 
   private[domain] final case class Account(
       no: AccountNo,

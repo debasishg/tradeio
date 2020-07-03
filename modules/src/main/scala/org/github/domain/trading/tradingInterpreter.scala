@@ -36,6 +36,7 @@ class TradingInterpreter[M[_]: MonadThrowable] extends Trading[M] {
           order.no,
           item.instrument,
           market,
+          item.buySell,
           item.unitPrice,
           item.quantity
         )
@@ -50,8 +51,9 @@ class TradingInterpreter[M[_]: MonadThrowable] extends Trading[M] {
         Trade.trade(
           accountNo, 
           execution.isin, 
-          TradeReferenceNo("t-123"), 
+          TradeReferenceNo(UUID.randomUUID().toString()), 
           execution.market, 
+          execution.buySell,
           execution.unitPrice, 
           Quantity(q)
         )
