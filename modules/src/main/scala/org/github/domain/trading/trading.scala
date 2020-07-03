@@ -8,6 +8,7 @@ import model.execution.Execution
 import model.order.Order
 import model.trade.Trade
 import model.market.Market
+import model.newtypes._
 
 trait Trading[F[_]] {
   /**
@@ -17,7 +18,7 @@ trait Trading[F[_]] {
     * @param csvOrder client order in csv format
     * @return a List of `Order` under the effect `F`
     */
-  def orders(csvOrder: String): F[List[Order]]
+  def orders(csvOrder: String): F[NonEmptyList[Order]]
 
   /**
     * Execute an `Order` in the `Market` and book the execution in the 
@@ -28,7 +29,7 @@ trait Trading[F[_]] {
     * @param brokerAccount the broker account where the execution will be booked
     * @return a List of `Execution` generated from the `Order`
     */
-  def execute(order: Order, market: Market, brokerAccount: Account): F[NonEmptyList[Execution]]
+  def execute(orders: NonEmptyList[Order], market: Market, brokerAccountNo: AccountNo): F[NonEmptyList[Execution]]
 
   /**
     * Allocate the `Execution` equally between the client accounts generating
@@ -38,5 +39,5 @@ trait Trading[F[_]] {
     * @param clientAccounts the client accounts for which `Trade` will be generated
     * @return a list of `Trade`
     */
-  def allocate(execution: Execution, clientAccounts: List[Account]): F[List[Trade]]
+  def allocate(executions: NonEmptyList[Execution], clientAccounts: NonEmptyList[AccountNo]): F[NonEmptyList[Trade]]
 }

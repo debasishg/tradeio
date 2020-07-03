@@ -17,7 +17,7 @@ object newtypes {
   @newtype case class OrderNo(value: String)
 
   // execution
-  @newtype case class ReferenceNo(value: String)
+  @newtype case class ExecutionReferenceNo(value: String)
   @newtype case class UnitPrice(value: BigDecimal)
 
   // trade

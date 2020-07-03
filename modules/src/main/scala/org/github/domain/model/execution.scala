@@ -3,9 +3,6 @@ package model
 
 import cats.implicits._
 
-import enumeratum._
-import enumeratum.EnumEntry._
-
 import common._
 import newtypes._
 import account._
@@ -14,19 +11,23 @@ import market._
 
 object execution {
 
+  // primary domain entity
   private[domain] final case class Execution(
+    executionRefNo: ExecutionReferenceNo, 
     accountNo: AccountNo, 
+    orderNo: OrderNo,
     isin: ISINCode, 
-    refNo: ReferenceNo, 
     market: Market,
     unitPrice: UnitPrice, 
     quantity: Quantity
   )
 
+  // as per layout obtained from exchange
   private[domain] final case class ExchangeExecution(
+    executionRefNo: String, 
     accountNo: String, 
+    orderNo: String,
     isin: String, 
-    refNo: String, 
     market: String,
     unitPrice: BigDecimal, 
     quantity: BigDecimal
@@ -34,6 +35,7 @@ object execution {
 
   object Execution {
 
+    // smart constructor
     def execution(exe: Execution): ErrorOr[Execution] = {
       (
 
@@ -43,10 +45,19 @@ object execution {
         validateUnitPrice(exe.unitPrice)
 
       ).mapN { (ano, ins, q, p) =>
-        Execution(ano, ins, exe.refNo, exe.market, p, q)
+        Execution(
+          exe.executionRefNo, 
+          ano, 
+          exe.orderNo,
+          ins, 
+          exe.market, 
+          p, 
+          q
+        )
       }.toEither
     }
 
+    // smart constructor from data received from exchange
     private[domain] def createExecution(eex: ExchangeExecution): ErrorOr[Execution] = {
       (
 
@@ -56,7 +67,15 @@ object execution {
         validateQuantity(Quantity(eex.quantity))
 
       ).mapN { (ano, ins, up, q) =>
-        Execution(ano, ins, ReferenceNo(eex.refNo), Market.withName(eex.market), up, q)
+        Execution(
+          ExecutionReferenceNo(eex.executionRefNo), 
+          ano, 
+          OrderNo(eex.orderNo),
+          ins, 
+          Market.withName(eex.market), 
+          up, 
+          q
+        )
       }.toEither
     }
 

@@ -1,6 +1,8 @@
 package org.github.domain
 package trading
 
+import java.util.UUID
+
 import cats.MonadError
 import cats.data.NonEmptyList
 import cats.implicits._
@@ -16,27 +18,48 @@ import model.newtypes._
 class TradingInterpreter[M[_]: MonadThrowable] extends Trading[M] {
   private final val ev = implicitly[MonadThrowable[M]]
 
-  def orders(csvOrder: String): M[List[Order]] = {
+  def orders(csvOrder: String): M[NonEmptyList[Order]] = {
     ordering
       .createOrders(csvOrder)
       .fold(
         nec => ev.raiseError(new Throwable(nec.toNonEmptyList.toList.mkString("/"))),
-        ev.pure(_)
+        os => ev.pure(NonEmptyList.fromList(os).get)
       )
   }
 
-  def execute(order: Order, market: Market, brokerAccount: Account): M[NonEmptyList[Execution]] = ev.pure {
-    order.items.map { item =>
-      Execution(
-        brokerAccount.no, 
-        item.instrument, 
-        ReferenceNo("e-123"), 
-        market, 
-        item.unitPrice, 
-        item.quantity
-      )
+  def execute(orders: NonEmptyList[Order], market: Market, brokerAccountNo: AccountNo): M[NonEmptyList[Execution]] = ev.pure {
+    orders.flatMap { order =>
+      order.items.map { item =>
+        Execution(
+          ExecutionReferenceNo(UUID.randomUUID().toString),
+          brokerAccountNo,
+          order.no,
+          item.instrument,
+          market,
+          item.unitPrice,
+          item.quantity
+        )
+      }
     }
   }
 
-  def allocate(execution: Execution, clientAccounts: List[Account]): M[List[Trade]] = ???
+  def allocate(executions: NonEmptyList[Execution], clientAccounts: NonEmptyList[AccountNo]): M[NonEmptyList[Trade]] = {
+    executions.map{ execution =>
+      val q = execution.quantity.value / clientAccounts.size
+      clientAccounts.map { accountNo =>
+        Trade.trade(
+          accountNo, 
+          execution.isin, 
+          TradeReferenceNo("t-123"), 
+          execution.market, 
+          execution.unitPrice, 
+          Quantity(q)
+        )
+      }.traverse(identity)
+    }.traverse(identity)
+    .fold(
+      nec => ev.raiseError(new Throwable(nec.toNonEmptyList.toList.mkString("/"))),
+      ls => ev.pure(ls.flatten)
+    )
+  }
 }
