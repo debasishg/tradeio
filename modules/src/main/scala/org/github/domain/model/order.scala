@@ -109,11 +109,6 @@ object order {
         .leftMap(_.map(_.toString))
     }
 
-//     private def ruinDelims(str: String) = augmentString(str).flatMap {
-//       case '\n' => "\r\n"
-//       case c => c.toString
-//     }
-
 //     def main(): Unit = {
 //       val o1 =
 //         FrontOfficeOrder("a-1", Instant.now(), "isin-12345", 100.00, "B")
