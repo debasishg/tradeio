@@ -1,2 +1,3 @@
 *.class
 *.log
+modules/.metals/readonly/scala/Predef.scala

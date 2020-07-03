@@ -8,13 +8,12 @@ import cats.data._
 import cats.implicits._
 import cats.instances.all._
 
-import _root_.io.estatico.newtype.macros.newtype
-
 import enumeratum._
 import enumeratum.EnumEntry._
 import squants.market._
 
 import common._
+import newtypes._
 
 object instrument {
   sealed trait InstrumentType extends EnumEntry
@@ -26,10 +25,6 @@ object instrument {
 
     val values = findValues
   }
-
-  @newtype case class ISINCode(value: String)
-  @newtype case class InstrumentName(value: String)
-  @newtype case class LotSize(value: Int)
 
   private [model] final case class Instrument(
       isinCode: ISINCode,

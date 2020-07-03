@@ -8,17 +8,15 @@ import cats.data._
 import cats.implicits._
 import cats.instances.all._
 
-import _root_.io.estatico.newtype.macros.newtype
 import squants.market._
 
 import enumeratum._
 import enumeratum.EnumEntry._
 
 import common._
+import newtypes._
 
 object account {
-  @newtype case class AccountNo(value: String)
-  @newtype case class AccountName(value: String)
 
   sealed trait AccountType extends EnumEntry
 

@@ -19,7 +19,6 @@ import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection._
 import eu.timepit.refined.numeric._
 
-import _root_.io.estatico.newtype.macros.newtype
 import squants.market._
 
 import io.chrisdavenport.cormorant._
@@ -30,6 +29,7 @@ import io.chrisdavenport.cormorant.implicits._
 import instrument._
 import account._
 import common._
+import newtypes._
 
 object order {
   sealed abstract class BuySell(override val entryName: String) extends EnumEntry
@@ -46,8 +46,6 @@ object order {
       quantity: Quantity,
       buySell: BuySell
   )
-
-  @newtype case class OrderNo(value: String)
 
   private[model] final case class Order(
       no: OrderNo,

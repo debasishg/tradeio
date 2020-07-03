@@ -1,30 +1,18 @@
 package org.github.domain
 package model
 
-import io.estatico.newtype.macros.newtype
-
 import cats.implicits._
 
 import enumeratum._
 import enumeratum.EnumEntry._
 
 import common._
+import newtypes._
 import account._
 import instrument._
+import market._
 
 object execution {
-  sealed abstract class Market(override val entryName: String) extends EnumEntry
-
-  object Market extends Enum[Market] {
-    case object NY extends Market("New York")
-    case object TKY extends Market("Tokyo")
-    case object SGP extends Market("Singapore")
-
-    val values = findValues
-  }
-
-  @newtype case class ReferenceNo(value: String)
-  @newtype case class UnitPrice(value: BigDecimal)
 
   private[model] final case class Execution(
     accountNo: AccountNo, 
