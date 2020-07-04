@@ -15,6 +15,7 @@ object newtypes {
 
   // order
   @newtype case class OrderNo(value: String)
+  @newtype case class Quantity(value: BigDecimal)
 
   // execution
   @newtype case class ExecutionReferenceNo(value: String)
