@@ -26,7 +26,14 @@ object Main extends IOApp {
     val clientAccounts = NonEmptyList.of(AccountNo("a-123"), AccountNo("a-234"))
 
     for {
-      trades <- program.tradeGeneration(tradeInterpreterIO, csvOrder, brokerAccountNo, Market.NewYork, clientAccounts)
+      trades <- program.tradeGeneration(
+                  tradeInterpreterIO, 
+                  csvOrder, 
+                  brokerAccountNo, 
+                  Market.NewYork, 
+                  clientAccounts
+                )
+
       _ = trades.toList.foreach(println)
     } yield ExitCode.Success
   }

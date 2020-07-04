@@ -9,6 +9,7 @@ import account._
 import instrument._
 import market._
 import enums._
+import java.time.LocalDateTime
 
 object execution {
 
@@ -21,7 +22,8 @@ object execution {
     market: Market,
     buySell: BuySell,
     unitPrice: UnitPrice, 
-    quantity: Quantity
+    quantity: Quantity,
+    dateOfExecution: LocalDateTime
   )
 
   // as per layout obtained from exchange
@@ -33,7 +35,8 @@ object execution {
     market: String,
     buySell: String,
     unitPrice: BigDecimal, 
-    quantity: BigDecimal
+    quantity: BigDecimal,
+    dateOfExecution: LocalDateTime
   )
 
   object Execution {
@@ -57,7 +60,8 @@ object execution {
           exe.market, 
           BuySell.withName(bs),
           p, 
-          q
+          q,
+          exe.dateOfExecution
         )
       }.toEither
     }
@@ -81,7 +85,8 @@ object execution {
           Market.withName(eex.market), 
           BuySell.withName(bs),
           up, 
-          q
+          q,
+          eex.dateOfExecution
         )
       }.toEither
     }

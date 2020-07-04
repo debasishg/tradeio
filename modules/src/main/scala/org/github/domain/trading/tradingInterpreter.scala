@@ -38,7 +38,8 @@ class TradingInterpreter[M[_]: MonadThrowable] extends Trading[M] {
           market,
           item.buySell,
           item.unitPrice,
-          item.quantity
+          item.quantity,
+          today
         )
       }
     }
