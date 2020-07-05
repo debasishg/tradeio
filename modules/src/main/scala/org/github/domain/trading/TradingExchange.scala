@@ -15,18 +15,23 @@ import model.trade._
 import model.newtypes._
 import common._
 
-object MainP extends IOApp {
+object ExchangeApp extends IOApp {
   override def run(args: List[String]): IO[ExitCode] = {
     val state = IO(Exchange.ApplicationState())
-    for {
+    val tradeGen = for {
 
       s <- Exchange.create[IO](state)
-      _ <- s.feedOrder(null)
-      _ <- s.feedExecution(OrderNo("o1"), NonEmptyList.one(null))
-      t <- s.allocate(OrderNo("o1"), NonEmptyList.one(AccountNo("a1")))
-      _ = println(t)
+      orders <- s.feedOrder(null).start
+      executions <- s.feedExecution(OrderNo("o1"), NonEmptyList.one(null)).start
+      trades <- s.allocate(OrderNo("o1"), NonEmptyList.one(AccountNo("a1"))).start
+      _ <- orders.join
+      _ <- executions.join
+      t <- trades.join
 
-    } yield ExitCode.Success
+    } yield t
+
+    tradeGen.unsafeRunSync().foreach(println)
+    IO(ExitCode.Success)
   }
 }
 
@@ -47,8 +52,21 @@ object Exchange {
     // quantity so far fulfilled for this ISIN
     fulfilledOrder: Map[ISINCode, Quantity] = Map.empty,
     executions: List[Execution] = List.empty,
+    clientAccountNos: List[AccountNo] = List.empty,
     trades: List[Trade] = List.empty
-  )
+  ) {
+    def orderFulfilled: Boolean = {
+      order.map{ ord =>
+        val lis = ord.items
+        lis.foldLeft(true) { (a, li) =>
+          val ins = li.instrument
+          val qty = li.quantity
+          if (fulfilledOrder.get(ins).getOrElse(Quantity(0)) == qty) a
+          else false
+        }
+      }.getOrElse(false)
+    }
+  }
 
   def create[F[_]: Concurrent](fa: F[ApplicationState]): F[TradingExchange[F]] = {
 
@@ -60,10 +78,40 @@ object Exchange {
     Ref.of[F, State](NoValue).map { state =>
       new TradingExchange[F] {
 
-        def feedOrder(ord: Order): F[Unit] = state.update {
-          case NoValue => Value(ApplicationState(Some(ord)))
-          case Value(s) => Value(s)
-          case st @ Updating(_) => st
+        def feedOrder(ord: Order): F[Unit] = 
+          Deferred[F, Either[Throwable, ApplicationState]].flatMap { newV =>
+            state.modify {
+              case NoValue => Updating(newV) -> addOrder(newV, ord, ApplicationState()).rethrow
+              case Value(s) => Updating(newV) -> addOrder(newV, ord, s).rethrow
+              case st @ Updating(inFlight) => 
+                Updating(newV) -> 
+                  (for {
+                    currAppState <- inFlight.get.rethrow  
+                    r <- addOrder(newV, ord, currAppState)
+                  } yield r).rethrow
+            }.map(_ => ())
+          }
+
+        private def addOrder(
+          d: Deferred[F, Either[Throwable, ApplicationState]], 
+          order: Order, 
+          currentState: ApplicationState) =
+          for {
+            r <- updateStateWithOrderInfo(currentState, order).pure[F].attempt
+            _ <- state.set {
+              r match {
+                case Left(_) => NoValue
+                case Right(v) => Value(v)
+              }
+            }
+            _ <- d.complete(r)
+          } yield r
+
+        private def updateStateWithOrderInfo(
+          appState: ApplicationState, 
+          ord: Order): ApplicationState = {
+
+          appState.order.map(_ => appState).getOrElse(appState.copy(order = Some(ord)))
         }
 
         def feedExecution(orderNo: OrderNo, execs: NonEmptyList[Execution]): F[Unit] = 
@@ -123,24 +171,44 @@ object Exchange {
         def allocate(orderNo: OrderNo, clientAccountNos: NonEmptyList[AccountNo]): F[List[Trade]] = 
           Deferred[F, Either[Throwable, ApplicationState]].flatMap { newV =>
             state.modify {
-              case NoValue => Updating(newV) -> generateTrades(newV, orderNo, clientAccountNos, ApplicationState()).rethrow
-              case Value(s) => Updating(newV) -> generateTrades(newV, orderNo, clientAccountNos, s).rethrow
+              // switch to Updating and generate trades to state. Note we don't have
+              // order in yet - still fulfillment info will be updated in anticipation
+              // that we will have the order subsequently
+              case NoValue => Updating(newV) -> updateStateAndGenerateTrades(newV, orderNo, clientAccountNos, ApplicationState()).rethrow
+
+              case Value(s) => Updating(newV) -> updateStateAndGenerateTrades(newV, orderNo, clientAccountNos, s).rethrow
+
               case st @ Updating(inFlight) => 
                 Updating(newV) -> 
                   (for {
                     currAppState <- inFlight.get.rethrow  
-                    r <- generateTrades(newV, orderNo, clientAccountNos, currAppState)
+                    r <- updateStateAndGenerateTrades(newV, orderNo, clientAccountNos, currAppState)
                   } yield r).rethrow
             }.flatMap(x => x.map(_.trades))
           }
 
-        private def generateTrades(
+        private def updateStateAndGenerateTrades(
           d: Deferred[F, Either[Throwable, ApplicationState]], 
           orderNo: OrderNo, 
           accountNos: NonEmptyList[AccountNo],
+          currentState: ApplicationState) = {
+            if (currentState.order.isDefined && currentState.orderFulfilled)
+              // generate trade only if order has been received and fulfilled by executions
+              generateTrades(d, orderNo, accountNos, currentState)
+            else 
+              // else just update the client accounts list
+              updateStateWithClientAccounts(d, accountNos, currentState)
+          }
+
+        private def updateStateWithClientAccounts(
+          d: Deferred[F, Either[Throwable, ApplicationState]], 
+          accountNos: NonEmptyList[AccountNo],
           currentState: ApplicationState) =
           for {
-            r <- currentState.copy(trades = allocate(NonEmptyList.fromList(currentState.executions).get, accountNos).toList).pure[F].attempt
+            r <- currentState.copy(
+                   clientAccountNos = (currentState.clientAccountNos ++ accountNos.toList).distinct
+                 ).pure[F].attempt
+
             _ <- state.set {
               r match {
                 case Left(_) => NoValue
@@ -150,7 +218,28 @@ object Exchange {
             _ <- d.complete(r)
           } yield r
 
-        private def allocate(executions: NonEmptyList[Execution], clientAccounts: NonEmptyList[AccountNo]): NonEmptyList[Trade] = {
+        private def generateTrades(
+          d: Deferred[F, Either[Throwable, ApplicationState]], 
+          orderNo: OrderNo, 
+          accountNos: NonEmptyList[AccountNo],
+          currentState: ApplicationState) =
+          for {
+            r <- currentState.copy(
+                   trades = allocate(NonEmptyList.fromList(currentState.executions).get, accountNos).toList
+                 ).pure[F].attempt
+
+            _ <- state.set {
+              r match {
+                case Left(_) => NoValue
+                case Right(v) => Value(v)
+              }
+            }
+            _ <- d.complete(r)
+          } yield r
+
+        private def allocate(
+          executions: NonEmptyList[Execution], 
+          clientAccounts: NonEmptyList[AccountNo]): NonEmptyList[Trade] = {
           executions.flatMap{ execution =>
             val q = execution.quantity.value / clientAccounts.size
             clientAccounts.map { accountNo =>
