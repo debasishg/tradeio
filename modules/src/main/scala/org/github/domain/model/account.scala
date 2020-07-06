@@ -15,7 +15,6 @@ import newtypes._
 import enums._
 
 object account {
-
   private[domain] final case class Account(
       no: AccountNo,
       name: AccountName,
@@ -104,7 +103,9 @@ object account {
       }.toEither
     }
 
-    private[model] def validateAccountNo(no: AccountNo): ValidationResult[AccountNo] =
+    private[model] def validateAccountNo(
+        no: AccountNo
+    ): ValidationResult[AccountNo] =
       if (no.value.isEmpty || no.value.size < 5)
         s"Account No has to be at least 5 characters long: found $no".invalidNec
       else no.validNec

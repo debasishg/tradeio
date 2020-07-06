@@ -15,14 +15,13 @@ import common._
 import model.execution._
 
 object executing {
-
   implicit val lr: LabelledRead[ExchangeExecution] = deriveLabelledRead
   implicit val lw: LabelledWrite[ExchangeExecution] = deriveLabelledWrite
 
   /**
-   * Create executions reading an input stream containing csv data from
-   * exchange.
-   */ 
+    * Create executions reading an input stream containing csv data from
+    * exchange.
+    */
   def createExecutions(in: InputStream): IO[ErrorOr[List[Execution]]] = {
     val acquire = IO {
       scala.io.Source.fromInputStream(in)
@@ -34,21 +33,23 @@ object executing {
   }
 
   /**
-   * Create executions reading a string containing newline separated csv data from
-   * exchange.
-   */ 
+    * Create executions reading a string containing newline separated csv data from
+    * exchange.
+    */
   def createExecutions(exchangeCsv: String): ErrorOr[List[Execution]] = {
     fromExchange(exchangeCsv) match {
       case Left(errs) => Left(errs)
       case Right(eexs) => eexs.traverse(Execution.createExecution)
     }
-  } 
+  }
 
   /**
-   * Workhorse method that parses csv data and creates `ExchangeExecution`.
-   * No domain validation is done here
-   */ 
-  private def fromExchange(executions: String): ErrorOr[List[ExchangeExecution]] = {
+    * Workhorse method that parses csv data and creates `ExchangeExecution`.
+    * No domain validation is done here
+    */
+  private def fromExchange(
+      executions: String
+  ): ErrorOr[List[ExchangeExecution]] = {
     parseComplete(executions)
       .leftWiden[Error]
       .flatMap(_.readLabelled[ExchangeExecution].sequence)
@@ -57,4 +58,3 @@ object executing {
       .leftMap(_.map(_.toString))
   }
 }
-

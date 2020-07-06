@@ -7,7 +7,7 @@ object newtypes {
   // account
   @newtype case class AccountNo(value: String)
   @newtype case class AccountName(value: String)
-  
+
   // instrument
   @newtype case class ISINCode(value: String)
   @newtype case class InstrumentName(value: String)

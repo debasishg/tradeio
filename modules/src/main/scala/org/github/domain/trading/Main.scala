@@ -27,12 +27,12 @@ object Main extends IOApp {
 
     for {
       trades <- program.tradeGeneration(
-                  tradeInterpreterIO, 
-                  csvOrder, 
-                  brokerAccountNo, 
-                  Market.NewYork, 
-                  clientAccounts
-                )
+        tradeInterpreterIO,
+        csvOrder,
+        brokerAccountNo,
+        Market.NewYork,
+        clientAccounts
+      )
 
       _ = trades.toList.foreach(println)
     } yield ExitCode.Success
@@ -41,31 +41,31 @@ object Main extends IOApp {
 
 object program {
   def tradeGeneration[F[_]: FlatMap](
-    trading: Trading[F], 
-    csvOrder: String, 
-    brokerAccountNo: AccountNo, 
-    market: Market,
-    clientAccountNos: NonEmptyList[AccountNo]): F[NonEmptyList[Trade]] = {
-
-      for {
-        orders       <- trading.orders(csvOrder)
-        executions   <- trading.execute(orders, market, brokerAccountNo)
-        trades       <- trading.allocate(executions, clientAccountNos)
-      } yield trades
+      trading: Trading[F],
+      csvOrder: String,
+      brokerAccountNo: AccountNo,
+      market: Market,
+      clientAccountNos: NonEmptyList[AccountNo]
+  ): F[NonEmptyList[Trade]] = {
+    for {
+      orders <- trading.orders(csvOrder)
+      executions <- trading.execute(orders, market, brokerAccountNo)
+      trades <- trading.allocate(executions, clientAccountNos)
+    } yield trades
   }
 }
 
 object orderGenerator {
-    def generateOrders(): String = {
-      val o1 =
-        FrontOfficeOrder("a-1", Instant.now(), "isin-12345", 100.00, 12.25, "B")
-      val o2 =
-        FrontOfficeOrder("a-1", Instant.now(), "isin-12346", 200.00, 22.25, "S")
-      val o3 =
-        FrontOfficeOrder("a-2", Instant.now(), "isin-12345", 100.00, 52.25, "B")
+  def generateOrders(): String = {
+    val o1 =
+      FrontOfficeOrder("a-1", Instant.now(), "isin-12345", 100.00, 12.25, "B")
+    val o2 =
+      FrontOfficeOrder("a-1", Instant.now(), "isin-12346", 200.00, 22.25, "S")
+    val o3 =
+      FrontOfficeOrder("a-2", Instant.now(), "isin-12345", 100.00, 52.25, "B")
 
-      val orders = List(o1, o2, o3)
-      implicit val lw: LabelledWrite[FrontOfficeOrder] = deriveLabelledWrite
-      orders.writeComplete.print(Printer.default)
-    }
+    val orders = List(o1, o2, o3)
+    implicit val lw: LabelledWrite[FrontOfficeOrder] = deriveLabelledWrite
+    orders.writeComplete.print(Printer.default)
+  }
 }

@@ -22,12 +22,17 @@ class TradingInterpreter[M[_]: MonadThrowable] extends Trading[M] {
     ordering
       .createOrders(csvOrder)
       .fold(
-        nec => ev.raiseError(new Throwable(nec.toNonEmptyList.toList.mkString("/"))),
+        nec =>
+          ev.raiseError(new Throwable(nec.toNonEmptyList.toList.mkString("/"))),
         os => ev.pure(NonEmptyList.fromList(os).get)
       )
   }
 
-  def execute(orders: NonEmptyList[Order], market: Market, brokerAccountNo: AccountNo): M[NonEmptyList[Execution]] = ev.pure {
+  def execute(
+      orders: NonEmptyList[Order],
+      market: Market,
+      brokerAccountNo: AccountNo
+  ): M[NonEmptyList[Execution]] = ev.pure {
     orders.flatMap { order =>
       order.items.map { item =>
         Execution(
@@ -45,24 +50,32 @@ class TradingInterpreter[M[_]: MonadThrowable] extends Trading[M] {
     }
   }
 
-  def allocate(executions: NonEmptyList[Execution], clientAccounts: NonEmptyList[AccountNo]): M[NonEmptyList[Trade]] = {
-    executions.map{ execution =>
-      val q = execution.quantity.value / clientAccounts.size
-      clientAccounts.map { accountNo =>
-        Trade.trade(
-          accountNo, 
-          execution.isin, 
-          TradeReferenceNo(UUID.randomUUID().toString()), 
-          execution.market, 
-          execution.buySell,
-          execution.unitPrice, 
-          Quantity(q)
-        )
-      }.traverse(identity)
-    }.traverse(identity)
-    .fold(
-      nec => ev.raiseError(new Throwable(nec.toNonEmptyList.toList.mkString("/"))),
-      ls => ev.pure(ls.flatten)
-    )
+  def allocate(
+      executions: NonEmptyList[Execution],
+      clientAccounts: NonEmptyList[AccountNo]
+  ): M[NonEmptyList[Trade]] = {
+    executions
+      .map { execution =>
+        val q = execution.quantity.value / clientAccounts.size
+        clientAccounts
+          .map { accountNo =>
+            Trade.trade(
+              accountNo,
+              execution.isin,
+              TradeReferenceNo(UUID.randomUUID().toString()),
+              execution.market,
+              execution.buySell,
+              execution.unitPrice,
+              Quantity(q)
+            )
+          }
+          .traverse(identity)
+      }
+      .traverse(identity)
+      .fold(
+        nec =>
+          ev.raiseError(new Throwable(nec.toNonEmptyList.toList.mkString("/"))),
+        ls => ev.pure(ls.flatten)
+      )
   }
 }

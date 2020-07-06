@@ -5,7 +5,8 @@ import enumeratum._
 import enumeratum.EnumEntry._
 
 object enums {
-  sealed abstract class BuySell(override val entryName: String) extends EnumEntry
+  sealed abstract class BuySell(override val entryName: String)
+      extends EnumEntry
 
   object BuySell extends Enum[BuySell] {
     case object Buy extends BuySell("B")
@@ -13,7 +14,7 @@ object enums {
 
     val values = findValues
   }
-  
+
   sealed trait InstrumentType extends EnumEntry
 
   object InstrumentType extends Enum[InstrumentType] {

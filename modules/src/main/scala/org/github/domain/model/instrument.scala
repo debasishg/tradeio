@@ -17,8 +17,7 @@ import newtypes._
 import enums._
 
 object instrument {
-
-  private [model] final case class Instrument(
+  private[model] final case class Instrument(
       isinCode: ISINCode,
       name: InstrumentName,
       instrumentType: InstrumentType,
@@ -31,10 +30,11 @@ object instrument {
   )
 
   object Instrument {
-    private[model] def validateISINCode(isin: ISINCode): ValidationResult[ISINCode] =
+    private[model] def validateISINCode(
+        isin: ISINCode
+    ): ValidationResult[ISINCode] =
       if (isin.value.isEmpty || isin.value.size != 12)
         s"ISIN code has to be 12 characters long: found $isin".invalidNec
       else isin.validNec
   }
-
 }
