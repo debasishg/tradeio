@@ -20,9 +20,11 @@ object ExchangeApp extends IOApp {
   override def run(args: List[String]): IO[ExitCode] = {
     for {
       s <- Exchange.create[IO]
-      order <- s.feedOrder(o1)
-      executions <- s.feedExecution(o1.no, NonEmptyList.of(e1, e2, e3, e4))
+      _ <- s.feedOrder(o1)
+      _ <- s.feedExecution(o1.no, NonEmptyList.of(e1, e2))
+      _ <- s.feedExecution(o1.no, NonEmptyList.of(e3, e4))
       trades <- s.allocate(o1.no, NonEmptyList.of(ano2, ano3))
+
       _ = trades.foreach(println)
     } yield ExitCode.Success
   }
@@ -53,6 +55,7 @@ object Exchange {
       clientAccountNos: List[AccountNo] = List.empty,
       trades: List[Trade] = List.empty
   ) {
+    // check if all order items have been fulfilled by executions
     def orderFulfilled: Boolean = {
       order
         .map { ord =>
@@ -205,9 +208,9 @@ object Exchange {
           Deferred[F, Either[Throwable, ApplicationState]].flatMap { newV =>
             state
               .modify {
-                // switch to Updating and generate trades to state. Note we don't have
-                // order in yet - still fulfillment info will be updated in anticipation
-                // that we will have the order subsequently
+                // switch to Updating and try to generate trades and update state.
+                // if the order is absent or has not yet been fulfilled we only update the state
+                // with client accounts and don't generate trade
                 case NoValue =>
                   Updating(newV) -> updateStateAndGenerateTrades(
                     newV,
@@ -216,6 +219,9 @@ object Exchange {
                     ApplicationState()
                   ).rethrow
 
+                // we use the current value of the state and follow the trade generation
+                // process (don't generate trade if order is absent or it has not yet
+                // been fulfilled)
                 case Value(s) =>
                   Updating(newV) -> updateStateAndGenerateTrades(
                     newV,
@@ -224,6 +230,8 @@ object Exchange {
                     s
                   ).rethrow
 
+                // we are in Updating and hence need to wait till completion. Then follow the
+                // usual trade generation process
                 case st @ Updating(inFlight) =>
                   Updating(newV) ->
                     (for {
