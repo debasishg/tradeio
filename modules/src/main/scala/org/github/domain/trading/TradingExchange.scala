@@ -18,6 +18,52 @@ import AppData._
 
 object ExchangeApp extends IOApp {
   override def run(args: List[String]): IO[ExitCode] = {
+    val tradeGen = Exchange.create[IO].flatMap { exchange =>
+      import exchange._
+
+      (
+        feedOrder(o1),
+        feedExecution(o1.no, NonEmptyList.of(e1, e2, e3, e4))
+      ).parTupled *> 
+      allocate(o1.no, NonEmptyList.of(ano2, ano3))
+        .start
+        .bracket { _.join }(_.cancel)
+    }
+
+    tradeGen.unsafeRunSync().foreach(t => println(s"Trade $t"))
+    IO(ExitCode.Success)
+  }
+
+  /*
+  override def run(args: List[String]): IO[ExitCode] = {
+    val tradeGen = Exchange.create[IO].flatMap { exchange =>
+      exchange
+        .feedOrder(o1)
+        .start
+        .bracket { fOrders =>
+          exchange
+            .feedExecution(o1.no, NonEmptyList.of(e1, e2, e3, e4))
+            .start
+            .bracket { fExecutions =>
+              for {
+                _ <- fOrders.join
+                _ <- fExecutions.join
+                fTrades <- exchange
+                  .allocate(o1.no, NonEmptyList.of(ano2, ano3))
+                  .start
+                trades <- fTrades.join
+              } yield trades
+            }(_.cancel)
+        }(_.cancel)
+    }
+
+    tradeGen.unsafeRunSync().foreach(t => println(s"Trade $t"))
+    IO(ExitCode.Success)
+  }
+   */
+
+  /*
+  override def run(args: List[String]): IO[ExitCode] = {
     val tradeGen = for {
       exchange <- Exchange.create[IO]
       fOrders <- exchange.feedOrder(o1).start
@@ -31,6 +77,7 @@ object ExchangeApp extends IOApp {
     tradeGen.unsafeRunSync().foreach(t => println(s"Trade $t"))
     IO(ExitCode.Success)
   }
+   */
 
   /*
   override def run(args: List[String]): IO[ExitCode] = {
@@ -274,15 +321,12 @@ object Exchange {
             accountNos: NonEmptyList[AccountNo],
             currentState: ApplicationState
         ) = {
-          if (currentState.order.isDefined && currentState.orderFulfilled) {
+          if (currentState.order.isDefined && currentState.orderFulfilled)
             // generate trade only if order has been received and fulfilled by executions
-            println("trade")
             generateTrades(d, orderNo, accountNos, currentState)
-          } else {
-            println("no trade")
+          else
             // else just update the client accounts list
             updateStateWithClientAccounts(d, accountNos, currentState)
-          }
         }
 
         private def updateStateWithClientAccounts(
