@@ -18,16 +18,35 @@ import AppData._
 
 object ExchangeApp extends IOApp {
   override def run(args: List[String]): IO[ExitCode] = {
+    val tradeGen = for {
+      exchange <- Exchange.create[IO]
+      fOrders <- exchange.feedOrder(o1).start
+      fExecutions <- exchange.feedExecution(o1.no, NonEmptyList.of(e1, e2, e3, e4)).start
+      _ <- fOrders.join
+      _ <- fExecutions.join
+      fTrades <- exchange.allocate(o1.no, NonEmptyList.of(ano2, ano3)).start
+      trades <- fTrades.join
+    } yield trades
+
+    tradeGen.unsafeRunSync().foreach(t => println(s"Trade $t"))
+    IO(ExitCode.Success)
+  }
+
+  /*
+  override def run(args: List[String]): IO[ExitCode] = {
     for {
       s <- Exchange.create[IO]
       _ <- s.feedOrder(o1)
       _ <- s.feedExecution(o1.no, NonEmptyList.of(e1, e2))
-      _ <- s.feedExecution(o1.no, NonEmptyList.of(e3, e4))
+      _ <- s.allocate(o1.no, NonEmptyList.of(ano2, ano3))
+      _ <- s.feedExecution(o1.no, NonEmptyList.of(e3))
+      _ <- s.feedExecution(o1.no, NonEmptyList.of(e4))
       trades <- s.allocate(o1.no, NonEmptyList.of(ano2, ano3))
 
       _ = trades.foreach(println)
     } yield ExitCode.Success
   }
+ */
 }
 
 trait TradingExchange[F[_]] {
@@ -121,6 +140,7 @@ object Exchange {
             appState: ApplicationState,
             ord: Order
         ): ApplicationState = {
+          // ignore input order if an order is already present
           appState.order
             .map(_ => appState)
             .getOrElse(appState.copy(order = Some(ord)))
@@ -254,12 +274,15 @@ object Exchange {
             accountNos: NonEmptyList[AccountNo],
             currentState: ApplicationState
         ) = {
-          if (currentState.order.isDefined && currentState.orderFulfilled)
+          if (currentState.order.isDefined && currentState.orderFulfilled) {
             // generate trade only if order has been received and fulfilled by executions
+            println("trade")
             generateTrades(d, orderNo, accountNos, currentState)
-          else
+          } else {
+            println("no trade")
             // else just update the client accounts list
             updateStateWithClientAccounts(d, accountNos, currentState)
+          }
         }
 
         private def updateStateWithClientAccounts(
