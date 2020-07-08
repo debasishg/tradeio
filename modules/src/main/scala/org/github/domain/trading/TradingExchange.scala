@@ -21,9 +21,15 @@ object ExchangeApp extends IOApp {
     val tradeGen = Exchange.create[IO].flatMap { exchange =>
       import exchange._
 
+      // `parTupled` gives a safe way to execute on fibers
+      // it starts, joins fibers and handles cancellation
+      // gracefully
+      // once we have order and executions we can then start
+      // executing allocations on another fiber. Here we use
+      // `bracket` that handles cancellations
       (
         feedOrder(o1),
-        feedExecution(o1.no, NonEmptyList.of(e1, e2, e3, e4))
+        feedExecutions(o1.no, NonEmptyList.of(e1, e2, e3, e4))
       ).parTupled *> 
       allocate(o1.no, NonEmptyList.of(ano2, ano3))
         .start
@@ -42,7 +48,7 @@ object ExchangeApp extends IOApp {
         .start
         .bracket { fOrders =>
           exchange
-            .feedExecution(o1.no, NonEmptyList.of(e1, e2, e3, e4))
+            .feedExecutions(o1.no, NonEmptyList.of(e1, e2, e3, e4))
             .start
             .bracket { fExecutions =>
               for {
@@ -63,11 +69,12 @@ object ExchangeApp extends IOApp {
    */
 
   /*
+  // selectively leaks fibers on cancellation and interrupts
   override def run(args: List[String]): IO[ExitCode] = {
     val tradeGen = for {
       exchange <- Exchange.create[IO]
       fOrders <- exchange.feedOrder(o1).start
-      fExecutions <- exchange.feedExecution(o1.no, NonEmptyList.of(e1, e2, e3, e4)).start
+      fExecutions <- exchange.feedExecutions(o1.no, NonEmptyList.of(e1, e2, e3, e4)).start
       _ <- fOrders.join
       _ <- fExecutions.join
       fTrades <- exchange.allocate(o1.no, NonEmptyList.of(ano2, ano3)).start
@@ -80,14 +87,15 @@ object ExchangeApp extends IOApp {
    */
 
   /*
+  // leaks fibers on cancellation and interrupts
   override def run(args: List[String]): IO[ExitCode] = {
     for {
       s <- Exchange.create[IO]
       _ <- s.feedOrder(o1)
-      _ <- s.feedExecution(o1.no, NonEmptyList.of(e1, e2))
+      _ <- s.feedExecutions(o1.no, NonEmptyList.of(e1, e2))
       _ <- s.allocate(o1.no, NonEmptyList.of(ano2, ano3))
-      _ <- s.feedExecution(o1.no, NonEmptyList.of(e3))
-      _ <- s.feedExecution(o1.no, NonEmptyList.of(e4))
+      _ <- s.feedExecutions(o1.no, NonEmptyList.of(e3))
+      _ <- s.feedExecutions(o1.no, NonEmptyList.of(e4))
       trades <- s.allocate(o1.no, NonEmptyList.of(ano2, ano3))
 
       _ = trades.foreach(println)
@@ -101,7 +109,7 @@ trait TradingExchange[F[_]] {
   def feedOrder(order: Order): F[Unit]
 
   // feed execution, which will update order for fullfilment
-  def feedExecution(
+  def feedExecutions(
       orderNo: OrderNo,
       executions: NonEmptyList[Execution]
   ): F[Unit]
@@ -193,7 +201,7 @@ object Exchange {
             .getOrElse(appState.copy(order = Some(ord)))
         }
 
-        def feedExecution(
+        def feedExecutions(
             orderNo: OrderNo,
             execs: NonEmptyList[Execution]
         ): F[Unit] = {
