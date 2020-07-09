@@ -104,6 +104,7 @@ object ExchangeApp extends IOApp {
  */
 }
 
+// FSM with the algebra of the commands
 trait TradingExchange[F[_]] {
   // feed order into the system
   def feedOrder(order: Order): F[Unit]
@@ -145,11 +146,17 @@ object Exchange {
     }
   }
 
+  // create the FSM
+  // the states of the FSM are abstracted within the creator
   def create[F[_]: Concurrent](): F[TradingExchange[F]] = {
     sealed trait State
+    // application state has a value
     case class Value(s: ApplicationState) extends State
+    // application state is being updated - need a `Deferred` for
+    // synchronization
     case class Updating(d: Deferred[F, Either[Throwable, ApplicationState]])
         extends State
+    // application state has no value
     case object NoValue extends State
 
     Ref.of[F, State](NoValue).map { state =>
@@ -242,7 +249,7 @@ object Exchange {
             orderNo: OrderNo,
             execs: NonEmptyList[Execution],
             currentState: ApplicationState
-        ) =
+        ): F[Either[Throwable, ApplicationState]] =
           for {
             r <- updateStateWithExecutionInfo(currentState, orderNo, execs)
               .pure[F]
@@ -341,7 +348,7 @@ object Exchange {
             d: Deferred[F, Either[Throwable, ApplicationState]],
             accountNos: NonEmptyList[AccountNo],
             currentState: ApplicationState
-        ) =
+        ): F[Either[Throwable, ApplicationState]] =
           for {
             r <- currentState
               .copy(
@@ -365,7 +372,7 @@ object Exchange {
             orderNo: OrderNo,
             accountNos: NonEmptyList[AccountNo],
             currentState: ApplicationState
-        ) =
+        ): F[Either[Throwable, ApplicationState]] =
           for {
             r <- currentState
               .copy(
