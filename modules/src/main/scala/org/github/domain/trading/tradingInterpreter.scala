@@ -6,6 +6,7 @@ import java.util.UUID
 import cats.MonadError
 import cats.data.NonEmptyList
 import cats.implicits._
+import cats.mtl._
 
 import common._
 import model.account.Account
@@ -15,7 +16,14 @@ import model.trade.Trade
 import model.market.Market
 import model.newtypes._
 
-class TradingInterpreter[M[_]: MonadThrowable] extends Trading[M] {
+import repository._
+
+class TradingInterpreter[M[_]: MonadThrowable]
+  (implicit A: ApplicativeAsk[M, AccountRepository[M]],
+            I: ApplicativeAsk[M, InstrumentRepository[M]],
+            O: ApplicativeAsk[M, OrderRepository[M]],
+            T: ApplicativeAsk[M, TradeRepository[M]]) extends Trading[M] {
+
   private final val ev = implicitly[MonadThrowable[M]]
 
   def orders(csvOrder: String): M[NonEmptyList[Order]] = {

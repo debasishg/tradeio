@@ -11,7 +11,6 @@ import cats.implicits._
 import cats.effect.concurrent.Ref
 import cats.effect.Sync
 
-import common._
 import model.account._
 import model.newtypes._
 import model.enums._
