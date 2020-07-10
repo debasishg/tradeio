@@ -3,6 +3,8 @@ package repository
 
 import java.time.LocalDateTime
 
+import cats.data.NonEmptyList
+
 import model.newtypes._
 
 import model.order._
@@ -14,4 +16,6 @@ trait OrderRepository[M[_]] {
   def queryByOrderDate(date: LocalDateTime): M[List[Order]]
   /** store */
   def store(ord: Order): M[Order]
+  /** store many orders */
+  def store(orders: NonEmptyList[Order]): M[Unit]
 }

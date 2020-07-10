@@ -7,6 +7,7 @@ import java.time.LocalDateTime
 import scala.collection.immutable.Map 
 
 import cats.{Order => OrderC, _}
+import cats.data.NonEmptyList
 import cats.implicits._
 import cats.effect.concurrent.Ref
 import cats.effect.Sync
@@ -28,6 +29,9 @@ final class OrderRepositoryInterpreter[M[_]: Monad] private (repo: Ref[M, Map[(O
 
   def store(ord: Order): M[Order] = 
     repo.update(_ + (((ord.no, ord.accountNo, ord.date), ord))).map(_ => ord)
+
+  def store(orders: NonEmptyList[Order]): M[Unit] =
+    repo.update(_ ++ orders.toList.map(ord => (((ord.no, ord.accountNo, ord.date), ord)))).map(_ => ())
 }
 
 // Smart constructor 

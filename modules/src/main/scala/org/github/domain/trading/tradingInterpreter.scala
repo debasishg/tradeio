@@ -26,13 +26,24 @@ class TradingInterpreter[M[_]: MonadThrowable]
 
   private final val ev = implicitly[MonadThrowable[M]]
 
+  def persistOrders(orders: NonEmptyList[Order]) = for {
+    repo <- O.ask
+    _ <- repo.store(orders)
+  } yield (())
+
   def orders(csvOrder: String): M[NonEmptyList[Order]] = {
     ordering
       .createOrders(csvOrder)
       .fold(
         nec =>
           ev.raiseError(new Throwable(nec.toNonEmptyList.toList.mkString("/"))),
-        os => ev.pure(NonEmptyList.fromList(os).get)
+        os => {
+          if (os isEmpty) ev.raiseError(new Throwable("Empty order list received from csv"))
+          else {
+            val nlos = NonEmptyList.fromList(os).get
+            persistOrders(nlos) *> ev.pure(nlos)
+          }
+        }
       )
   }
 
