@@ -20,16 +20,12 @@ import repository._
 
 class TradingInterpreter[M[_]: MonadThrowable]
   (implicit A: ApplicativeAsk[M, AccountRepository[M]],
+            E: ApplicativeAsk[M, ExecutionRepository[M]],
             I: ApplicativeAsk[M, InstrumentRepository[M]],
             O: ApplicativeAsk[M, OrderRepository[M]],
             T: ApplicativeAsk[M, TradeRepository[M]]) extends Trading[M] {
 
   private final val ev = implicitly[MonadThrowable[M]]
-
-  def persistOrders(orders: NonEmptyList[Order]) = for {
-    repo <- O.ask
-    _ <- repo.store(orders)
-  } yield (())
 
   def orders(csvOrder: String): M[NonEmptyList[Order]] = {
     ordering
@@ -51,8 +47,8 @@ class TradingInterpreter[M[_]: MonadThrowable]
       orders: NonEmptyList[Order],
       market: Market,
       brokerAccountNo: AccountNo
-  ): M[NonEmptyList[Execution]] = ev.pure {
-    orders.flatMap { order =>
+  ): M[NonEmptyList[Execution]] = {
+    val exes = orders.flatMap { order =>
       order.items.map { item =>
         Execution(
           ExecutionReferenceNo(UUID.randomUUID().toString),
@@ -67,6 +63,7 @@ class TradingInterpreter[M[_]: MonadThrowable]
         )
       }
     }
+    persistExecutions(exes) *> ev.pure(exes)
   }
 
   def allocate(
@@ -94,7 +91,25 @@ class TradingInterpreter[M[_]: MonadThrowable]
       .fold(
         nec =>
           ev.raiseError(new Throwable(nec.toNonEmptyList.toList.mkString("/"))),
-        ls => ev.pure(ls.flatten)
+        ls => {
+          val trds = ls.flatten
+          persistTrades(trds) *> ev.pure(trds)
+        }
       )
   }
+
+  private def persistOrders(orders: NonEmptyList[Order]) = for {
+    repo <- O.ask
+    _ <- repo.store(orders)
+  } yield (())
+
+  private def persistExecutions(executions: NonEmptyList[Execution]) = for {
+    repo <- E.ask
+    _ <- repo.store(executions)
+  } yield (())
+
+  private def persistTrades(trades: NonEmptyList[Trade]) = for {
+    repo <- T.ask
+    _ <- repo.store(trades)
+  } yield (())
 }

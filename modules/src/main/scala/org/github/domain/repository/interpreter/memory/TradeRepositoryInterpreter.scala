@@ -7,6 +7,7 @@ import java.time.LocalDateTime
 import scala.collection.immutable.Map 
 
 import cats._
+import cats.data.NonEmptyList
 import cats.implicits._
 import cats.effect.concurrent.Ref
 import cats.effect.Sync
@@ -24,6 +25,9 @@ final class TradeRepositoryInterpreter[M[_]: Monad] private (repo: Ref[M, Map[(A
 
   def store(trd: Trade): M[Trade] = 
     repo.update(_ + (((trd.accountNo, trd.isin, trd.refNo), trd))).map(_ => trd)
+
+  def store(trades: NonEmptyList[Trade]): M[Unit] =
+    repo.update(_ ++ trades.toList.map(trd => (((trd.accountNo, trd.isin, trd.refNo), trd)))).map(_ => ())
 }
 
 // Smart constructor 

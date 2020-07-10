@@ -3,6 +3,8 @@ package repository
 
 import java.time.LocalDateTime
 
+import cats.data.NonEmptyList
+
 import model.newtypes._
 
 import model.trade._
@@ -12,4 +14,6 @@ trait TradeRepository[M[_]] {
   def query(accountNo: AccountNo, date: LocalDateTime): M[List[Trade]]
   /** store */
   def store(trd: Trade): M[Trade]
+  /** store many trades */
+  def store(executions: NonEmptyList[Trade]): M[Unit]
 }

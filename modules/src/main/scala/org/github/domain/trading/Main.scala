@@ -31,6 +31,7 @@ object Main extends IOApp {
 
     val trades = Algebras.make[IO].flatMap { algebras =>
       implicit val accountRepositoryAsk = DefaultApplicativeAsk.constant[IO, AccountRepository[IO]](algebras.accountRepository)
+      implicit val executionRepositoryAsk = DefaultApplicativeAsk.constant[IO, ExecutionRepository[IO]](algebras.executionRepository)
       implicit val instrumentRepositoryAsk = DefaultApplicativeAsk.constant[IO, InstrumentRepository[IO]](algebras.instrumentRepository)
       implicit val orderRepositoryAsk = DefaultApplicativeAsk.constant[IO, OrderRepository[IO]](algebras.orderRepository)
       implicit val tradeRepositoryAsk = DefaultApplicativeAsk.constant[IO, TradeRepository[IO]](algebras.tradeRepository)

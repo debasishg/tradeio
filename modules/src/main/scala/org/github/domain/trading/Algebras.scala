@@ -13,11 +13,13 @@ object Algebras {
   def make[F[_]: Sync]: F[Algebras[F]] = 
   for {
     accountRepositoryInterpreter <- AccountRepositoryInterpreter.make[F]
+    executionRepositoryInterpreter <- ExecutionRepositoryInterpreter.make[F]
     instrumentRepositoryInterpreter <- InstrumentRepositoryInterpreter.make[F]
     orderRepositoryInterpreter <- OrderRepositoryInterpreter.make[F]
     tradeRepositoryInterpreter <- TradeRepositoryInterpreter.make[F]
   } yield new Algebras[F](
     accountRepositoryInterpreter,
+    executionRepositoryInterpreter,
     instrumentRepositoryInterpreter,
     orderRepositoryInterpreter,
     tradeRepositoryInterpreter
@@ -26,6 +28,7 @@ object Algebras {
 
 final class Algebras[F[_]] (
   val accountRepository: AccountRepository[F],
+  val executionRepository: ExecutionRepository[F],
   val instrumentRepository: InstrumentRepository[F],
   val orderRepository: OrderRepository[F],
   val tradeRepository: TradeRepository[F]
