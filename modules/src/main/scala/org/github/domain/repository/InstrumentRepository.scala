@@ -8,7 +8,7 @@ import model.instrument._
 
 trait InstrumentRepository[M[_]] {
   /** query by account number */
-  def query(no: ISINCode): M[Option[Instrument]]
+  def query(isin: ISINCode): M[Option[Instrument]]
   /** query by instrument type Equity / FI / CCY */
   def queryByInstrumentType(instrumentType: InstrumentType): M[List[Instrument]]
   /** store */
