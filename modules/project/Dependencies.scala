@@ -60,5 +60,6 @@ object Dependencies {
       Seq(Misc.newtype, Misc.squants) ++ 
       Seq(Refined.refinedCore, Refined.refinedCats, Refined.refinedShapeless) ++ 
       Seq(Ciris.cirisCore, Ciris.cirisEnum, Ciris.cirisRefined) ++ 
-      Seq(Cormorant.core, Cormorant.generic, Cormorant.parser, Cormorant.refined) 
+      Seq(Cormorant.core, Cormorant.generic, Cormorant.parser, Cormorant.refined) ++
+      Seq(Skunk.skunkCore, Skunk.skunkCirce)
 }

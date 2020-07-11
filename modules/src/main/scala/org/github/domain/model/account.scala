@@ -84,7 +84,7 @@ object account {
         closeDate: Option[LocalDateTime],
         baseCcy: Currency,
         tradingCcy: Currency,
-        settlementCcy: Option[Currency] = None
+        settlementCcy: Currency
     ): ErrorOr[Account] = {
       (
         validateAccountNo(no),
@@ -98,7 +98,7 @@ object account {
           AccountType.Both,
           baseCcy,
           tradingCcy.some,
-          settlementCcy.orElse(tradingCcy.some)
+          settlementCcy.some  
         )
       }.toEither
     }
