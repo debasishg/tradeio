@@ -30,7 +30,11 @@ final class AccountRepositoryInterpreter[M[_]: Monad] private (repo: Ref[M, Map[
   def all: M[List[Account]] = repo.get.map(_.values.toList)
 
   def allClosed(closeDate: Option[LocalDateTime]): M[List[Account]] = 
-    repo.get.map(_.values.filter(_.dateOfClose.isDefined).toList)
+    closeDate.map {cd =>
+      repo.get.map(_.values.filter(a => a.dateOfClose.isDefined && a.dateOfClose.get.isAfter(cd)).toList)
+    }.getOrElse {
+      repo.get.map(_.values.filter(a => a.dateOfClose.isDefined).toList)
+    }
 
   def allAccountsOfType(accountType: AccountType): M[List[Account]] = 
     repo.get.map(_.values.filter(_.accountType == accountType).toList)

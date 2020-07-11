@@ -24,17 +24,49 @@ import ext.skunkx._
 
 final class AccountRepositoryInterpreter[M[_]: Sync] private (
   sessionPool: Resource[M, Session[M]]) extends AccountRepository[M] {
-  def query(no: AccountNo): M[Option[Account]] = ???
+  
+  import AccountQueries._
 
-  def store(a: Account): M[Account] = ???
+  def query(no: AccountNo): M[Option[Account]] = 
+    sessionPool.use { session =>
+      session.prepare(selectByAccountNo).use { ps =>
+        ps.option(no)
+      }
+    }
 
-  def query(openedOn: LocalDateTime): M[List[Account]] = ???
+  def store(a: Account): M[Account] = 
+    sessionPool.use { session =>
+      session.prepare(upsertAccount).use { cmd =>
+        cmd.execute(a).void.map(_ => a)
+      }
+    }
 
-  def all: M[List[Account]] = ???
+  def query(openedOn: LocalDateTime): M[List[Account]] = 
+    sessionPool.use { session =>
+      session.prepare(selectByOpenedDate).use { ps =>
+        ps.stream(openedOn, 1024).compile.toList
+      }
+    }
 
-  def allClosed(closeDate: Option[LocalDateTime]): M[List[Account]] = ???
+  def all: M[List[Account]] = sessionPool.use(_.execute(selectAll))
 
-  def allAccountsOfType(accountType: AccountType): M[List[Account]] = ???
+  def allClosed(closeDate: Option[LocalDateTime]): M[List[Account]] = 
+    sessionPool.use { session =>
+      closeDate.map { cd =>
+        session.prepare(selectClosedAfter).use { ps =>
+          ps.stream(cd, 1024).compile.toList
+        }
+      }.getOrElse {
+        session.execute(selectAllClosed)
+      }
+    }
+
+  def allAccountsOfType(accountType: AccountType): M[List[Account]] = 
+    sessionPool.use { session =>
+      session.prepare(selectByAccountType).use { ps =>
+        ps.stream(accountType, 1024).compile.toList
+      }
+    }
 }
 
 private object AccountQueries {
@@ -101,10 +133,31 @@ private object AccountQueries {
         WHERE a.dateOfOpen = $timestamp
        """.query(decoder)
 
+  val selectByAccountType: Query[AccountType, Account] =
+    sql"""
+        SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
+        FROM accounts AS a
+        WHERE a.type = $accountType
+       """.query(decoder)
+
   val selectAll: Query[Void, Account] =
     sql"""
         SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
         FROM accounts AS a
+       """.query(decoder)
+
+  val selectClosedAfter: Query[LocalDateTime, Account] =
+    sql"""
+        SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
+        FROM accounts AS a
+        WHERE a.dateOfClose >= $timestamp
+       """.query(decoder)
+
+  val selectAllClosed: Query[Void, Account] =
+    sql"""
+        SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
+        FROM accounts AS a
+        WHERE a.dateOfClose IS NOT NULL
        """.query(decoder)
 
   val insertAccount: Command[Account] =
