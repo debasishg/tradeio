@@ -6,7 +6,6 @@ import java.time.LocalDateTime
 import cats.data.NonEmptyList
 
 import model.newtypes._
-
 import model.order._
 
 trait OrderRepository[M[_]] {

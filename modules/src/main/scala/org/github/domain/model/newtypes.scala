@@ -11,7 +11,7 @@ object newtypes {
   // instrument
   @newtype case class ISINCode(value: String)
   @newtype case class InstrumentName(value: String)
-  @newtype case class LotSize(value: Int)
+  @newtype case class LotSize(value: Short)
 
   // order
   @newtype case class OrderNo(value: String)

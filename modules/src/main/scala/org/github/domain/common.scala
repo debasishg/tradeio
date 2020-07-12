@@ -11,4 +11,5 @@ object common {
   type MonadThrowable[F[_]] = MonadError[F, Throwable]
 
   def today = LocalDateTime.now
+  final val ZERO_BIG_DECIMAL = BigDecimal(0)
 }
