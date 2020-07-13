@@ -213,7 +213,7 @@ private object AccountQueries {
           dateOfOpen           = EXCLUDED.dateOfOpen,
           dateOfClose          = EXCLUDED.dateOfClose,
           baseCurrency         = EXCLUDED.baseCurrency,
-          tradingCurrency      = EXCLUDED.tradingCurrency
+          tradingCurrency      = EXCLUDED.tradingCurrency,
           settlementCurrency   = EXCLUDED.settlementCurrency
        """.command.contramap {
 
