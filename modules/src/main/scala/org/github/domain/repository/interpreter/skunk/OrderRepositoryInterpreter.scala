@@ -46,7 +46,7 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
     sessionPool.use { session =>
       session.transaction.use { xa =>
         session.prepare(insertOrder).use { cmd =>
-          cmd.execute(ord).void.map(_ => ord)
+          cmd.execute(ord)
         } *>
         session.prepare(insertLineItems(ord.items.size)).use { cmd =>
           cmd.execute(ord.items.toList).void.map(_ => ord)
