@@ -10,7 +10,7 @@ import model.order._
 
 trait OrderRepository[M[_]] {
   /** query by unique key order no, account number and date */
-  def query(no: OrderNo, accountNo: AccountNo, date: LocalDateTime): M[Option[Order]]
+  def query(no: OrderNo): M[Option[Order]]
   /** query by order date */
   def queryByOrderDate(date: LocalDateTime): M[List[Order]]
   /** store */

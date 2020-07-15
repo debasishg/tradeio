@@ -28,17 +28,51 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
 
   import OrderQueries._
 
-  def query(no: OrderNo, accountNo: AccountNo, date: LocalDateTime): M[Option[Order]] = 
+  def query(no: OrderNo): M[Option[Order]] = 
     sessionPool.use { session =>
-      session.prepare(selectByUniqueKey).use { ps =>
-        ps.option(no ~ accountNo ~ date)
+      session.prepare(selectByOrderNo).use { ps =>
+        ps.stream(no, 1024)
+          .compile
+          .toList
+          .map(_.groupBy(_._2)).map { m =>
+            val lines: List[Order] = m.map {
+              case (ono, lis) => makeSingleLineItemOrders(no, lis)
+            }.head
+            if (lines.isEmpty) None
+            else lines.tail.foldLeft(lines.head)((a, e) => a.combine(e)).some
+          }
       }
     }
+
+  private def makeSingleLineItemOrders(ono: OrderNo, 
+    lis: List[LocalDateTime ~ String ~ String ~ BigDecimal ~ BuySell ~ String]): List[Order] = {
+
+    lis.map {
+      case odt ~ ano ~ isin ~ qty ~ bs ~ ono => 
+        Order(
+          OrderNo(ono), 
+          odt, 
+          AccountNo(ano), 
+          NonEmptyList.one(
+            LineItem(ISINCode(isin), Quantity(qty), UnitPrice(BigDecimal.decimal(1.0)), bs)
+          )
+        )
+    }
+  }
 
   def queryByOrderDate(date: LocalDateTime): M[List[Order]] = 
     sessionPool.use { session =>
       session.prepare(selectByOrderDate).use { ps =>
-        ps.stream(date, 1024).compile.toList
+        ps.stream(date, 1024)
+          .compile
+          .toList
+          .map(_.groupBy(_._2)).map { m =>
+            m.map {
+              case (ono, lis) => 
+                val singleOrders = makeSingleLineItemOrders(OrderNo(ono), lis)
+                singleOrders.tail.foldLeft(singleOrders.head)((a, e) => a.combine(e))
+            }.toList
+          }
       }
     }
 
@@ -64,11 +98,7 @@ private object OrderQueries {
   val buySell = enum(BuySell, Type("buysellflag"))
   implicit val moneyContext = defaultMoneyContext
 
-  val decoder: Decoder[Order] =
-    (varchar ~ timestamp ~ varchar).map {
-      case no ~ dt ~ ano =>
-        Order(OrderNo(no), dt, AccountNo(ano), null)
-    }
+  val orderLineItemDecoder = timestamp ~ varchar ~ varchar ~ numeric ~ buySell ~ varchar
 
   val orderEncoder: Encoder[Order] = 
     (varchar ~ varchar ~ timestamp).values.contramap((o: Order) => o.no.value ~ o.accountNo.value ~ o.date)
@@ -77,21 +107,21 @@ private object OrderQueries {
     (varchar ~ numeric ~ numeric ~ varchar).values.contramap((li: LineItem) => 
       li.instrument.value ~ li.quantity.value ~ li.unitPrice.value ~ li.buySell.toString)
 
-  val selectByUniqueKey: Query[OrderNo ~ AccountNo ~ LocalDateTime, Order] =
+  val selectByOrderNo =  // : Query[OrderNo, Order] =
     sql"""
-        SELECT o.no, o.dateOfOrder, o.accountNo
-        FROM orders AS o
+        SELECT o.dateOfOrder, o.accountNo, l.isinCode, l.quantity, l.buySellFlag, o.no
+        FROM orders o, lineItems l
         WHERE o.no = ${varchar.cimap[OrderNo]}
-          AND o.accountNo = ${varchar.cimap[AccountNo]}
-          AND o.dateOfOrder = ${timestamp}
-       """.query(decoder)
+        AND   o.no = l.orderNo
+       """.query(orderLineItemDecoder)
 
-  val selectByOrderDate: Query[LocalDateTime, Order] =
+  val selectByOrderDate =  // : Query[LocalDateTime, Order] =
     sql"""
-        SELECT o.no, o.dateOfOrder, o.accountNo
-        FROM orders AS o
+        SELECT o.dateOfOrder, o.accountNo, l.isinCode, l.quantity, l.buySellFlag, o.no
+        FROM orders o, lineItems l
         WHERE o.dateOfOrder = ${timestamp}
-       """.query(decoder)
+        AND   o.no = l.orderNo
+       """.query(orderLineItemDecoder)
 
   val insertOrder: Command[Order] =
     sql"INSERT INTO orders (no, dateOfOrder, accountNo) VALUES $orderEncoder".command

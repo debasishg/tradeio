@@ -5,6 +5,7 @@ import java.time.LocalDateTime
 import java.time.Instant
 import java.util.UUID
 
+import cats.Semigroup
 import cats.effect._
 import cats.data.NonEmptyList
 import cats.implicits._
@@ -40,6 +41,10 @@ object order {
   )
 
   object Order {
+    implicit val orderConcatSemigroup: Semigroup[Order] = new Semigroup[Order] {
+      def combine(x: Order, y: Order): Order = Order(x.no, x.date, x.accountNo, x.items ++ y.items.toList)
+    }
+
     /**
       * Domain validation for `FrontOfficeOrder` is done here. Creates
       * records after validation

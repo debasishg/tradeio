@@ -18,24 +18,24 @@ import model.enums._
 
 // Constructor private for the interpreter to prevent the Ref from leaking
 // access through smart constructor below
-final class OrderRepositoryInterpreter[M[_]: Monad] private (repo: Ref[M, Map[(OrderNo, AccountNo, LocalDateTime), Order]])
+final class OrderRepositoryInterpreter[M[_]: Monad] private (repo: Ref[M, Map[OrderNo, Order]])
   extends OrderRepository[M] {
 
-  def query(no: OrderNo, accountNo: AccountNo, date: LocalDateTime): M[Option[Order]] = 
-    repo.get.map(_.get((no, accountNo, date)))
+  def query(no: OrderNo): M[Option[Order]] = 
+    repo.get.map(_.get(no))
 
   def queryByOrderDate(date: LocalDateTime): M[List[Order]] = 
     repo.get.map(_.values.filter(_.date == date).toList)
 
   def store(ord: Order): M[Order] = 
-    repo.update(_ + (((ord.no, ord.accountNo, ord.date), ord))).map(_ => ord)
+    repo.update(_ + ((ord.no, ord))).map(_ => ord)
 
   def store(orders: NonEmptyList[Order]): M[Unit] =
-    repo.update(_ ++ orders.toList.map(ord => (((ord.no, ord.accountNo, ord.date), ord)))).map(_ => ())
+    repo.update(_ ++ orders.toList.map(ord => ((ord.no, ord)))).map(_ => ())
 }
 
 // Smart constructor 
 object OrderRepositoryInterpreter {
   def make[M[_]: Sync]: M[OrderRepositoryInterpreter[M]] =
-    Ref.of[M, Map[(OrderNo, AccountNo, LocalDateTime), Order]](Map.empty).map(new OrderRepositoryInterpreter(_))
+    Ref.of[M, Map[OrderNo, Order]](Map.empty).map(new OrderRepositoryInterpreter(_))
 }
