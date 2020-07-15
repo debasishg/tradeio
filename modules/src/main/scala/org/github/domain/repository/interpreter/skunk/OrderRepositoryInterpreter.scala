@@ -4,6 +4,7 @@ package interpreter.skunk
 
 import java.time.LocalDateTime
 
+import cats.Semigroup
 import cats.data.NonEmptyList
 import cats.implicits._
 import cats.effect._
@@ -39,7 +40,7 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
               case (ono, lis) => makeSingleLineItemOrders(no, lis)
             }.head
             if (lines.isEmpty) None
-            else lines.tail.foldLeft(lines.head)((a, e) => a.combine(e)).some
+            else lines.tail.foldLeft(lines.head)(Semigroup[Order].combine).some
           }
       }
     }
@@ -70,26 +71,49 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
             m.map {
               case (ono, lis) => 
                 val singleOrders = makeSingleLineItemOrders(OrderNo(ono), lis)
-                singleOrders.tail.foldLeft(singleOrders.head)((a, e) => a.combine(e))
+                singleOrders.tail.foldLeft(singleOrders.head)(Semigroup[Order].combine)
             }.toList
           }
       }
     }
 
+    /**
+      * Generic store API that handles both inserts and updates. The steps to be followed are:
+      * 
+      * 1. delete line-items (if any) corresponding to this order number
+      * 2. upsert order record
+      * 3. insert new line-items
+      *
+      * @param ord the order to store
+      * @return the order with an effect
+      */
   def store(ord: Order): M[Order] = 
     sessionPool.use { session =>
-      session.transaction.use { xa =>
-        session.prepare(insertOrder).use { cmd =>
-          cmd.execute(ord)
-        } *>
-        session.prepare(insertLineItems(ord.items.size)).use { cmd =>
-          cmd.execute(ord.items.toList).void.map(_ => ord)
-        } 
+      session.transaction.use { _ =>
+        storeOrderAndLineItems(ord, session)
       }
     }
 
-  def store(orders: NonEmptyList[Order]): M[Unit] = ???
+  private def storeOrderAndLineItems(ord: Order, session: Session[M]): M[Order] = {
+    session.prepare(deleteLineItems).use { cmd =>
+      cmd.execute(ord.no.value)
+    } *>
+    session.prepare(upsertOrder).use { cmd =>
+      cmd.execute(ord.no.value ~ ord.date ~ ord.accountNo.value)
+    } *>
+    session.prepare(insertLineItems(ord.items.size)).use { cmd =>
+      cmd.execute(ord.items.toList).void.map(_ => ord)
+    } 
+  }
 
+  def store(orders: NonEmptyList[Order]): M[Unit] =
+    sessionPool.use { session =>
+      session.transaction.use { xa =>
+        orders.toList.map { ord =>
+          storeOrderAndLineItems(ord, session)
+        }.sequence.map(_ => ())
+      } 
+    } 
 }
   
 private object OrderQueries {
@@ -107,7 +131,7 @@ private object OrderQueries {
     (varchar ~ numeric ~ numeric ~ varchar).values.contramap((li: LineItem) => 
       li.instrument.value ~ li.quantity.value ~ li.unitPrice.value ~ li.buySell.toString)
 
-  val selectByOrderNo =  // : Query[OrderNo, Order] =
+  val selectByOrderNo =  
     sql"""
         SELECT o.dateOfOrder, o.accountNo, l.isinCode, l.quantity, l.buySellFlag, o.no
         FROM orders o, lineItems l
@@ -115,7 +139,7 @@ private object OrderQueries {
         AND   o.no = l.orderNo
        """.query(orderLineItemDecoder)
 
-  val selectByOrderDate =  // : Query[LocalDateTime, Order] =
+  val selectByOrderDate =  
     sql"""
         SELECT o.dateOfOrder, o.accountNo, l.isinCode, l.quantity, l.buySellFlag, o.no
         FROM orders o, lineItems l
@@ -133,4 +157,16 @@ private object OrderQueries {
     val es = lineItemEncoder.list(n)
     sql"INSERT INTO lineItems (orderNo, isinCode, quantity, buySellFlag) VALUES $es".command
   }
+
+  val upsertOrder =  
+    sql"""
+        INSERT INTO orders
+        VALUES ($varchar, $timestamp, $varchar)
+        ON CONFLICT(no) DO UPDATE SET
+          dateOfOrder      = EXCLUDED.dateOfOrder,
+          accountNo        = EXCLUDED.accountNo
+       """.command
+
+  val deleteLineItems: Command[String] =
+    sql"DELETE FROM lineItems WHERE orderNo = $varchar".command
 }

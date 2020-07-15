@@ -41,6 +41,9 @@ object order {
   )
 
   object Order {
+
+    // semigroup that combines orders with same order number
+    // used in combining join records between orders and lineItems tables
     implicit val orderConcatSemigroup: Semigroup[Order] = new Semigroup[Order] {
       def combine(x: Order, y: Order): Order = Order(x.no, x.date, x.accountNo, x.items ++ y.items.toList)
     }
