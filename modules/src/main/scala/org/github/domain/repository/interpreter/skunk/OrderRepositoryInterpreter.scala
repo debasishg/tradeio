@@ -46,16 +46,16 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
     }
 
   private def makeSingleLineItemOrders(ono: OrderNo, 
-    lis: List[LocalDateTime ~ String ~ String ~ BigDecimal ~ BuySell ~ String]): List[Order] = {
+    lis: List[LocalDateTime ~ String ~ String ~ BigDecimal ~ BigDecimal ~ BuySell ~ String]): List[Order] = {
 
     lis.map {
-      case odt ~ ano ~ isin ~ qty ~ bs ~ ono => 
+      case odt ~ ano ~ isin ~ qty ~ up ~ bs ~ ono => 
         Order(
           OrderNo(ono), 
           odt, 
           AccountNo(ano), 
           NonEmptyList.one(
-            LineItem(ISINCode(isin), Quantity(qty), UnitPrice(BigDecimal.decimal(1.0)), bs)
+            LineItem(ISINCode(isin), Quantity(qty), UnitPrice(up), bs)
           )
         )
     }
@@ -94,16 +94,11 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
       }
     }
 
+  // prepareAndExecute is an extension method defined in skunkx
   private def storeOrderAndLineItems(ord: Order, session: Session[M]): M[Order] = {
-    session.prepare(deleteLineItems).use { cmd =>
-      cmd.execute(ord.no.value)
-    } *>
-    session.prepare(upsertOrder).use { cmd =>
-      cmd.execute(ord.no.value ~ ord.date ~ ord.accountNo.value)
-    } *>
-    session.prepare(insertLineItems(ord.items.size)).use { cmd =>
-      cmd.execute(ord.items.toList).void.map(_ => ord)
-    } 
+    session.prepareAndExecute(deleteLineItems, ord.no.value) *>
+    session.prepareAndExecute(upsertOrder, ord.no.value ~ ord.date ~ ord.accountNo.value) *>
+    session.prepareAndExecute(insertLineItems(ord.items.size), ord.items.toList).void.map(_ => ord)
   }
 
   def store(orders: NonEmptyList[Order]): M[Unit] =
@@ -122,7 +117,7 @@ private object OrderQueries {
   val buySell = enum(BuySell, Type("buysellflag"))
   implicit val moneyContext = defaultMoneyContext
 
-  val orderLineItemDecoder = timestamp ~ varchar ~ varchar ~ numeric ~ buySell ~ varchar
+  val orderLineItemDecoder = timestamp ~ varchar ~ varchar ~ numeric ~ numeric ~ buySell ~ varchar
 
   val orderEncoder: Encoder[Order] = 
     (varchar ~ varchar ~ timestamp).values.contramap((o: Order) => o.no.value ~ o.accountNo.value ~ o.date)
@@ -133,7 +128,7 @@ private object OrderQueries {
 
   val selectByOrderNo =  
     sql"""
-        SELECT o.dateOfOrder, o.accountNo, l.isinCode, l.quantity, l.buySellFlag, o.no
+        SELECT o.dateOfOrder, o.accountNo, l.isinCode, l.quantity, l.unitPrice, l.buySellFlag, o.no
         FROM orders o, lineItems l
         WHERE o.no = ${varchar.cimap[OrderNo]}
         AND   o.no = l.orderNo
@@ -141,7 +136,7 @@ private object OrderQueries {
 
   val selectByOrderDate =  
     sql"""
-        SELECT o.dateOfOrder, o.accountNo, l.isinCode, l.quantity, l.buySellFlag, o.no
+        SELECT o.dateOfOrder, o.accountNo, l.isinCode, l.quantity, l.unitPrice, l.buySellFlag, o.no
         FROM orders o, lineItems l
         WHERE o.dateOfOrder = ${timestamp}
         AND   o.no = l.orderNo
@@ -151,11 +146,11 @@ private object OrderQueries {
     sql"INSERT INTO orders (no, dateOfOrder, accountNo) VALUES $orderEncoder".command
 
   val insertLineItem: Command[LineItem] =
-    sql"INSERT INTO lineItems (orderNo, isinCode, quantity, buySellFlag) VALUES $lineItemEncoder".command
+    sql"INSERT INTO lineItems (orderNo, isinCode, quantity, unitPrice, buySellFlag) VALUES $lineItemEncoder".command
 
   def insertLineItems(n: Int): Command[List[LineItem]] = {
     val es = lineItemEncoder.list(n)
-    sql"INSERT INTO lineItems (orderNo, isinCode, quantity, buySellFlag) VALUES $es".command
+    sql"INSERT INTO lineItems (orderNo, isinCode, quantity, unitPrice, buySellFlag) VALUES $es".command
   }
 
   val upsertOrder =  
@@ -163,8 +158,8 @@ private object OrderQueries {
         INSERT INTO orders
         VALUES ($varchar, $timestamp, $varchar)
         ON CONFLICT(no) DO UPDATE SET
-          dateOfOrder      = EXCLUDED.dateOfOrder,
-          accountNo        = EXCLUDED.accountNo
+          dateOfOrder = EXCLUDED.dateOfOrder,
+          accountNo   = EXCLUDED.accountNo
        """.command
 
   val deleteLineItems: Command[String] =

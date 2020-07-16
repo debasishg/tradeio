@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS lineItems (
     orderNo varchar references orders(no),
     isinCode varchar references instruments(isinCode),
     quantity decimal NOT NULL,
+    unitPrice decimal NOT NULL,
     buySellFlag buySell NOT NULL
 );
 
