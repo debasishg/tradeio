@@ -8,7 +8,6 @@ import cats.Semigroup
 import cats.data.NonEmptyList
 import cats.implicits._
 import cats.effect._
-import cats.effect.concurrent.Ref
 
 import skunk._
 import skunk.data.Type
@@ -16,7 +15,6 @@ import skunk.codec.all._
 import skunk.implicits._
 
 import squants.market._
-import squants.market.defaultMoneyContext
 
 import model.newtypes._
 import model.enums._
@@ -113,7 +111,6 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
   
 private object OrderQueries {
 
-  // A codec that maps Postgres type `accountType` to Scala type `AccountType`
   val buySell = enum(BuySell, Type("buysellflag"))
   implicit val moneyContext = defaultMoneyContext
 
