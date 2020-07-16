@@ -115,3 +115,10 @@ private object InstrumentQueries {
          }
     }
 }
+
+// Smart constructor 
+object InstrumentRepositoryInterpreter {
+  def make[M[_]: Sync](
+    sessionPool: Resource[M, Session[M]]
+  ): M[InstrumentRepositoryInterpreter[M]] = Sync[M].delay(new InstrumentRepositoryInterpreter[M](sessionPool))
+}

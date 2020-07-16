@@ -111,5 +111,11 @@ private object TradeQueries {
         WHERE t.accountNo = ${varchar.cimap[AccountNo]}
           AND t.tradeDate = $timestamp
     """.query(tradeDecoder)
+}
 
+// Smart constructor 
+object TradeRepositoryInterpreter {
+  def make[M[_]: Sync](
+    sessionPool: Resource[M, Session[M]]
+  ): M[TradeRepositoryInterpreter[M]] = Sync[M].delay(new TradeRepositoryInterpreter[M](sessionPool))
 }

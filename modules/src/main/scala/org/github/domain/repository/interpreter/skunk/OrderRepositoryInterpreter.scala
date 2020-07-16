@@ -162,3 +162,10 @@ private object OrderQueries {
   val deleteLineItems: Command[String] =
     sql"DELETE FROM lineItems WHERE orderNo = $varchar".command
 }
+
+// Smart constructor 
+object OrderRepositoryInterpreter {
+  def make[M[_]: Sync](
+    sessionPool: Resource[M, Session[M]]
+  ): M[OrderRepositoryInterpreter[M]] = Sync[M].delay(new OrderRepositoryInterpreter[M](sessionPool))
+}

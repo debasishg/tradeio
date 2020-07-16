@@ -75,3 +75,10 @@ private object ExecutionQueries {
     sql"INSERT INTO executions VALUES $enc".command
   }
 }
+
+// Smart constructor 
+object ExecutionRepositoryInterpreter {
+  def make[M[_]: Sync](
+    sessionPool: Resource[M, Session[M]]
+  ): M[ExecutionRepositoryInterpreter[M]] = Sync[M].delay(new ExecutionRepositoryInterpreter[M](sessionPool))
+}
