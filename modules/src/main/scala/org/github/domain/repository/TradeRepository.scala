@@ -15,5 +15,5 @@ trait TradeRepository[M[_]] {
   /** store */
   def store(trd: Trade): M[Trade]
   /** store many trades */
-  def store(executions: NonEmptyList[Trade]): M[Unit]
+  def store(trades: NonEmptyList[Trade]): M[Unit]
 }
