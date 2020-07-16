@@ -52,7 +52,6 @@ final class InstrumentRepositoryInterpreter[M[_]: Sync] private (
   
 private object InstrumentQueries {
 
-  // A codec that maps Postgres type `accountType` to Scala type `AccountType`
   val instrumentType = enum(InstrumentType, Type("instrumenttype"))
   implicit val moneyContext = defaultMoneyContext
 

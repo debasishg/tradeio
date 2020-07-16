@@ -3,6 +3,7 @@ package model
 
 import java.time.LocalDateTime
 
+import cats.Semigroup
 import cats.implicits._
 
 import enumeratum._
@@ -78,11 +79,22 @@ object trade {
       quantity: Quantity,
       tradeDate: LocalDateTime = today,
       valueDate: Option[LocalDateTime] = None,
-      taxFees: Option[List[(TaxFeeId, Money)]] = None,
+      taxFees: List[TradeTaxFee] = List.empty,
       netAmount: Option[Money] = None
   )
 
+  private[domain] final case class TradeTaxFee(
+    taxFeeId: TaxFeeId,
+    amount: Money
+  )
+
   object Trade {
+    // semigroup that combines trades with same reference number
+    // used in combining join records between trades and taxFees tables
+    implicit val tradeConcatSemigroup: Semigroup[Trade] = new Semigroup[Trade] {
+      def combine(x: Trade, y: Trade): Trade = x.copy(taxFees = x.taxFees ++ y.taxFees)
+    }
+
     def trade(
         accountNo: AccountNo,
         isin: ISINCode,

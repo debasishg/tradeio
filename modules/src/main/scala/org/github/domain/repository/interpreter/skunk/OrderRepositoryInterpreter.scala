@@ -112,7 +112,6 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
 private object OrderQueries {
 
   val buySell = enum(BuySell, Type("buysellflag"))
-  implicit val moneyContext = defaultMoneyContext
 
   val orderLineItemDecoder = timestamp ~ varchar ~ varchar ~ numeric ~ numeric ~ buySell ~ varchar
 
