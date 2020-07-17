@@ -27,7 +27,7 @@ object load {
   private def default: ConfigValue[AppConfig] =
     (
       env("DATABASE_USER").as[NonEmptyString].default("postgres"),
-      env("DATABASE_NAME").as[NonEmptyString].default("banking"),
+      env("DATABASE_NAME").as[NonEmptyString].default("trading"),
     ).parMapN { (dbuser, dbname) =>
       AppConfig(
         PostgreSQLConfig(
