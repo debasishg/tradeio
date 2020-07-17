@@ -107,7 +107,7 @@ final class TradeRepositoryInterpreter[M[_]: Sync] private (
 }
 
 private object TradeQueries {
-  val buySell = enum(BuySell, Type("buysellflag"))
+  val buySell = enum(BuySell, Type("buysell"))
   val taxFeeId = enum(TaxFeeId, Type("taxfeeid"))
 
   val tradeTaxFeeDecoder =

@@ -39,7 +39,7 @@ final class ExecutionRepositoryInterpreter[M[_]: Sync] private (
 }
 
 private object ExecutionQueries {
-  val buySell = enum(BuySell, Type("buysellflag"))
+  val buySell = enum(BuySell, Type("buysell"))
 
   val executionEncoder: Encoder[Execution] =
     (varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ buySell ~ numeric ~ numeric ~ timestamp).values

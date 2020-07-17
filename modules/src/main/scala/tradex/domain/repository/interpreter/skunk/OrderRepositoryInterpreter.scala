@@ -109,7 +109,7 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
         ord.no.value ~ ord.date ~ ord.accountNo.value
       ) *>
       session
-        .prepareAndExecute(insertLineItems(ord.items.size), ord.items.toList)
+        .prepareAndExecute(insertLineItems(ord.no, ord.items.size), ord.items.toList)
         .void
         .map(_ => ord)
   }
@@ -128,7 +128,7 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
 }
 
 private object OrderQueries {
-  val buySell = enum(BuySell, Type("buysellflag"))
+  val buySell = enum(BuySell, Type("buysell"))
 
   val orderLineItemDecoder = timestamp ~ varchar ~ varchar ~ numeric ~ numeric ~ buySell ~ varchar
 
@@ -136,10 +136,10 @@ private object OrderQueries {
     (varchar ~ varchar ~ timestamp).values
       .contramap((o: Order) => o.no.value ~ o.accountNo.value ~ o.date)
 
-  val lineItemEncoder: Encoder[LineItem] =
-    (varchar ~ numeric ~ numeric ~ varchar).values.contramap(
+  def lineItemEncoder(orderNo: OrderNo) = 
+    (varchar ~ varchar ~ numeric ~ numeric ~ buySell).values.contramap(
       (li: LineItem) =>
-        li.instrument.value ~ li.quantity.value ~ li.unitPrice.value ~ li.buySell.toString
+        orderNo.value ~ li.instrument.value ~ li.quantity.value ~ li.unitPrice.value ~ li.buySell
     )
 
   val selectByOrderNo =
@@ -161,11 +161,11 @@ private object OrderQueries {
   val insertOrder: Command[Order] =
     sql"INSERT INTO orders (no, dateOfOrder, accountNo) VALUES $orderEncoder".command
 
-  val insertLineItem: Command[LineItem] =
-    sql"INSERT INTO lineItems (orderNo, isinCode, quantity, unitPrice, buySellFlag) VALUES $lineItemEncoder".command
+  def insertLineItem(orderNo: OrderNo): Command[LineItem] =
+    sql"INSERT INTO lineItems (orderNo, isinCode, quantity, unitPrice, buySellFlag) VALUES ${lineItemEncoder(orderNo)}".command
 
-  def insertLineItems(n: Int): Command[List[LineItem]] = {
-    val es = lineItemEncoder.list(n)
+  def insertLineItems(orderNo: OrderNo, n: Int): Command[List[LineItem]] = {
+    val es = lineItemEncoder(orderNo).list(n)
     sql"INSERT INTO lineItems (orderNo, isinCode, quantity, unitPrice, buySellFlag) VALUES $es".command
   }
 
