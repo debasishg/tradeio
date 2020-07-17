@@ -164,7 +164,7 @@ private object TradeQueries {
     sql"INSERT INTO trades VALUES $enc".command
   }
 
-  val selectByAccountNoAndDate = 
+  val selectByAccountNoAndDate =
     sql"""
         SELECT t.accountNo, 
                t.isinCode, 

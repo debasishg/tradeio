@@ -13,7 +13,6 @@ import eu.timepit.refined.types.string.NonEmptyString
 import config._
 
 object load {
-  
   def apply[F[_]: Async: ContextShift]: F[AppConfig] =
     env("TRADING_APP_ENV")
       .as[AppEnvironment]
@@ -27,7 +26,7 @@ object load {
   private def default: ConfigValue[AppConfig] =
     (
       env("DATABASE_USER").as[NonEmptyString].default("postgres"),
-      env("DATABASE_NAME").as[NonEmptyString].default("trading"),
+      env("DATABASE_NAME").as[NonEmptyString].default("trading")
     ).parMapN { (dbuser, dbname) =>
       AppConfig(
         PostgreSQLConfig(

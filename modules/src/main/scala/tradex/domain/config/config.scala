@@ -7,8 +7,8 @@ import eu.timepit.refined.types.numeric.PosInt
 import eu.timepit.refined.types.string.NonEmptyString
 
 object config {
-  case class AppConfig (
-    postgreSQL: PostgreSQLConfig
+  case class AppConfig(
+      postgreSQL: PostgreSQLConfig
   )
 
   case class PostgreSQLConfig(

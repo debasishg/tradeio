@@ -4,7 +4,7 @@ package interpreter.skunk
 
 import java.time.LocalDateTime
 
-import cats.Semigroup
+import cats.{ Semigroup, Foldable }
 import cats.data.NonEmptyList
 import cats.implicits._
 import cats.effect._
@@ -38,12 +38,15 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
             val lines: List[Order] = m.map {
               case (ono, lis) => makeSingleLineItemOrders(no, lis)
             }.head
-            if (lines.isEmpty) None
-            else lines.tail.foldLeft(lines.head)(Semigroup[Order].combine).some
+            combineSingleLineItemOrders(lines)
           }
       }
     }
 
+  /**
+    * Takes one joined record which has the `Order` and one `LineItem`
+    * and returns an `Order` with a single `LineItem` in it.
+    */
   private def makeSingleLineItemOrders(
       ono: OrderNo,
       lis: List[
@@ -62,6 +65,10 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
         )
     }
   }
+
+  private def combineSingleLineItemOrders(orders: List[Order]): Option[Order] = 
+    if (orders.isEmpty) None
+    else orders.tail.foldLeft(orders.head)(Semigroup[Order].combine).some
 
   def queryByOrderDate(date: LocalDateTime): M[List[Order]] =
     sessionPool.use { session =>
@@ -109,7 +116,10 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
         ord.no.value ~ ord.date ~ ord.accountNo.value
       ) *>
       session
-        .prepareAndExecute(insertLineItems(ord.no, ord.items.size), ord.items.toList)
+        .prepareAndExecute(
+          insertLineItems(ord.no, ord.items.size),
+          ord.items.toList
+        )
         .void
         .map(_ => ord)
   }
@@ -136,7 +146,7 @@ private object OrderQueries {
     (varchar ~ varchar ~ timestamp).values
       .contramap((o: Order) => o.no.value ~ o.accountNo.value ~ o.date)
 
-  def lineItemEncoder(orderNo: OrderNo) = 
+  def lineItemEncoder(orderNo: OrderNo) =
     (varchar ~ varchar ~ numeric ~ numeric ~ buySell).values.contramap(
       (li: LineItem) =>
         orderNo.value ~ li.instrument.value ~ li.quantity.value ~ li.unitPrice.value ~ li.buySell

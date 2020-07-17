@@ -11,15 +11,13 @@ import natchez.Trace.Implicits.noop // needed for skunk
 import config.config._
 
 final case class AppResources[F[_]](
-  psql: Resource[F, Session[F]]
+    psql: Resource[F, Session[F]]
 )
 
 object AppResources {
-
   def make[F[_]: ConcurrentEffect: ContextShift](
       cfg: AppConfig
   ): Resource[F, AppResources[F]] = {
-
     def mkPostgreSqlResource(c: PostgreSQLConfig): SessionPool[F] =
       Session
         .pooled[F](
