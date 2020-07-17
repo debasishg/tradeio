@@ -14,13 +14,13 @@ import model.enums._
 import model.market._
 
 object AppData {
-  val ano1 = AccountNo("a-no1")
-  val ano2 = AccountNo("a-no2")
-  val ano3 = AccountNo("a-no3")
+  val ano1 = AccountNo("ibm-123")
+  val ano2 = AccountNo("ibm-124")
+  val ano3 = AccountNo("nri-654")
 
-  val isin1 = ISINCode("012345678901")
-  val isin2 = ISINCode("123456789010")
-  val isin3 = ISINCode("234567890101")
+  val apple = ISINCode("US0378331005")
+  val bae = ISINCode("GB0002634946")
+  val ibm = ISINCode("US4592001014")
 
   val o1 = Order(
     no = OrderNo("o1"),
@@ -29,9 +29,9 @@ object AppData {
     items = NonEmptyList
       .fromList(
         List(
-          LineItem(isin1, Quantity(100), UnitPrice(12.25), BuySell.Buy),
-          LineItem(isin2, Quantity(200), UnitPrice(52.25), BuySell.Sell),
-          LineItem(isin3, Quantity(100), UnitPrice(32.25), BuySell.Buy)
+          LineItem(apple, Quantity(100), UnitPrice(12.25), BuySell.Buy),
+          LineItem(bae, Quantity(200), UnitPrice(52.25), BuySell.Sell),
+          LineItem(apple, Quantity(100), UnitPrice(32.25), BuySell.Buy)
         )
       )
       .get
@@ -41,7 +41,7 @@ object AppData {
     executionRefNo = ExecutionReferenceNo(UUID.randomUUID().toString()),
     accountNo = ano1,
     orderNo = o1.no,
-    isin = isin1,
+    isin = apple,
     market = Market.NewYork,
     buySell = BuySell.Buy,
     unitPrice = UnitPrice(12.25),
@@ -53,7 +53,7 @@ object AppData {
     executionRefNo = ExecutionReferenceNo(UUID.randomUUID().toString()),
     accountNo = ano1,
     orderNo = o1.no,
-    isin = isin2,
+    isin = bae,
     market = Market.NewYork,
     buySell = BuySell.Sell,
     unitPrice = UnitPrice(52.25),
@@ -65,7 +65,7 @@ object AppData {
     executionRefNo = ExecutionReferenceNo(UUID.randomUUID().toString()),
     accountNo = ano1,
     orderNo = o1.no,
-    isin = isin2,
+    isin = bae,
     market = Market.NewYork,
     buySell = BuySell.Sell,
     unitPrice = UnitPrice(51.25),
@@ -77,7 +77,7 @@ object AppData {
     executionRefNo = ExecutionReferenceNo(UUID.randomUUID().toString()),
     accountNo = ano1,
     orderNo = o1.no,
-    isin = isin3,
+    isin = ibm,
     market = Market.NewYork,
     buySell = BuySell.Buy,
     unitPrice = UnitPrice(32.25),

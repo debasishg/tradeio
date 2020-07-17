@@ -9,8 +9,8 @@ object enums {
       extends EnumEntry
 
   object BuySell extends Enum[BuySell] {
-    case object Buy extends BuySell("B")
-    case object Sell extends BuySell("S")
+    case object Buy extends BuySell("buy")
+    case object Sell extends BuySell("sell")
 
     val values = findValues
   }

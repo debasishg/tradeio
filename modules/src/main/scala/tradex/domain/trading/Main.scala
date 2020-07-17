@@ -21,12 +21,13 @@ import repository._
 import interpreter.memory._
 
 import Implicits._
+import AppData._
 
 object Main extends IOApp {
   override def run(args: List[String]): IO[ExitCode] = {
     val csvOrder = orderGenerator.generateOrders()
-    val brokerAccountNo = AccountNo("b-123")
-    val clientAccounts = NonEmptyList.of(AccountNo("a-123"), AccountNo("a-234"))
+    val brokerAccountNo = ano3
+    val clientAccounts = NonEmptyList.of(ano1, ano2)
 
     val trades = 
       config.load[IO].flatMap { cfg =>
@@ -78,11 +79,11 @@ object program {
 object orderGenerator {
   def generateOrders(): String = {
     val o1 =
-      FrontOfficeOrder("a-1", Instant.now(), "isin-12345", 100.00, 12.25, "B")
+      FrontOfficeOrder(ano1.value, Instant.now(), "US0378331005", 100.00, 1200.50, "buy")
     val o2 =
-      FrontOfficeOrder("a-1", Instant.now(), "isin-12346", 200.00, 22.25, "S")
+      FrontOfficeOrder(ano1.value, Instant.now(), "GB0002634946", 200.00, 230.00, "sell")
     val o3 =
-      FrontOfficeOrder("a-2", Instant.now(), "isin-12345", 100.00, 52.25, "B")
+      FrontOfficeOrder(ano2.value, Instant.now(), "US0378331005", 100.00, 1200.50, "buy")
 
     val orders = List(o1, o2, o3)
     implicit val lw: LabelledWrite[FrontOfficeOrder] = deriveLabelledWrite
