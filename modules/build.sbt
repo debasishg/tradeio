@@ -8,7 +8,7 @@ lazy val root = (project in file(".")).settings(
 )
 
 lazy val commonSettings = Seq(
-  organization := "org.github",
+  organization := "tradex",
   name := "tradeio",
   scalaVersion := Versions.scalaVersion,
   scalafmtOnCompile := true
