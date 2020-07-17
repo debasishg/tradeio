@@ -28,26 +28,31 @@ object Main extends IOApp {
     val brokerAccountNo = AccountNo("b-123")
     val clientAccounts = NonEmptyList.of(AccountNo("a-123"), AccountNo("a-234"))
 
-    val trades = Algebras.make[IO].flatMap { algebras =>
-      implicit val accountRepositoryAsk = DefaultApplicativeAsk
-        .constant[IO, AccountRepository[IO]](algebras.accountRepository)
-      implicit val executionRepositoryAsk = DefaultApplicativeAsk
-        .constant[IO, ExecutionRepository[IO]](algebras.executionRepository)
-      implicit val instrumentRepositoryAsk = DefaultApplicativeAsk
-        .constant[IO, InstrumentRepository[IO]](algebras.instrumentRepository)
-      implicit val orderRepositoryAsk = DefaultApplicativeAsk
-        .constant[IO, OrderRepository[IO]](algebras.orderRepository)
-      implicit val tradeRepositoryAsk = DefaultApplicativeAsk
-        .constant[IO, TradeRepository[IO]](algebras.tradeRepository)
+    val trades = 
+      config.load[IO].flatMap { cfg =>
+        AppResources.make[IO](cfg).use { res =>
+          Algebras.make[IO](res.psql).flatMap { algebras =>
+            implicit val accountRepositoryAsk = DefaultApplicativeAsk
+              .constant[IO, AccountRepository[IO]](algebras.accountRepository)
+            implicit val executionRepositoryAsk = DefaultApplicativeAsk
+              .constant[IO, ExecutionRepository[IO]](algebras.executionRepository)
+            implicit val instrumentRepositoryAsk = DefaultApplicativeAsk
+              .constant[IO, InstrumentRepository[IO]](algebras.instrumentRepository)
+            implicit val orderRepositoryAsk = DefaultApplicativeAsk
+              .constant[IO, OrderRepository[IO]](algebras.orderRepository)
+            implicit val tradeRepositoryAsk = DefaultApplicativeAsk
+              .constant[IO, TradeRepository[IO]](algebras.tradeRepository)
 
-      program.tradeGeneration(
-        new TradingInterpreter[IO],
-        csvOrder,
-        brokerAccountNo,
-        Market.NewYork,
-        clientAccounts
-      )
-    }
+            program.tradeGeneration(
+              new TradingInterpreter[IO],
+              csvOrder,
+              brokerAccountNo,
+              Market.NewYork,
+              clientAccounts
+            )
+          }
+        }     
+      }
     trades.unsafeRunSync.toList.foreach(println)
     IO(ExitCode.Success)
   }
