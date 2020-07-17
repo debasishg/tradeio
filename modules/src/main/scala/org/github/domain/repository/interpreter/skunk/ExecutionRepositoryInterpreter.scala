@@ -41,7 +41,6 @@ final class ExecutionRepositoryInterpreter[M[_]: Sync] private (
 private object ExecutionQueries {
 
   val buySell = enum(BuySell, Type("buysellflag"))
-  implicit val moneyContext = defaultMoneyContext
 
   val executionEncoder: Encoder[Execution] = 
     (varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ buySell ~ numeric ~ numeric ~ timestamp)

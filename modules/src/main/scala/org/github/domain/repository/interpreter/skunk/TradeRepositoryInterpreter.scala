@@ -21,6 +21,7 @@ import model.enums._
 import model.trade._
 import model.market._
 import ext.skunkx._
+import common._
 
 final class TradeRepositoryInterpreter[M[_]: Sync] private (
   sessionPool: Resource[M, Session[M]]) extends TradeRepository[M] {
@@ -57,7 +58,6 @@ final class TradeRepositoryInterpreter[M[_]: Sync] private (
                  BigDecimal ~ 
                  String]): List[Trade] = {
 
-    implicit val moneyContext = defaultMoneyContext
     trdTxs.map {
       case ano ~ isin ~ mkt ~ bs ~ up ~ qty ~ td ~ vd ~ na ~ tfid ~ amt ~ rno =>
         Trade(
@@ -100,8 +100,6 @@ private object TradeQueries {
 
   val buySell = enum(BuySell, Type("buysellflag"))
   val taxFeeId = enum(TaxFeeId, Type("taxfeeid"))
-
-  implicit val moneyContext = defaultMoneyContext
 
   val tradeTaxFeeDecoder = 
     varchar ~ varchar ~ varchar ~ buySell ~ numeric ~ numeric ~ timestamp ~ timestamp.opt ~ numeric.opt ~ taxFeeId ~ numeric ~ varchar

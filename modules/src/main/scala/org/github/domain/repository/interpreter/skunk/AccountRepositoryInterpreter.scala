@@ -14,13 +14,13 @@ import skunk.codec.all._
 import skunk.implicits._
 
 import squants.market._
-import squants.market.defaultMoneyContext
 
 import model.newtypes._
 import model.enums._
 import model.account._
 import Account._
 import ext.skunkx._
+import common._
 
 final class AccountRepositoryInterpreter[M[_]: Sync] private (
   sessionPool: Resource[M, Session[M]]) extends AccountRepository[M] {
@@ -73,7 +73,6 @@ private object AccountQueries {
 
   // A codec that maps Postgres type `accountType` to Scala type `AccountType`
   val accountType = enum(AccountType, Type("accounttype"))
-  implicit val moneyContext = defaultMoneyContext
 
   val decoder: Decoder[Account] =
     (varchar ~ varchar ~ accountType ~ timestamp ~ timestamp.opt ~ varchar ~ varchar.opt ~ varchar.opt).map {

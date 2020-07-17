@@ -15,7 +15,6 @@ import skunk.codec.all._
 import skunk.implicits._
 
 import squants.market._
-import squants.market.defaultMoneyContext
 
 import common._
 import model.newtypes._
@@ -53,7 +52,6 @@ final class InstrumentRepositoryInterpreter[M[_]: Sync] private (
 private object InstrumentQueries {
 
   val instrumentType = enum(InstrumentType, Type("instrumenttype"))
-  implicit val moneyContext = defaultMoneyContext
 
   val decoder: Decoder[Instrument] =
     (varchar ~ varchar ~ instrumentType ~ timestamp.opt ~ timestamp.opt ~ int2.opt ~ numeric.opt ~ numeric.opt ~ numeric.opt).map {

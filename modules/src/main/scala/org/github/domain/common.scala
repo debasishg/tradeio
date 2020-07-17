@@ -4,6 +4,7 @@ import java.time.LocalDateTime
 
 import cats._
 import cats.data._
+import squants.market._
 
 object common {
   type ValidationResult[A] = ValidatedNec[String, A]
@@ -12,4 +13,6 @@ object common {
 
   def today = LocalDateTime.now
   final val ZERO_BIG_DECIMAL = BigDecimal(0)
+
+  implicit val moneyContext = defaultMoneyContext
 }

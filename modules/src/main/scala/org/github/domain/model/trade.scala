@@ -52,20 +52,16 @@ object trade {
     taxFeeForMarket.get(trade.market).orElse(taxFeeForMarket.get(Market.Other))
   }
 
-  final def principal(trade: Trade)(implicit ctx: MoneyContext): Money =
+  final def principal(trade: Trade): Money =
     Money(trade.unitPrice.value * trade.quantity.value)
 
   // combinator to value a tax/fee for a specific trade
-  private def valueAs(trade: Trade, taxFeeId: TaxFeeId)(
-      implicit ctx: MoneyContext
-  ): Money = {
+  private def valueAs(trade: Trade, taxFeeId: TaxFeeId): Money = {
     ((rates get taxFeeId) map (_ * principal(trade))) getOrElse (Money(0))
   }
 
   // all tax/fees for a specific trade
-  private def taxFeeCalculate(trade: Trade, taxFeeIds: List[TaxFeeId])(
-      implicit ctx: MoneyContext
-  ): List[(TaxFeeId, Money)] = {
+  private def taxFeeCalculate(trade: Trade, taxFeeIds: List[TaxFeeId]): List[(TaxFeeId, Money)] = {
     taxFeeIds zip (taxFeeIds.map(valueAs(trade, _)))
   }
 
