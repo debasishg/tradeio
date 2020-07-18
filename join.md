@@ -13,7 +13,7 @@ case class Employee(id: String, name: String, salaries: List[Salary])
 
 We implement the data model with a join on 2 tables - `employees` and `salaries`:
 
-```
+```sql
 CREATE TABLE IF NOT EXISTS employees (
   id varchar NOT NULL PRIMARY KEY,
   name varchar NOT NULL
