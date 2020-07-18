@@ -4,7 +4,7 @@ package interpreter.skunk
 
 import java.time.LocalDateTime
 
-import cats.{ Semigroup, Foldable }
+import cats.{Semigroup, Foldable}
 import cats.data.NonEmptyList
 import cats.implicits._
 import cats.effect._
@@ -26,6 +26,15 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
     sessionPool: Resource[M, Session[M]]
 ) extends OrderRepository[M] {
   import OrderQueries._
+
+  // semigroup that combines orders with same order number
+  // used in combining join records between orders and lineItems tables
+  // NOT a generic semigroup that combines all orders - only specific
+  // to this query - hence not added in the companion object
+  implicit val orderConcatSemigroup: Semigroup[Order] = new Semigroup[Order] {
+    def combine(x: Order, y: Order): Order =
+      Order(x.no, x.date, x.accountNo, x.items ++ y.items.toList)
+  }
 
   def query(no: OrderNo): M[Option[Order]] =
     sessionPool.use { session =>
@@ -66,7 +75,7 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
     }
   }
 
-  private def combineSingleLineItemOrders(orders: List[Order]): Option[Order] = 
+  private def combineSingleLineItemOrders(orders: List[Order]): Option[Order] =
     if (orders.isEmpty) None
     else orders.tail.foldLeft(orders.head)(Semigroup[Order].combine).some
 

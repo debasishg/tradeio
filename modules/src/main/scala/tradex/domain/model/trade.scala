@@ -3,7 +3,6 @@ package model
 
 import java.time.LocalDateTime
 
-import cats.Semigroup
 import cats.implicits._
 
 import enumeratum._
@@ -64,8 +63,17 @@ object trade {
   private def taxFeeCalculate(
       trade: Trade,
       taxFeeIds: List[TaxFeeId]
-  ): List[(TaxFeeId, Money)] = {
-    taxFeeIds zip (taxFeeIds.map(valueAs(trade, _)))
+  ): List[TradeTaxFee] = {
+    taxFeeIds
+      .zip(taxFeeIds.map(valueAs(trade, _)))
+      .map { case (tid, amt) => TradeTaxFee(tid, amt) }
+  }
+
+  private def netAmount(
+      trade: Trade,
+      taxFeeAmounts: List[TradeTaxFee]
+  ): Money = {
+    principal(trade) + taxFeeAmounts.map(_.amount).foldLeft(Money(0))(_ + _)
   }
 
   private[domain] final case class Trade(
@@ -88,13 +96,6 @@ object trade {
   )
 
   object Trade {
-    // semigroup that combines trades with same reference number
-    // used in combining join records between trades and taxFees tables
-    implicit val tradeConcatSemigroup: Semigroup[Trade] = new Semigroup[Trade] {
-      def combine(x: Trade, y: Trade): Trade =
-        x.copy(taxFees = x.taxFees ++ y.taxFees)
-    }
-
     def trade(
         accountNo: AccountNo,
         isin: ISINCode,
@@ -112,7 +113,11 @@ object trade {
         Execution.validateQuantity(quantity),
         Execution.validateUnitPrice(unitPrice)
       ).mapN { (a, i, q, u) =>
-        Trade(a, i, refNo, market, buySell, u, q, td, vd)
+        val trd = Trade(a, i, refNo, market, buySell, u, q, td, vd)
+        val taxFees =
+          forTrade(trd).map(taxFeeCalculate(trd, _)).getOrElse(List.empty)
+        val netAmt = netAmount(trd, taxFees)
+        trd.copy(taxFees = taxFees, netAmount = Option(netAmt))
       }.toEither
     }
   }

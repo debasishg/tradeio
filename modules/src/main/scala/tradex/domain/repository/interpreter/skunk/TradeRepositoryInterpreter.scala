@@ -28,6 +28,15 @@ final class TradeRepositoryInterpreter[M[_]: Sync] private (
 ) extends TradeRepository[M] {
   import TradeQueries._
 
+  // semigroup that combines trades with same reference number
+  // used in combining join records between trades and taxFees tables
+  // NOT a generic semigroup that combines all trades - only specific
+  // to this query - hence not added in the companion object
+  implicit val tradeConcatSemigroup: Semigroup[Trade] = new Semigroup[Trade] {
+    def combine(x: Trade, y: Trade): Trade =
+      x.copy(taxFees = x.taxFees ++ y.taxFees)
+  }
+
   def query(accountNo: AccountNo, date: LocalDateTime): M[List[Trade]] =
     sessionPool.use { session =>
       session.prepare(selectByAccountNoAndDate).use { ps =>
