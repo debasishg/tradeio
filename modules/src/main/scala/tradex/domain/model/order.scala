@@ -5,7 +5,6 @@ import java.time.LocalDateTime
 import java.time.Instant
 import java.util.UUID
 
-import cats.Semigroup
 import cats.effect._
 import cats.data.NonEmptyList
 import cats.implicits._
@@ -41,13 +40,6 @@ object order {
   )
 
   object Order {
-    // semigroup that combines orders with same order number
-    // used in combining join records between orders and lineItems tables
-    implicit val orderConcatSemigroup: Semigroup[Order] = new Semigroup[Order] {
-      def combine(x: Order, y: Order): Order =
-        Order(x.no, x.date, x.accountNo, x.items ++ y.items.toList)
-    }
-
     /**
       * Domain validation for `FrontOfficeOrder` is done here. Creates
       * records after validation

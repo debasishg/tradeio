@@ -100,10 +100,8 @@ Note what happens in the above implementation:
 * the actual trick is to fold over these records using a `Semigroup[Employee]`, which needs to be defined suitably so that salaries belonging to one employee get collected in a list with that specific employee. Here's how we can do that:
 
 ```scala
-object Employee {
-  implicit val employeeConcatSemigroup: Semigroup[Employee] = new Semigroup[Employee] {
-    def combine(x: Employee, y: Employee): Employee =
-      x.copy(salaries = x.salaries ++ y.salaries)
-  }
+implicit val employeeConcatSemigroup: Semigroup[Employee] = new Semigroup[Employee] {
+  def combine(x: Employee, y: Employee): Employee =
+    x.copy(salaries = x.salaries ++ y.salaries)
 }
 ```
