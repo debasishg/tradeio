@@ -63,8 +63,17 @@ object trade {
   private def taxFeeCalculate(
       trade: Trade,
       taxFeeIds: List[TaxFeeId]
-  ): List[(TaxFeeId, Money)] = {
-    taxFeeIds zip (taxFeeIds.map(valueAs(trade, _)))
+  ): List[TradeTaxFee] = {
+    taxFeeIds
+      .zip(taxFeeIds.map(valueAs(trade, _)))
+      .map { case (tid, amt) => TradeTaxFee(tid, amt) }
+  }
+
+  private def netAmount(
+      trade: Trade,
+      taxFeeAmounts: List[TradeTaxFee]
+  ): Money = {
+    principal(trade) + taxFeeAmounts.map(_.amount).foldLeft(Money(0))(_ + _)
   }
 
   private[domain] final case class Trade(
@@ -87,7 +96,6 @@ object trade {
   )
 
   object Trade {
-
     def trade(
         accountNo: AccountNo,
         isin: ISINCode,
@@ -105,7 +113,11 @@ object trade {
         Execution.validateQuantity(quantity),
         Execution.validateUnitPrice(unitPrice)
       ).mapN { (a, i, q, u) =>
-        Trade(a, i, refNo, market, buySell, u, q, td, vd)
+        val trd = Trade(a, i, refNo, market, buySell, u, q, td, vd)
+        val taxFees =
+          forTrade(trd).map(taxFeeCalculate(trd, _)).getOrElse(List.empty)
+        val netAmt = netAmount(trd, taxFees)
+        trd.copy(taxFees = taxFees, netAmount = Option(netAmt))
       }.toEither
     }
   }

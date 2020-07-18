@@ -4,7 +4,7 @@ package interpreter.skunk
 
 import java.time.LocalDateTime
 
-import cats.{ Semigroup, Foldable }
+import cats.{Semigroup, Foldable}
 import cats.data.NonEmptyList
 import cats.implicits._
 import cats.effect._
@@ -25,7 +25,6 @@ import ext.skunkx._
 final class OrderRepositoryInterpreter[M[_]: Sync] private (
     sessionPool: Resource[M, Session[M]]
 ) extends OrderRepository[M] {
-
   import OrderQueries._
 
   // semigroup that combines orders with same order number
@@ -76,7 +75,7 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
     }
   }
 
-  private def combineSingleLineItemOrders(orders: List[Order]): Option[Order] = 
+  private def combineSingleLineItemOrders(orders: List[Order]): Option[Order] =
     if (orders.isEmpty) None
     else orders.tail.foldLeft(orders.head)(Semigroup[Order].combine).some
 
