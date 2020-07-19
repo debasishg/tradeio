@@ -94,24 +94,24 @@ final class TradeRepositoryInterpreter[M[_]: Sync] private (
 
   def store(exe: Trade): M[Trade] =
     sessionPool.use { session =>
-      session.prepare(insertTrade).use { cmd =>
-        cmd.execute(exe).void.map(_ => exe)
+      session.prepare(insertTrade).use { 
+        _.execute(exe).void.map(_ => exe)
       }
     }
 
   private def storeTradeAndTaxFees(t: Trade, session: Session[M]): M[Trade] = {
-    session.prepareAndExecute(insertTrade, t) *>
+    val taxFees = t.taxFees
+    session.prepare(insertTrade).use(_.execute(t)) *>
       session
-        .prepareAndExecute(insertTaxFees(t.refNo, t.taxFees.size), t.taxFees)
+        .prepareAndExecute(taxFees)(insertTaxFees(t.refNo, taxFees))
         .void
         .map(_ => t)
   }
 
-  def store(executions: NonEmptyList[Trade]): M[Unit] =
+  def store(trades: NonEmptyList[Trade]): M[Unit] =
     sessionPool.use { session =>
-      session.prepare(insertTrades(executions.size)).use { cmd =>
-        cmd.execute(executions.toList).void.map(_ => ())
-      }
+      val ts = trades.toList
+      session.prepare(insertTrades(ts)).use (_.execute(ts)).void.map(_ => ())
     }
 }
 
@@ -162,14 +162,19 @@ private object TradeQueries {
 
   def insertTaxFees(
       tradeRefNo: TradeReferenceNo,
-      n: Int
-  ): Command[List[TradeTaxFee]] = {
-    val es = taxFeeEncoder(tradeRefNo).list(n)
+      taxFees: List[TradeTaxFee]
+  ): Command[taxFees.type] = {
+    val es = taxFeeEncoder(tradeRefNo).values.list(taxFees)
     sql"INSERT INTO tradeTaxFees (tradeRefNo, taxFeeId, amount) VALUES $es".command
   }
 
-  def insertTrades(n: Int): Command[List[Trade]] = {
-    val enc = tradeEncoder.list(n)
+//   def insertTrades(n: Int): Command[List[Trade]] = {
+//     val enc = tradeEncoder.list(n)
+//     sql"INSERT INTO trades VALUES $enc".command
+//   }
+
+  def insertTrades(trades: List[Trade]): Command[trades.type] = {
+    val enc = tradeEncoder.values.list(trades)
     sql"INSERT INTO trades VALUES $enc".command
   }
 
