@@ -2,6 +2,7 @@ package tradex.domain
 package trading
 
 import java.util.UUID
+import java.time.LocalDate
 
 import cats.MonadError
 import cats.data.NonEmptyList
@@ -26,6 +27,12 @@ class TradingInterpreter[M[_]: MonadThrowable](
     T: ApplicativeAsk[M, TradeRepository[M]]
 ) extends Trading[M] {
   private final val ev = implicitly[MonadThrowable[M]]
+
+  def getTrades(forAccountNo: AccountNo, forDate: Option[LocalDate] = None): M[List[Trade]] = 
+    for {
+      repo <- T.ask
+      trades <- repo.query(forAccountNo, forDate.getOrElse(today.toLocalDate()))
+    } yield (trades)
 
   def orders(csvOrder: String): M[NonEmptyList[Order]] = {
     ordering

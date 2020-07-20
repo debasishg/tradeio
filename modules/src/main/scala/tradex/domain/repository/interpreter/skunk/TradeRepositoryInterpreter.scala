@@ -2,7 +2,7 @@ package tradex.domain
 package repository
 package interpreter.skunk
 
-import java.time.LocalDateTime
+import java.time.{LocalDate, LocalDateTime}
 
 import cats.Semigroup
 import cats.data.NonEmptyList
@@ -37,7 +37,7 @@ final class TradeRepositoryInterpreter[M[_]: Sync] private (
       x.copy(taxFees = x.taxFees ++ y.taxFees)
   }
 
-  def query(accountNo: AccountNo, date: LocalDateTime): M[List[Trade]] =
+  def query(accountNo: AccountNo, date: LocalDate): M[List[Trade]] =
     sessionPool.use { session =>
       session.prepare(selectByAccountNoAndDate).use { ps =>
         ps.stream(accountNo ~ date, 1024)
@@ -194,7 +194,7 @@ private object TradeQueries {
                t.tradeRefNo
         FROM trades t, tradeTaxFees f
         WHERE t.accountNo = ${varchar.cimap[AccountNo]}
-          AND t.tradeDate = $timestamp
+          AND DATE(t.tradeDate) = $date
           AND t.tradeRefNo = f.tradeRefNo
     """.query(tradeTaxFeeDecoder)
 }

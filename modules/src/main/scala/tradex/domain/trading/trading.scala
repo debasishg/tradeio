@@ -1,6 +1,8 @@
 package tradex.domain
 package trading
 
+import java.time.LocalDate
+
 import cats.data.NonEmptyList
 
 import model.account.Account
@@ -11,6 +13,16 @@ import model.market.Market
 import model.newtypes._
 
 trait Trading[F[_]] {
+  /**
+    * Find the list of trades for the supplied client account no and (optionally)
+    * the trade date.
+    *
+    * @param forAccountNo the client accountNo
+    * @param forDate the trade date
+    * @return a list of `Trade` under the effect `F`
+    */
+  def getTrades(forAccountNo: AccountNo, forDate: Option[LocalDate] = None): F[List[Trade]]
+
   /**
     * Create a list of `Order` from client orders read from a stream
     * as a csv file.
