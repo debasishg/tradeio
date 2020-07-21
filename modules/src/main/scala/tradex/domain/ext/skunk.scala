@@ -19,7 +19,9 @@ object skunkx {
   implicit class SkunkSessionOps[F[_]](session: Session[F])(
       implicit b: Bracket[F, Throwable]
   ) {
-    def prepareAndExecute[A](arg: A)(prepareCommand: Command[arg.type]): F[Completion] =
+    def prepareAndExecute[A](
+        arg: A
+    )(prepareCommand: Command[arg.type]): F[Completion] =
       session.prepare(prepareCommand).use { cmd =>
         cmd.execute(arg)
       }

@@ -94,7 +94,7 @@ final class TradeRepositoryInterpreter[M[_]: Sync] private (
 
   def store(exe: Trade): M[Trade] =
     sessionPool.use { session =>
-      session.prepare(insertTrade).use { 
+      session.prepare(insertTrade).use {
         _.execute(exe).void.map(_ => exe)
       }
     }
@@ -111,7 +111,7 @@ final class TradeRepositoryInterpreter[M[_]: Sync] private (
   def store(trades: NonEmptyList[Trade]): M[Unit] =
     sessionPool.use { session =>
       val ts = trades.toList
-      session.prepare(insertTrades(ts)).use (_.execute(ts)).void.map(_ => ())
+      session.prepare(insertTrades(ts)).use(_.execute(ts)).void.map(_ => ())
     }
 }
 

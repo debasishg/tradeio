@@ -21,7 +21,10 @@ trait Trading[F[_]] {
     * @param forDate the trade date
     * @return a list of `Trade` under the effect `F`
     */
-  def getTrades(forAccountNo: AccountNo, forDate: Option[LocalDate] = None): F[List[Trade]]
+  def getTrades(
+      forAccountNo: AccountNo,
+      forDate: Option[LocalDate] = None
+  ): F[List[Trade]]
 
   /**
     * Create a list of `Order` from client orders read from a stream

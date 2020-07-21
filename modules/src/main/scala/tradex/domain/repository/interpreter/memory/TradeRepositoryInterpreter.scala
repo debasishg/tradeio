@@ -23,7 +23,9 @@ final class TradeRepositoryInterpreter[M[_]: Monad] private (
   def query(accountNo: AccountNo, date: LocalDate): M[List[Trade]] =
     repo.get.map(
       _.values
-        .filter(t => t.accountNo == accountNo && t.tradeDate.toLocalDate == date)
+        .filter(
+          t => t.accountNo == accountNo && t.tradeDate.toLocalDate == date
+        )
         .toList
     )
 

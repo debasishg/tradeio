@@ -35,7 +35,6 @@ object program {
       trades <- allocate(executions, clientAccountNos)
     } yield trades
   }
-  
 }
 
 // generate order from front office

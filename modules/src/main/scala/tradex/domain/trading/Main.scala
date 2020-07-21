@@ -26,12 +26,16 @@ object Main extends IOApp {
       config.load[IO].flatMap { cfg =>
         AppResources.make[IO](cfg).use { res =>
           Algebras.make[IO](res.psql).flatMap { algebras =>
-
-            implicit val accountRepositoryAsk = askRepo[AccountRepository[IO]](algebras.accountRepository)
-            implicit val executionRepositoryAsk = askRepo[ExecutionRepository[IO]](algebras.executionRepository)
-            implicit val instrumentRepositoryAsk = askRepo[InstrumentRepository[IO]](algebras.instrumentRepository)
-            implicit val orderRepositoryAsk = askRepo[OrderRepository[IO]](algebras.orderRepository)
-            implicit val tradeRepositoryAsk = askRepo[TradeRepository[IO]](algebras.tradeRepository)
+            implicit val accountRepositoryAsk =
+              askRepo[AccountRepository[IO]](algebras.accountRepository)
+            implicit val executionRepositoryAsk =
+              askRepo[ExecutionRepository[IO]](algebras.executionRepository)
+            implicit val instrumentRepositoryAsk =
+              askRepo[InstrumentRepository[IO]](algebras.instrumentRepository)
+            implicit val orderRepositoryAsk =
+              askRepo[OrderRepository[IO]](algebras.orderRepository)
+            implicit val tradeRepositoryAsk =
+              askRepo[TradeRepository[IO]](algebras.tradeRepository)
 
             program.tradeGeneration(
               new TradingInterpreter[IO],

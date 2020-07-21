@@ -121,7 +121,9 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
   ): M[Order] = {
     val lineItems = ord.items.toList
     session.prepare(deleteLineItems).use(_.execute(ord.no.value)) *>
-      session.prepare(upsertOrder).use(_.execute(ord.no.value ~ ord.date ~ ord.accountNo.value)) *>
+      session
+        .prepare(upsertOrder)
+        .use(_.execute(ord.no.value ~ ord.date ~ ord.accountNo.value)) *>
       session
         .prepareAndExecute(lineItems)(insertLineItems(ord.no, lineItems))
         .void
@@ -183,7 +185,10 @@ private object OrderQueries {
     sql"INSERT INTO lineItems (orderNo, isinCode, quantity, unitPrice, buySellFlag) VALUES $es".command
   }
 
-  def insertLineItems(orderNo: OrderNo, lineItems: List[LineItem]): Command[lineItems.type] = {
+  def insertLineItems(
+      orderNo: OrderNo,
+      lineItems: List[LineItem]
+  ): Command[lineItems.type] = {
     val es = lineItemEncoder(orderNo).list(lineItems)
     sql"INSERT INTO lineItems (orderNo, isinCode, quantity, unitPrice, buySellFlag) VALUES $es".command
   }

@@ -28,7 +28,10 @@ class TradingInterpreter[M[_]: MonadThrowable](
 ) extends Trading[M] {
   private final val ev = implicitly[MonadThrowable[M]]
 
-  def getTrades(forAccountNo: AccountNo, forDate: Option[LocalDate] = None): M[List[Trade]] = 
+  def getTrades(
+      forAccountNo: AccountNo,
+      forDate: Option[LocalDate] = None
+  ): M[List[Trade]] =
     for {
       repo <- T.ask
       trades <- repo.query(forAccountNo, forDate.getOrElse(today.toLocalDate()))
