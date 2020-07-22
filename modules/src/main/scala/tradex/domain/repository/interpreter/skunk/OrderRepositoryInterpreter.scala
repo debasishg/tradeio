@@ -2,7 +2,7 @@ package tradex.domain
 package repository
 package interpreter.skunk
 
-import java.time.LocalDateTime
+import java.time.{LocalDateTime, LocalDate}
 
 import cats.Semigroup
 import cats.data.NonEmptyList
@@ -76,7 +76,7 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
     if (orders.isEmpty) None
     else orders.tail.foldLeft(orders.head)(Semigroup[Order].combine).some
 
-  def queryByOrderDate(date: LocalDateTime): M[List[Order]] =
+  def queryByOrderDate(date: LocalDate): M[List[Order]] =
     sessionPool.use { session =>
       session.prepare(selectByOrderDate).use { ps =>
         ps.stream(date, 1024)
@@ -167,7 +167,7 @@ private object OrderQueries {
     sql"""
         SELECT o.dateOfOrder, o.accountNo, l.isinCode, l.quantity, l.unitPrice, l.buySellFlag, o.no
         FROM orders o, lineItems l
-        WHERE o.dateOfOrder = ${timestamp}
+        WHERE Date(o.dateOfOrder) = $date
         AND   o.no = l.orderNo
        """.query(orderLineItemDecoder)
 

@@ -1,7 +1,7 @@
 package tradex.domain
 package repository
 
-import java.time.LocalDateTime
+import java.time.LocalDate
 
 import cats.data.NonEmptyList
 
@@ -13,7 +13,7 @@ trait OrderRepository[M[_]] {
   def query(no: OrderNo): M[Option[Order]]
 
   /** query by order date */
-  def queryByOrderDate(date: LocalDateTime): M[List[Order]]
+  def queryByOrderDate(date: LocalDate): M[List[Order]]
 
   /** store */
   def store(ord: Order): M[Order]

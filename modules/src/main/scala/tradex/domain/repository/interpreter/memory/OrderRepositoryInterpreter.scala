@@ -3,10 +3,9 @@ package repository
 package interpreter
 package memory
 
-import java.time.LocalDateTime
+import java.time.LocalDate
 import scala.collection.immutable.Map
 
-// import cats.{Order => OrderC, _}
 import cats._
 import cats.data.NonEmptyList
 import cats.implicits._
@@ -23,8 +22,8 @@ final class OrderRepositoryInterpreter[M[_]: Monad] private (
   def query(no: OrderNo): M[Option[model.order.Order]] =
     repo.get.map(_.get(no))
 
-  def queryByOrderDate(date: LocalDateTime): M[List[model.order.Order]] =
-    repo.get.map(_.values.filter(_.date == date).toList)
+  def queryByOrderDate(date: LocalDate): M[List[model.order.Order]] =
+    repo.get.map(_.values.filter(_.date.toLocalDate == date).toList)
 
   def store(ord: model.order.Order): M[model.order.Order] =
     repo.update(_ + ((ord.no, ord))).map(_ => ord)
