@@ -1,12 +1,9 @@
 package tradex.domain
 package trading
 
-import cats._
 import cats.data._
-import cats.implicits._
 import cats.effect._
 
-import model.newtypes._
 import model.market._
 
 import repository._
@@ -47,7 +44,7 @@ object Main extends IOApp {
           }
         }
       }
-    trades.unsafeRunSync.toList.foreach(println)
+    trades.unsafeRunSync().toList.foreach(println)
     IO(ExitCode.Success)
   }
 }

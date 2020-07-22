@@ -3,7 +3,7 @@ package repository
 package interpreter
 package memory
 
-import java.time.{LocalDateTime, LocalDate}
+import java.time.LocalDate
 import scala.collection.immutable.Map
 
 import cats._

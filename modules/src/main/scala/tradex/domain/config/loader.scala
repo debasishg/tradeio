@@ -8,7 +8,6 @@ import ciris.refined._
 import environments._
 import environments.AppEnvironment._
 import eu.timepit.refined.auto._
-import eu.timepit.refined.cats._
 import eu.timepit.refined.types.string.NonEmptyString
 import config._
 

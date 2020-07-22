@@ -2,11 +2,6 @@ package tradex.domain
 package trading
 
 import cats._
-import cats.data._
-import cats.implicits._
-import cats.instances.all._
-import cats.effect.IO
-import cats.effect.implicits._
 import cats.mtl._
 
 object Implicits {

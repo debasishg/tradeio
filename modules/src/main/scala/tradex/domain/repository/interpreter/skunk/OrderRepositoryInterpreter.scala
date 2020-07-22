@@ -4,7 +4,7 @@ package interpreter.skunk
 
 import java.time.LocalDateTime
 
-import cats.{Semigroup, Foldable}
+import cats.Semigroup
 import cats.data.NonEmptyList
 import cats.implicits._
 import cats.effect._
@@ -14,12 +14,9 @@ import skunk.data.Type
 import skunk.codec.all._
 import skunk.implicits._
 
-import squants.market._
-
 import model.newtypes._
 import model.enums._
 import model.order._
-import Order._
 import ext.skunkx._
 
 final class OrderRepositoryInterpreter[M[_]: Sync] private (

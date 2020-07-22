@@ -3,8 +3,6 @@ package tradex.domain.ext
 import io.estatico.newtype.Coercible
 import io.estatico.newtype.ops._
 
-import cats._
-import cats.data._
 import cats.effect._
 
 import skunk._

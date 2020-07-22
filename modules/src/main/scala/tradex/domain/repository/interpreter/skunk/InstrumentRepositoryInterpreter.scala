@@ -2,12 +2,8 @@ package tradex.domain
 package repository
 package interpreter.skunk
 
-import java.time.LocalDateTime
-
-import cats.data.NonEmptyList
 import cats.implicits._
 import cats.effect._
-import cats.effect.concurrent.Ref
 
 import skunk._
 import skunk.data.Type
@@ -20,7 +16,6 @@ import common._
 import model.newtypes._
 import model.enums._
 import model.instrument._
-import Instrument._
 import ext.skunkx._
 
 final class InstrumentRepositoryInterpreter[M[_]: Sync] private (

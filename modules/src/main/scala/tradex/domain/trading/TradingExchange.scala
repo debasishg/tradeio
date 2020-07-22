@@ -3,7 +3,6 @@ package trading
 
 import java.util.UUID
 
-import cats.{Order => OrderC, _}
 import cats.data.NonEmptyList
 import cats.implicits._
 import cats.effect._
@@ -13,12 +12,11 @@ import model.order._
 import model.execution._
 import model.trade._
 import model.newtypes._
-import common._
 import AppData._
 
 object ExchangeApp extends IOApp {
   override def run(args: List[String]): IO[ExitCode] = {
-    val tradeGen = Exchange.create[IO].flatMap { exchange =>
+    val tradeGen = Exchange.create[IO]().flatMap { exchange =>
       import exchange._
 
       // `parTupled` gives a safe way to execute on fibers

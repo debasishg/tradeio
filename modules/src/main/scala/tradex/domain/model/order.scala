@@ -5,7 +5,6 @@ import java.time.LocalDateTime
 import java.time.Instant
 import java.util.UUID
 
-import cats.effect._
 import cats.data.NonEmptyList
 import cats.implicits._
 

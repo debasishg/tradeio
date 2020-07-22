@@ -6,7 +6,6 @@ import java.time.Instant
 import cats._
 import cats.data._
 import cats.implicits._
-import cats.effect._
 
 import io.chrisdavenport.cormorant._
 import io.chrisdavenport.cormorant.generic.semiauto._
@@ -17,7 +16,6 @@ import model.market._
 import model.order._
 import model.trade._
 
-import Implicits._
 import AppData._
 
 object program {

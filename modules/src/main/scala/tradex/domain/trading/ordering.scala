@@ -12,12 +12,8 @@ import io.chrisdavenport.cormorant.parser._
 import io.chrisdavenport.cormorant.implicits._
 
 import common._
-import model.account._
-import model.instrument._
 import model.order._
 import Order._
-import model.newtypes._
-import model.market._
 
 object ordering {
   implicit val lr: LabelledRead[FrontOfficeOrder] = deriveLabelledRead

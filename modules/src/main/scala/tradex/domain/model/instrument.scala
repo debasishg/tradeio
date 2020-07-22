@@ -3,13 +3,8 @@ package model
 
 import java.time.LocalDateTime
 
-import cats._
-import cats.data._
 import cats.implicits._
-import cats.instances.all._
 
-import enumeratum._
-import enumeratum.EnumEntry._
 import squants.market._
 
 import common._

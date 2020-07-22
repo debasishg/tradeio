@@ -2,7 +2,6 @@ package tradex.domain
 package trading
 
 import cats.effect._
-import cats.implicits._
 
 import skunk._
 import skunk.util.Typer

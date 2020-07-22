@@ -4,7 +4,6 @@ package trading
 import java.util.UUID
 import java.time.LocalDate
 
-import cats.MonadError
 import cats.data.NonEmptyList
 import cats.implicits._
 import cats.mtl._

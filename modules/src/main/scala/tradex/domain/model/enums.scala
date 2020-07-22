@@ -2,7 +2,6 @@ package tradex.domain
 package model
 
 import enumeratum._
-import enumeratum.EnumEntry._
 
 object enums {
   sealed abstract class BuySell(override val entryName: String)

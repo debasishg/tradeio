@@ -1,7 +1,6 @@
 package tradex.domain
 package trading
 
-import cats.Parallel
 import cats.effect._
 import cats.implicits._
 

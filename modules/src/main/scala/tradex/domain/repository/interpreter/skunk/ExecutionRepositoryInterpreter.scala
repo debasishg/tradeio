@@ -11,12 +11,8 @@ import skunk.data.Type
 import skunk.codec.all._
 import skunk.implicits._
 
-import squants.market._
-
-import model.newtypes._
 import model.enums._
 import model.execution._
-import ext.skunkx._
 
 final class ExecutionRepositoryInterpreter[M[_]: Sync] private (
     sessionPool: Resource[M, Session[M]]

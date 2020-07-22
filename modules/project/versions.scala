@@ -1,10 +1,10 @@
 object Versions {
-  val catsVersion = "2.2.0-M3"
-  val catsEffectVersion = "2.1.3"
+  val catsVersion = "2.2.0-RC1"
+  val catsEffectVersion = "2.2.0-RC1"
   val catsMtlVersion = "0.7.0"
   val macroParadiseVersion = "2.1.1"
   val kindProjectorVersion = "0.11.0"
-  val scalaVersion = "2.13.2"
+  val scalaVersion = "2.13.3"
   val zioVersion = "1.0.0-RC20"
   val zioLoggingVersion = "0.2.6"
   val silencerVersion = "1.4.4"

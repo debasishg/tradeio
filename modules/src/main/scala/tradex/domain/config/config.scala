@@ -1,7 +1,6 @@
 package tradex.domain
 package config
 
-import ciris._
 import eu.timepit.refined.types.net.UserPortNumber
 import eu.timepit.refined.types.numeric.PosInt
 import eu.timepit.refined.types.string.NonEmptyString

@@ -5,8 +5,6 @@ import java.util.UUID
 import cats.data.NonEmptyList
 
 import common._
-import model.instrument._
-import model.account._
 import model.order._
 import model.execution._
 import model.newtypes._

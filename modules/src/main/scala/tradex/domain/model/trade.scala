@@ -6,7 +6,6 @@ import java.time.LocalDateTime
 import cats.implicits._
 
 import enumeratum._
-import enumeratum.EnumEntry._
 
 import squants.market._
 
