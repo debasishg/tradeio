@@ -14,6 +14,14 @@ import model.newtypes._
 
 trait Trading[F[_]] {
   /**
+    * Find accounts opened on the date specified
+    *
+    * @param openDate the date when account was opened
+    * @return a list of `Account` under the effect `F`
+    */
+  def getAccountsOpenedOn(openDate: LocalDate): F[List[Account]]
+
+  /**
     * Find the list of trades for the supplied client account no and (optionally)
     * the trade date.
     *

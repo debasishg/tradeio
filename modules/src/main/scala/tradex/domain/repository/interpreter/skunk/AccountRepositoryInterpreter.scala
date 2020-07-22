@@ -2,7 +2,7 @@ package tradex.domain
 package repository
 package interpreter.skunk
 
-import java.time.LocalDateTime
+import java.time.LocalDate
 
 import cats.implicits._
 import cats.effect._
@@ -41,7 +41,7 @@ final class AccountRepositoryInterpreter[M[_]: Sync] private (
       }
     }
 
-  def query(openedOn: LocalDateTime): M[List[Account]] =
+  def query(openedOn: LocalDate): M[List[Account]] =
     sessionPool.use { session =>
       session.prepare(selectByOpenedDate).use { ps =>
         ps.stream(openedOn, 1024).compile.toList
@@ -50,7 +50,7 @@ final class AccountRepositoryInterpreter[M[_]: Sync] private (
 
   def all: M[List[Account]] = sessionPool.use(_.execute(selectAll))
 
-  def allClosed(closeDate: Option[LocalDateTime]): M[List[Account]] =
+  def allClosed(closeDate: Option[LocalDate]): M[List[Account]] =
     sessionPool.use { session =>
       closeDate
         .map { cd =>
@@ -127,11 +127,11 @@ private object AccountQueries {
         WHERE a.no = ${varchar.cimap[AccountNo]}
        """.query(decoder)
 
-  val selectByOpenedDate: Query[LocalDateTime, Account] =
+  val selectByOpenedDate: Query[LocalDate, Account] =
     sql"""
         SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
         FROM accounts AS a
-        WHERE a.dateOfOpen = $timestamp
+        WHERE DATE(a.dateOfOpen) = $date
        """.query(decoder)
 
   val selectByAccountType: Query[AccountType, Account] =
@@ -147,11 +147,11 @@ private object AccountQueries {
         FROM accounts AS a
        """.query(decoder)
 
-  val selectClosedAfter: Query[LocalDateTime, Account] =
+  val selectClosedAfter: Query[LocalDate, Account] =
     sql"""
         SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
         FROM accounts AS a
-        WHERE a.dateOfClose >= $timestamp
+        WHERE a.dateOfClose >= $date
        """.query(decoder)
 
   val selectAllClosed: Query[Void, Account] =

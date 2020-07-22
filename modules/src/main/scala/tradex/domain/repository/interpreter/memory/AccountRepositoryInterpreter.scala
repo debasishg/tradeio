@@ -3,7 +3,7 @@ package repository
 package interpreter
 package memory
 
-import java.time.LocalDateTime
+import java.time.LocalDate
 import scala.collection.immutable.Map
 
 import cats._
@@ -24,18 +24,20 @@ final class AccountRepositoryInterpreter[M[_]: Monad] private (
 
   def store(a: Account): M[Account] = repo.update(_ + ((a.no, a))).map(_ => a)
 
-  def query(openedOn: LocalDateTime): M[List[Account]] =
-    repo.get.map(_.values.filter(_.dateOfOpen == openedOn).toList)
+  def query(openedOn: LocalDate): M[List[Account]] =
+    repo.get.map(_.values.filter(_.dateOfOpen.toLocalDate == openedOn).toList)
 
   def all: M[List[Account]] = repo.get.map(_.values.toList)
 
-  def allClosed(closeDate: Option[LocalDateTime]): M[List[Account]] =
+  def allClosed(closeDate: Option[LocalDate]): M[List[Account]] =
     closeDate
       .map { cd =>
         repo.get.map(
           _.values
             .filter(
-              a => a.dateOfClose.isDefined && a.dateOfClose.get.isAfter(cd)
+              a =>
+                a.dateOfClose.isDefined && a.dateOfClose.get.toLocalDate
+                  .isAfter(cd)
             )
             .toList
         )

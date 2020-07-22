@@ -1,7 +1,7 @@
 package tradex.domain
 package repository
 
-import java.time.LocalDateTime
+import java.time.LocalDate
 
 import model.newtypes._
 import model.enums._
@@ -16,13 +16,13 @@ trait AccountRepository[M[_]] {
   def store(a: Account): M[Account]
 
   /** query by opened date */
-  def query(openedOn: LocalDateTime): M[List[Account]]
+  def query(openedOn: LocalDate): M[List[Account]]
 
   /** all accounts */
   def all: M[List[Account]]
 
   /** all closed accounts, if date supplied then all closed after that date */
-  def allClosed(closeDate: Option[LocalDateTime]): M[List[Account]]
+  def allClosed(closeDate: Option[LocalDate]): M[List[Account]]
 
   /** all accounts trading / settlement / both */
   def allAccountsOfType(accountType: AccountType): M[List[Account]]
