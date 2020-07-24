@@ -106,7 +106,9 @@ object trade {
         unitPrice: BigDecimal,
         quantity: BigDecimal,
         td: LocalDateTime = today,
-        vd: Option[LocalDateTime] = None
+        vd: Option[LocalDateTime] = None,
+        taxFees: List[TradeTaxFee] = List.empty,
+        netAmt: Option[Money] = None
     ): ErrorOr[Trade] = {
       (
         validateTradeRefNo(refNo),
@@ -118,10 +120,14 @@ object trade {
         Execution.validateMarket(market)
       ).mapN { (ref, a, i, q, u, bs, m) =>
         val trd = Trade(a, i, ref, m, BuySell.withName(bs), u, q, td, vd)
-        val taxFees =
-          forTrade(trd).map(taxFeeCalculate(trd, _)).getOrElse(List.empty)
-        val netAmt = netAmount(trd, taxFees)
-        trd.copy(taxFees = taxFees, netAmount = Option(netAmt))
+        if (taxFees.isEmpty && !netAmt.isDefined) {
+
+          val taxFees =
+            forTrade(trd).map(taxFeeCalculate(trd, _)).getOrElse(List.empty)
+          val netAmt = netAmount(trd, taxFees)
+          trd.copy(taxFees = taxFees, netAmount = Option(netAmt))
+
+        } else trd
       }.toEither
     }
 

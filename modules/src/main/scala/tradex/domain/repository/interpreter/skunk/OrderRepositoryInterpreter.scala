@@ -18,8 +18,6 @@ import model.newtypes._
 import model.enums._
 import model.order._
 import ext.skunkx._
-import common._
-import NewtypeRefinedOps._
 
 final class OrderRepositoryInterpreter[M[_]: Sync] private (
     sessionPool: Resource[M, Session[M]]
