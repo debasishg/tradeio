@@ -10,9 +10,11 @@ import enumeratum._
 import squants.market._
 
 import common._
+import NewtypeRefinedOps._
 import newtypes._
 import account._
 import instrument._
+import order._
 import execution._
 import market._
 import enums._
@@ -51,7 +53,7 @@ object trade {
   }
 
   final def principal(trade: Trade): Money =
-    Money(trade.unitPrice.value * trade.quantity.value)
+    Money(trade.unitPrice.value.value * trade.quantity.value.value)
 
   // combinator to value a tax/fee for a specific trade
   private def valueAs(trade: Trade, taxFeeId: TaxFeeId): Money = {
@@ -96,28 +98,38 @@ object trade {
 
   object Trade {
     def trade(
-        accountNo: AccountNo,
-        isin: ISINCode,
-        refNo: TradeReferenceNo,
-        market: Market,
-        buySell: BuySell,
-        unitPrice: UnitPrice,
-        quantity: Quantity,
+        accountNo: String,
+        isin: String,
+        refNo: String,
+        market: String,
+        buySell: String,
+        unitPrice: BigDecimal,
+        quantity: BigDecimal,
         td: LocalDateTime = today,
         vd: Option[LocalDateTime] = None
     ): ErrorOr[Trade] = {
       (
+        validateTradeRefNo(refNo),
         Account.validateAccountNo(accountNo),
         Instrument.validateISINCode(isin),
-        Execution.validateQuantity(quantity),
-        Execution.validateUnitPrice(unitPrice)
-      ).mapN { (a, i, q, u) =>
-        val trd = Trade(a, i, refNo, market, buySell, u, q, td, vd)
+        Order.validateQuantity(quantity),
+        Order.validateUnitPrice(unitPrice),
+        Order.validateBuySell(buySell),
+        Execution.validateMarket(market)
+      ).mapN { (ref, a, i, q, u, bs, m) =>
+        val trd = Trade(a, i, ref, m, BuySell.withName(bs), u, q, td, vd)
         val taxFees =
           forTrade(trd).map(taxFeeCalculate(trd, _)).getOrElse(List.empty)
         val netAmt = netAmount(trd, taxFees)
         trd.copy(taxFees = taxFees, netAmount = Option(netAmt))
       }.toEither
+    }
+
+    private[model] def validateTradeRefNo(
+      refNo: String
+    ): ValidationResult[TradeReferenceNo] = {
+      validate[TradeReferenceNo](refNo)
+        .toValidated
     }
   }
 }
