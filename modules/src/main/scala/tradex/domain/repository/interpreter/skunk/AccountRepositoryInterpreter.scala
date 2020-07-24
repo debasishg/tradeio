@@ -14,11 +14,9 @@ import skunk.implicits._
 
 import squants.market._
 
-import model.newtypes._
 import model.enums._
 import model.account._
 import Account._
-import ext.skunkx._
 import common._
 
 final class AccountRepositoryInterpreter[M[_]: Sync] private (
@@ -26,7 +24,7 @@ final class AccountRepositoryInterpreter[M[_]: Sync] private (
 ) extends AccountRepository[M] {
   import AccountQueries._
 
-  def query(no: AccountNo): M[Option[Account]] =
+  def query(no: String): M[Option[Account]] =
     sessionPool.use { session =>
       session.prepare(selectByAccountNo).use { ps =>
         ps.option(no)
@@ -81,8 +79,8 @@ private object AccountQueries {
           tp match {
             case AccountType.Trading =>
               tradingAccount(
-                AccountNo(no),
-                AccountName(nm),
+                no,
+                nm,
                 Option(dp),
                 dc,
                 Currency(bc).get,
@@ -93,8 +91,8 @@ private object AccountQueries {
               )
             case AccountType.Settlement =>
               settlementAccount(
-                AccountNo(no),
-                AccountName(nm),
+                no,
+                nm,
                 Option(dp),
                 dc,
                 Currency(bc).get,
@@ -105,8 +103,8 @@ private object AccountQueries {
               )
             case AccountType.Both =>
               tradingAndSettlementAccount(
-                AccountNo(no),
-                AccountName(nm),
+                no,
+                nm,
                 Option(dp),
                 dc,
                 Currency(bc).get,
@@ -119,11 +117,11 @@ private object AccountQueries {
           }
       }
 
-  val selectByAccountNo: Query[AccountNo, Account] =
+  val selectByAccountNo: Query[String, Account] =
     sql"""
         SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
         FROM accounts AS a
-        WHERE a.no = ${varchar.cimap[AccountNo]}
+        WHERE a.no = $varchar
        """.query(decoder)
 
   val selectByOpenedDate: Query[LocalDate, Account] =
@@ -168,17 +166,17 @@ private object AccountQueries {
       case a =>
         a match {
           case Account(no, nm, dop, doc, AccountType.Both, bc, tc, sc) =>
-            no.value ~ nm.value ~ AccountType.Both ~ dop ~ doc ~ bc.toString ~ Option(
+            no.value.value ~ nm.value.value ~ AccountType.Both ~ dop ~ doc ~ bc.toString ~ Option(
               tc.toString
             ) ~ Option(sc.toString)
 
           case Account(no, nm, dop, doc, AccountType.Trading, bc, tc, _) =>
-            no.value ~ nm.value ~ AccountType.Trading ~ dop ~ doc ~ bc.toString ~ Option(
+            no.value.value ~ nm.value.value ~ AccountType.Trading ~ dop ~ doc ~ bc.toString ~ Option(
               tc.toString
             ) ~ None
 
           case Account(no, nm, dop, doc, AccountType.Settlement, bc, _, sc) =>
-            no.value ~ nm.value ~ AccountType.Settlement ~ dop ~ doc ~ bc.toString ~ None ~ Option(
+            no.value.value ~ nm.value.value ~ AccountType.Settlement ~ dop ~ doc ~ bc.toString ~ None ~ Option(
               sc.toString
             )
         }
@@ -199,19 +197,19 @@ private object AccountQueries {
       case a =>
         a match {
           case Account(no, nm, dop, doc, AccountType.Trading, bc, tc, _) =>
-            nm.value ~ AccountType.Trading ~ dop ~ doc ~ bc.toString ~ Option(
+            nm.value.value ~ AccountType.Trading ~ dop ~ doc ~ bc.toString ~ Option(
               tc.toString
-            ) ~ None ~ no.value
+            ) ~ None ~ no.value.value
 
           case Account(no, nm, dop, doc, AccountType.Settlement, bc, _, sc) =>
-            nm.value ~ AccountType.Settlement ~ dop ~ doc ~ bc.toString ~ None ~ Option(
+            nm.value.value ~ AccountType.Settlement ~ dop ~ doc ~ bc.toString ~ None ~ Option(
               sc.toString
-            ) ~ no.value
+            ) ~ no.value.value
 
           case Account(no, nm, dop, doc, AccountType.Both, bc, tc, sc) =>
-            nm.value ~ AccountType.Settlement ~ dop ~ doc ~ bc.toString ~ Option(
+            nm.value.value ~ AccountType.Settlement ~ dop ~ doc ~ bc.toString ~ Option(
               tc.toString
-            ) ~ Option(sc.toString) ~ no.value
+            ) ~ Option(sc.toString) ~ no.value.value
         }
     }
 
@@ -231,17 +229,17 @@ private object AccountQueries {
       case a =>
         a match {
           case Account(no, nm, dop, doc, AccountType.Trading, bc, tc, _) =>
-            no.value ~ nm.value ~ AccountType.Trading ~ dop ~ doc ~ bc.toString ~ Option(
+            no.value.value ~ nm.value.value ~ AccountType.Trading ~ dop ~ doc ~ bc.toString ~ Option(
               tc.toString
             ) ~ None
 
           case Account(no, nm, dop, doc, AccountType.Settlement, bc, _, sc) =>
-            no.value ~ nm.value ~ AccountType.Settlement ~ dop ~ doc ~ bc.toString ~ None ~ Option(
+            no.value.value ~ nm.value.value ~ AccountType.Settlement ~ dop ~ doc ~ bc.toString ~ None ~ Option(
               sc.toString
             )
 
           case Account(no, nm, dop, doc, AccountType.Both, bc, tc, sc) =>
-            no.value ~ nm.value ~ AccountType.Settlement ~ dop ~ doc ~ bc.toString ~ Option(
+            no.value.value ~ nm.value.value ~ AccountType.Settlement ~ dop ~ doc ~ bc.toString ~ Option(
               tc.toString
             ) ~ Option(sc.toString)
         }

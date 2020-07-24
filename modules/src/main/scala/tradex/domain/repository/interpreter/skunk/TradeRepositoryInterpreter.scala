@@ -19,7 +19,6 @@ import squants.market._
 import model.newtypes._
 import model.enums._
 import model.trade._
-import model.market._
 import ext.skunkx._
 import common._
 
@@ -37,7 +36,7 @@ final class TradeRepositoryInterpreter[M[_]: Sync] private (
       x.copy(taxFees = x.taxFees ++ y.taxFees)
   }
 
-  def query(accountNo: AccountNo, date: LocalDate): M[List[Trade]] =
+  def query(accountNo: String, date: LocalDate): M[List[Trade]] =
     sessionPool.use { session =>
       session.prepare(selectByAccountNoAndDate).use { ps =>
         ps.stream(accountNo ~ date, 1024)
@@ -48,7 +47,7 @@ final class TradeRepositoryInterpreter[M[_]: Sync] private (
             m.map {
               case (refNo, lis) =>
                 val singleTradeTaxFeeLine =
-                  makeSingleTradeTaxFees(TradeReferenceNo(refNo), lis)
+                  makeSingleTradeTaxFees(refNo, lis)
                 singleTradeTaxFeeLine.tail.foldLeft(singleTradeTaxFeeLine.head)(
                   Semigroup[Trade].combine
                 )
@@ -58,7 +57,7 @@ final class TradeRepositoryInterpreter[M[_]: Sync] private (
     }
 
   private def makeSingleTradeTaxFees(
-      trdRefNo: TradeReferenceNo,
+      trdRefNo: String,
       trdTxs: List[
         String ~
           String ~
@@ -76,19 +75,21 @@ final class TradeRepositoryInterpreter[M[_]: Sync] private (
   ): List[Trade] = {
     trdTxs.map {
       case ano ~ isin ~ mkt ~ bs ~ up ~ qty ~ td ~ vd ~ na ~ tfid ~ amt ~ rno =>
-        Trade(
-          AccountNo(ano),
-          ISINCode(isin),
-          TradeReferenceNo(rno),
-          Market.withName(mkt),
-          bs,
-          UnitPrice(up),
-          Quantity(qty),
-          td,
-          vd,
-          List(TradeTaxFee(tfid, Money(amt))),
-          na.map(Money(_))
-        )
+        Trade
+          .trade(
+            ano,
+            isin,
+            rno,
+            mkt,
+            bs.entryName,
+            up,
+            qty,
+            td,
+            vd,
+            List(TradeTaxFee(tfid, Money(amt))),
+            na.map(Money(_))
+          )
+          .fold(errs => throw new Exception(errs.toString), identity)
     }
   }
 
@@ -131,13 +132,15 @@ private object TradeQueries {
     (varchar ~ varchar ~ varchar ~ varchar ~ buySell ~ numeric ~ numeric ~ timestamp ~ timestamp.opt ~ numeric.opt).values
       .contramap(
         (t: Trade) =>
-          t.refNo.value ~ t.accountNo.value ~ t.isin.value ~ t.market.toString ~ t.buySell ~ t.unitPrice.value ~ t.quantity.value ~ t.tradeDate ~ t.valueDate ~ t.netAmount
+          t.refNo.value.value ~ t.accountNo.value.value ~ t.isin.value.value ~ t.market.toString ~ t.buySell ~ t.unitPrice.value.value ~ t.quantity.value.value ~ t.tradeDate ~ t.valueDate ~ t.netAmount
             .map(_.value)
       )
 
   def taxFeeEncoder(refNo: TradeReferenceNo): Encoder[TradeTaxFee] =
     (varchar ~ taxFeeId ~ numeric).values
-      .contramap((t: TradeTaxFee) => refNo.value ~ t.taxFeeId ~ t.amount.value)
+      .contramap(
+        (t: TradeTaxFee) => refNo.value.value ~ t.taxFeeId ~ t.amount.value
+      )
 
   val insertTrade: Command[Trade] =
     sql"""
@@ -193,7 +196,7 @@ private object TradeQueries {
                f.amount,
                t.tradeRefNo
         FROM trades t, tradeTaxFees f
-        WHERE t.accountNo = ${varchar.cimap[AccountNo]}
+        WHERE t.accountNo = $varchar
           AND DATE(t.tradeDate) = $date
           AND t.tradeRefNo = f.tradeRefNo
     """.query(tradeTaxFeeDecoder)

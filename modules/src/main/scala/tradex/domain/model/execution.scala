@@ -1,12 +1,16 @@
 package tradex.domain
 package model
 
+import java.util.UUID
+
 import cats.implicits._
 
 import common._
+import NewtypeRefinedOps._
 import newtypes._
 import account._
 import instrument._
+import order._
 import market._
 import enums._
 import java.time.LocalDateTime
@@ -40,26 +44,39 @@ object execution {
 
   object Execution {
     // smart constructor
-    def execution(exe: Execution): ErrorOr[Execution] = {
+    def execution(
+        executionRefNo: String,
+        accountNo: String,
+        orderNo: String,
+        isin: String,
+        market: String,
+        buySell: String,
+        unitPrice: BigDecimal,
+        quantity: BigDecimal,
+        dateOfExecution: LocalDateTime
+    ): ValidationResult[Execution] = {
       (
-        Account.validateAccountNo(exe.accountNo),
-        Instrument.validateISINCode(exe.isin),
-        validateBuySell(exe.buySell.entryName),
-        validateQuantity(exe.quantity),
-        validateUnitPrice(exe.unitPrice)
-      ).mapN { (ano, ins, bs, q, p) =>
+        validateExecutionRefNo(executionRefNo),
+        Account.validateAccountNo(accountNo),
+        Order.validateOrderNo(orderNo),
+        Instrument.validateISINCode(isin),
+        validateMarket(market),
+        Order.validateBuySell(buySell),
+        Order.validateUnitPrice(unitPrice),
+        Order.validateQuantity(quantity)
+      ).mapN { (ref, ano, ono, isin, m, bs, up, qty) =>
         Execution(
-          exe.executionRefNo,
+          ref,
           ano,
-          exe.orderNo,
-          ins,
-          exe.market,
+          ono,
+          isin,
+          m,
           BuySell.withName(bs),
-          p,
-          q,
-          exe.dateOfExecution
+          up,
+          qty,
+          dateOfExecution
         )
-      }.toEither
+      }
     }
 
     // smart constructor from data received from exchange
@@ -67,16 +84,18 @@ object execution {
         eex: ExchangeExecution
     ): ErrorOr[Execution] = {
       (
-        Account.validateAccountNo(AccountNo(eex.accountNo)),
-        Instrument.validateISINCode(ISINCode(eex.isin)),
-        validateBuySell(eex.buySell),
-        validateUnitPrice(UnitPrice(eex.unitPrice)),
-        validateQuantity(Quantity(eex.quantity))
-      ).mapN { (ano, ins, bs, up, q) =>
+        validateExecutionRefNo(eex.executionRefNo),
+        Account.validateAccountNo(eex.accountNo),
+        Instrument.validateISINCode(eex.isin),
+        Order.validateBuySell(eex.buySell),
+        Order.validateUnitPrice(eex.unitPrice),
+        Order.validateQuantity(eex.quantity),
+        Order.validateOrderNo(eex.orderNo)
+      ).mapN { (ref, ano, ins, bs, up, q, ono) =>
         Execution(
-          ExecutionReferenceNo(eex.executionRefNo),
+          ref,
           ano,
-          OrderNo(eex.orderNo),
+          ono,
           ins,
           Market.withName(eex.market),
           BuySell.withName(bs),
@@ -87,26 +106,27 @@ object execution {
       }.toEither
     }
 
-    private[model] def validateQuantity(
-        qty: Quantity
-    ): ValidationResult[Quantity] =
-      if (qty.value <= 0)
-        s"Quantity has to be positive: found $qty".invalidNec
-      else qty.validNec
+    private[model] def validateExecutionRefNo(
+        refNo: String
+    ): ValidationResult[ExecutionReferenceNo] = {
+      validate[ExecutionReferenceNo](refNo).toValidated
+    }
 
-    private[model] def validateUnitPrice(
-        price: UnitPrice
-    ): ValidationResult[UnitPrice] =
-      if (price.value <= 0)
-        s"Unit Price has to be positive: found $price".invalidNec
-      else price.validNec
-
-    private[model] def validateBuySell(bs: String): ValidationResult[String] = {
-      BuySell
-        .withNameEither(bs)
+    private[model] def validateMarket(m: String): ValidationResult[Market] = {
+      Market
+        .withNameEither(m)
         .toValidatedNec
-        .map(_.entryName)
         .leftMap(_.map(_.toString))
     }
+
+    def generateExecutionReferenceNo(): ExecutionReferenceNo =
+      validateExecutionRefNo(UUID.randomUUID().toString)
+        .fold(
+          errs =>
+            throw new Exception(
+              s"Unable to generate reference no : ${errs.toString}"
+            ),
+          identity
+        )
   }
 }

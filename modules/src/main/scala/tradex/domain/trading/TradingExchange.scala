@@ -1,17 +1,21 @@
 package tradex.domain
 package trading
 
-import java.util.UUID
-
 import cats.data.NonEmptyList
 import cats.implicits._
 import cats.effect._
 import cats.effect.concurrent.{Deferred, Ref}
 
+import eu.timepit.refined.auto._
+import eu.timepit.refined.api.Refined
+import eu.timepit.refined.numeric._
+
 import model.order._
 import model.execution._
 import model.trade._
 import model.newtypes._
+import common._
+import NewtypeRefinedOps._
 import AppData._
 
 object ExchangeApp extends IOApp {
@@ -135,7 +139,8 @@ object Exchange {
           lis.foldLeft(true) { (a, li) =>
             val ins = li.instrument
             val qty = li.quantity
-            if (fulfilledOrder.get(ins).getOrElse(Quantity(0)) == qty) a
+            val zero: BigDecimal Refined NonNegative = BigDecimal(0)
+            if (fulfilledOrder.get(ins).getOrElse(Quantity(zero)) == qty) a
             else false
           }
         }
@@ -270,7 +275,14 @@ object Exchange {
               val ins = e.isin
               val qty = e.quantity
               a.updatedWith(ins)(
-                _.map(q => Quantity(q.value + qty.value)).orElse(qty.some)
+                _.map(
+                  q =>
+                    validate[Quantity](q.value.value + qty.value.value)
+                      .fold(
+                        errs => throw new Exception(errs.toString),
+                        identity
+                      )
+                )
               )
           }
           appState.copy(
@@ -395,22 +407,21 @@ object Exchange {
             clientAccounts: NonEmptyList[AccountNo]
         ): NonEmptyList[Trade] = {
           executions.flatMap { execution =>
-            val q = execution.quantity.value / clientAccounts.size
+            val q = execution.quantity.value.value / clientAccounts.size
+            val qty = validate[Quantity](q)
+              .fold(errs => throw new Exception(errs.toString), identity)
             clientAccounts
               .map { accountNo =>
-                Trade.trade(
+                Trade(
                   accountNo,
                   execution.isin,
-                  TradeReferenceNo(UUID.randomUUID().toString()),
+                  Trade.generateTradeReferenceNo(),
                   execution.market,
                   execution.buySell,
                   execution.unitPrice,
-                  Quantity(q)
+                  qty
                 )
               }
-              .traverse(identity)
-              .toOption
-              .get
           }
         }
       }

@@ -41,7 +41,7 @@ private object ExecutionQueries {
     (varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ buySell ~ numeric ~ numeric ~ timestamp).values
       .contramap(
         (e: Execution) =>
-          e.executionRefNo.value ~ e.accountNo.value ~ e.orderNo.value ~ e.isin.value ~ e.market.toString ~ e.buySell ~ e.unitPrice.value ~ e.quantity.value ~ e.dateOfExecution
+          e.executionRefNo.value.value ~ e.accountNo.value.value ~ e.orderNo.value.value ~ e.isin.value.value ~ e.market.toString ~ e.buySell ~ e.unitPrice.value.value ~ e.quantity.value.value ~ e.dateOfExecution
       )
 
   val insertExecution: Command[Execution] =
