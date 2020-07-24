@@ -30,7 +30,9 @@ final class TradeRepositoryInterpreter[M[_]: Monad] private (
     )
 
   def store(trd: Trade): M[Trade] =
-    repo.update(_ + (((trd.accountNo.value.value, trd.isin, trd.refNo), trd))).map(_ => trd)
+    repo
+      .update(_ + (((trd.accountNo.value.value, trd.isin, trd.refNo), trd)))
+      .map(_ => trd)
 
   def store(trades: NonEmptyList[Trade]): M[Unit] =
     repo

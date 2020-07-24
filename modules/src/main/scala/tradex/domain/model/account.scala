@@ -108,12 +108,15 @@ object account {
     private[model] def validateAccountNo(
         no: String
     ): ValidationResult[AccountNo] =
-      validate[AccountNo](no).toValidated.leftMap(_ :+ s"Account No has to be at least 5 characters long: found $no")
+      validate[AccountNo](no).toValidated.leftMap(
+        _ :+ s"Account No has to be at least 5 characters long: found $no"
+      )
 
     private[model] def validateAccountName(
         name: String
     ): ValidationResult[AccountName] =
-      validate[AccountName](name).toValidated.leftMap(_ :+ s"Account Name cannot be blank")
+      validate[AccountName](name).toValidated
+        .leftMap(_ :+ s"Account Name cannot be blank")
 
     private def validateOpenCloseDate(
         od: LocalDateTime,

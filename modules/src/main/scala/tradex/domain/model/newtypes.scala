@@ -15,20 +15,20 @@ import _root_.shapeless.HNil
 
 object newtypes {
   // account
-  type AccountNoString = String Refined AllOf [
+  type AccountNoString = String Refined AllOf[
     MaxSize[W.`12`.T] ::
-    MinSize[W.`5`.T] ::
-    HNil
+      MinSize[W.`5`.T] ::
+      HNil
   ]
 
   @newtype case class AccountNo(value: AccountNoString)
   @newtype case class AccountName(value: NonEmptyString)
 
   // instrument
-  type ISINCodeString = String Refined AllOf [
+  type ISINCodeString = String Refined AllOf[
     MaxSize[W.`12`.T] ::
-    MinSize[W.`12`.T] ::
-    HNil
+      MinSize[W.`12`.T] ::
+      HNil
   ]
 
   @newtype case class ISINCode(value: ISINCodeString)
@@ -37,7 +37,7 @@ object newtypes {
 
   // order
   @newtype case class OrderNo(value: NonEmptyString)
-  @newtype case class Quantity(value: BigDecimal Refined Positive)
+  @newtype case class Quantity(value: BigDecimal Refined NonNegative)
 
   // execution
   @newtype case class ExecutionReferenceNo(value: NonEmptyString)

@@ -48,10 +48,12 @@ object order {
     private[domain] def create(
         frontOfficeOrders: NonEmptyList[FrontOfficeOrder]
     ): ErrorOr[List[Order]] = {
-      frontOfficeOrders
-        .toList
+      frontOfficeOrders.toList
         .groupBy(_.accountNo)
-        .map { case (ano, forders) => makeOrder(UUID.randomUUID.toString, today, ano, forders) }
+        .map {
+          case (ano, forders) =>
+            makeOrder(UUID.randomUUID.toString, today, ano, forders)
+        }
         .toList
         .sequence
         .toEither
@@ -60,24 +62,25 @@ object order {
     private[domain] def makeOrder(
         ono: String,
         odt: LocalDateTime,
-        ano: String, 
+        ano: String,
         forders: List[FrontOfficeOrder]
     ): ValidationResult[Order] = {
-      forders.map{ fo => 
-        makeLineItem(fo.isin, fo.qty, fo.unitPrice, fo.buySell)
-      }
-      .sequence
-      .map { items =>
-        makeOrder(ono, odt, ano, NonEmptyList.of(items.head, items.tail: _*))
-      }
-      .fold(_.invalid[Order], identity)
+      forders
+        .map { fo =>
+          makeLineItem(fo.isin, fo.qty, fo.unitPrice, fo.buySell)
+        }
+        .sequence
+        .map { items =>
+          makeOrder(ono, odt, ano, NonEmptyList.of(items.head, items.tail: _*))
+        }
+        .fold(_.invalid[Order], identity)
     }
 
     private[domain] def makeLineItem(
-      isin: String,
-      quantity: BigDecimal,
-      unitPrice: BigDecimal,
-      buySell: String
+        isin: String,
+        quantity: BigDecimal,
+        unitPrice: BigDecimal,
+        buySell: String
     ): ValidationResult[LineItem] = {
       (
         Instrument.validateISINCode(isin),
@@ -90,45 +93,42 @@ object order {
     }
 
     private[domain] def makeOrder(
-        orderNo: String, 
+        orderNo: String,
         orderDate: LocalDateTime,
-        accountNo: String, 
+        accountNo: String,
         lineItems: NonEmptyList[LineItem]
     ): ValidationResult[Order] = {
       (
         validateOrderNo(orderNo),
-        Account.validateAccountNo(accountNo),
-      ).mapN { (orderNo, accountNo) => 
+        Account.validateAccountNo(accountNo)
+      ).mapN { (orderNo, accountNo) =>
         Order(
           orderNo,
           orderDate,
-          accountNo, 
+          accountNo,
           lineItems
-        ) 
+        )
       }
     }
 
     private[model] def validateQuantity(
-      qty: BigDecimal
-    ): ValidationResult[Quantity] = { 
-      validate[Quantity](qty)
-        .toValidated
+        qty: BigDecimal
+    ): ValidationResult[Quantity] = {
+      validate[Quantity](qty).toValidated
         .leftMap(_ :+ s"Quantity has to be positive: found $qty")
     }
 
     private[model] def validateUnitPrice(
-      price: BigDecimal
-    ): ValidationResult[UnitPrice] = { 
-      validate[UnitPrice](price)
-        .toValidated
+        price: BigDecimal
+    ): ValidationResult[UnitPrice] = {
+      validate[UnitPrice](price).toValidated
         .leftMap(_ :+ s"Unit Price has to be positive: found $price")
     }
 
     private[model] def validateOrderNo(
-      orderNo: String
+        orderNo: String
     ): ValidationResult[OrderNo] = {
-      validate[OrderNo](orderNo)
-        .toValidated
+      validate[OrderNo](orderNo).toValidated
     }
 
     private[model] def validateBuySell(bs: String): ValidationResult[String] = {

@@ -1,7 +1,6 @@
 package tradex.domain
 package trading
 
-import java.util.UUID
 import java.time.LocalDate
 
 import cats.data.NonEmptyList
@@ -9,6 +8,7 @@ import cats.implicits._
 import cats.mtl._
 
 import common._
+import NewtypeRefinedOps._
 import model.account.Account
 import model.execution.Execution
 import model.order.Order
@@ -34,7 +34,7 @@ class TradingInterpreter[M[_]: MonadThrowable](
     } yield accounts
 
   def getTrades(
-      forAccountNo: AccountNo,
+      forAccountNo: String,
       forDate: Option[LocalDate] = None
   ): M[List[Trade]] =
     for {
@@ -67,7 +67,7 @@ class TradingInterpreter[M[_]: MonadThrowable](
     val exes = orders.flatMap { order =>
       order.items.map { item =>
         Execution(
-          ExecutionReferenceNo(UUID.randomUUID().toString),
+          Execution.generateExecutionReferenceNo(),
           brokerAccountNo,
           order.no,
           item.instrument,
@@ -86,32 +86,25 @@ class TradingInterpreter[M[_]: MonadThrowable](
       executions: NonEmptyList[Execution],
       clientAccounts: NonEmptyList[AccountNo]
   ): M[NonEmptyList[Trade]] = {
-    executions
-      .map { execution =>
-        val q = execution.quantity.value / clientAccounts.size
+    val trades: NonEmptyList[Trade] = executions
+      .flatMap { execution =>
+        val q = execution.quantity.value.value / clientAccounts.size
+        val qty = validate[Quantity](q)
+          .fold(errs => throw new Exception(errs.toString), identity)
         clientAccounts
           .map { accountNo =>
-            Trade.trade(
+            Trade(
               accountNo,
               execution.isin,
-              TradeReferenceNo(UUID.randomUUID().toString()),
+              Trade.generateTradeReferenceNo(),
               execution.market,
               execution.buySell,
               execution.unitPrice,
-              Quantity(q)
+              qty
             )
           }
-          .traverse(identity)
       }
-      .traverse(identity)
-      .fold(
-        nec =>
-          ev.raiseError(new Throwable(nec.toNonEmptyList.toList.mkString("/"))),
-        ls => {
-          val trds = ls.flatten
-          persistTrades(trds) *> ev.pure(trds)
-        }
-      )
+    persistTrades(trades) *> ev.pure(trades)
   }
 
   private def persistOrders(orders: NonEmptyList[Order]) =

@@ -53,17 +53,19 @@ private object InstrumentQueries {
     (varchar ~ varchar ~ instrumentType ~ timestamp.opt ~ timestamp.opt ~ int2.opt ~ numeric.opt ~ numeric.opt ~ numeric.opt)
       .map {
         case isin ~ nm ~ tp ~ di ~ dm ~ ls ~ up ~ cr ~ cf =>
-          Instrument.instrument(
-            isin,
-            nm,
-            tp,
-            di,
-            dm,
-            LotSize(ls.getOrElse(0)),
-            up.map(Money(_)),
-            cr.map(Money(_)),
-            cf
-          ).fold(errs => throw new Exception(errs.toString), identity)
+          Instrument
+            .instrument(
+              isin,
+              nm,
+              tp,
+              di,
+              dm,
+              LotSize(ls.getOrElse(0)),
+              up.map(Money(_)),
+              cr.map(Money(_)),
+              cf
+            )
+            .fold(errs => throw new Exception(errs.toString), identity)
       }
 
   val selectByISINCode: Query[String, Instrument] =

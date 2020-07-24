@@ -75,19 +75,21 @@ final class TradeRepositoryInterpreter[M[_]: Sync] private (
   ): List[Trade] = {
     trdTxs.map {
       case ano ~ isin ~ mkt ~ bs ~ up ~ qty ~ td ~ vd ~ na ~ tfid ~ amt ~ rno =>
-        Trade.trade(
-          ano,
-          isin,
-          rno,
-          mkt,
-          bs.entryName,
-          up,
-          qty,
-          td,
-          vd,
-          List(TradeTaxFee(tfid, Money(amt))),
-          na.map(Money(_))
-        ).fold(errs => throw new Exception(errs.toString), identity)
+        Trade
+          .trade(
+            ano,
+            isin,
+            rno,
+            mkt,
+            bs.entryName,
+            up,
+            qty,
+            td,
+            vd,
+            List(TradeTaxFee(tfid, Money(amt))),
+            na.map(Money(_))
+          )
+          .fold(errs => throw new Exception(errs.toString), identity)
     }
   }
 
@@ -136,7 +138,9 @@ private object TradeQueries {
 
   def taxFeeEncoder(refNo: TradeReferenceNo): Encoder[TradeTaxFee] =
     (varchar ~ taxFeeId ~ numeric).values
-      .contramap((t: TradeTaxFee) => refNo.value.value ~ t.taxFeeId ~ t.amount.value)
+      .contramap(
+        (t: TradeTaxFee) => refNo.value.value ~ t.taxFeeId ~ t.amount.value
+      )
 
   val insertTrade: Command[Trade] =
     sql"""

@@ -30,7 +30,7 @@ trait Trading[F[_]] {
     * @return a list of `Trade` under the effect `F`
     */
   def getTrades(
-      forAccountNo: AccountNo,
+      forAccountNo: String,
       forDate: Option[LocalDate] = None
   ): F[List[Trade]]
 

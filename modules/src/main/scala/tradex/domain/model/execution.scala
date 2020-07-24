@@ -1,6 +1,8 @@
 package tradex.domain
 package model
 
+import java.util.UUID
+
 import cats.implicits._
 
 import common._
@@ -43,15 +45,15 @@ object execution {
   object Execution {
     // smart constructor
     def execution(
-      executionRefNo: String,
-      accountNo: String,
-      orderNo: String,
-      isin: String,
-      market: String,
-      buySell: String,
-      unitPrice: BigDecimal,
-      quantity: BigDecimal,
-      dateOfExecution: LocalDateTime
+        executionRefNo: String,
+        accountNo: String,
+        orderNo: String,
+        isin: String,
+        market: String,
+        buySell: String,
+        unitPrice: BigDecimal,
+        quantity: BigDecimal,
+        dateOfExecution: LocalDateTime
     ): ValidationResult[Execution] = {
       (
         validateExecutionRefNo(executionRefNo),
@@ -65,12 +67,12 @@ object execution {
       ).mapN { (ref, ano, ono, isin, m, bs, up, qty) =>
         Execution(
           ref,
-          ano, 
-          ono, 
+          ano,
+          ono,
           isin,
           m,
           BuySell.withName(bs),
-          up, 
+          up,
           qty,
           dateOfExecution
         )
@@ -105,10 +107,9 @@ object execution {
     }
 
     private[model] def validateExecutionRefNo(
-      refNo: String
+        refNo: String
     ): ValidationResult[ExecutionReferenceNo] = {
-      validate[ExecutionReferenceNo](refNo)
-        .toValidated
+      validate[ExecutionReferenceNo](refNo).toValidated
     }
 
     private[model] def validateMarket(m: String): ValidationResult[Market] = {
@@ -117,5 +118,15 @@ object execution {
         .toValidatedNec
         .leftMap(_.map(_.toString))
     }
+
+    def generateExecutionReferenceNo(): ExecutionReferenceNo =
+      validateExecutionRefNo(UUID.randomUUID().toString)
+        .fold(
+          errs =>
+            throw new Exception(
+              s"Unable to generate reference no : ${errs.toString}"
+            ),
+          identity
+        )
   }
 }

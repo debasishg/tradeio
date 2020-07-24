@@ -40,7 +40,7 @@ object orderGenerator {
   def generateOrders(): String = {
     val o1 =
       FrontOfficeOrder(
-        ano1.value,
+        ano1String,
         Instant.now(),
         "US0378331005",
         100.00,
@@ -49,7 +49,7 @@ object orderGenerator {
       )
     val o2 =
       FrontOfficeOrder(
-        ano1.value,
+        ano1String,
         Instant.now(),
         "GB0002634946",
         200.00,
@@ -58,7 +58,7 @@ object orderGenerator {
       )
     val o3 =
       FrontOfficeOrder(
-        ano2.value,
+        ano2String,
         Instant.now(),
         "US0378331005",
         100.00,

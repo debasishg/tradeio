@@ -27,7 +27,9 @@ final class OrderRepositoryInterpreter[M[_]: Monad] private (
     repo.update(_ + ((ord.no.value.value, ord))).map(_ => ord)
 
   def store(orders: NonEmptyList[model.order.Order]): M[Unit] =
-    repo.update(_ ++ orders.toList.map(ord => ((ord.no.value.value, ord)))).map(_ => ())
+    repo
+      .update(_ ++ orders.toList.map(ord => ((ord.no.value.value, ord))))
+      .map(_ => ())
 }
 
 // Smart constructor

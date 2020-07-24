@@ -5,6 +5,7 @@ import java.io.InputStream
 
 import cats.effect._
 import cats.implicits._
+import cats.data.NonEmptyList
 
 import io.chrisdavenport.cormorant._
 import io.chrisdavenport.cormorant.generic.semiauto._
@@ -50,12 +51,13 @@ object ordering {
     */
   private def fromFrontOffice(
       order: String
-  ): ErrorOr[List[FrontOfficeOrder]] = {
+  ): ErrorOr[NonEmptyList[FrontOfficeOrder]] = {
     parseComplete(order)
       .leftWiden[Error]
       .flatMap(_.readLabelled[FrontOfficeOrder].sequence)
       .toValidatedNec
       .toEither
       .leftMap(_.map(_.toString))
+      .map(l => NonEmptyList.fromList(l).get)
   }
 }

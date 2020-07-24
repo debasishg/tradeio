@@ -18,6 +18,7 @@ import order._
 import execution._
 import market._
 import enums._
+import java.{util => ju}
 
 object trade {
   sealed abstract class TaxFeeId(override val entryName: String)
@@ -121,21 +122,28 @@ object trade {
       ).mapN { (ref, a, i, q, u, bs, m) =>
         val trd = Trade(a, i, ref, m, BuySell.withName(bs), u, q, td, vd)
         if (taxFees.isEmpty && !netAmt.isDefined) {
-
           val taxFees =
             forTrade(trd).map(taxFeeCalculate(trd, _)).getOrElse(List.empty)
           val netAmt = netAmount(trd, taxFees)
           trd.copy(taxFees = taxFees, netAmount = Option(netAmt))
-
         } else trd
       }.toEither
     }
 
     private[model] def validateTradeRefNo(
-      refNo: String
+        refNo: String
     ): ValidationResult[TradeReferenceNo] = {
-      validate[TradeReferenceNo](refNo)
-        .toValidated
+      validate[TradeReferenceNo](refNo).toValidated
     }
+
+    def generateTradeReferenceNo(): TradeReferenceNo =
+      validateTradeRefNo(ju.UUID.randomUUID().toString)
+        .fold(
+          errs =>
+            throw new Exception(
+              s"Unable to generate reference no : ${errs.toString}"
+            ),
+          identity
+        )
   }
 }

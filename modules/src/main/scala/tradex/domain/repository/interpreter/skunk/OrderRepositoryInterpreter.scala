@@ -61,19 +61,23 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
   ): List[Order] = {
     lis.map {
       case odt ~ ano ~ isin ~ qty ~ up ~ bs ~ ono =>
-        Order.makeOrder(
-          ono, 
-          odt, 
-          ano, 
-          NonEmptyList.one(
-            Order.makeLineItem(
-              isin,
-              qty,
-              up,
-              bs.entryName
-            ).fold(errs => throw new Exception(errs.toString), identity)
+        Order
+          .makeOrder(
+            ono,
+            odt,
+            ano,
+            NonEmptyList.one(
+              Order
+                .makeLineItem(
+                  isin,
+                  qty,
+                  up,
+                  bs.entryName
+                )
+                .fold(errs => throw new Exception(errs.toString), identity)
+            )
           )
-        ).fold(errs => throw new Exception(errs.toString), identity)
+          .fold(errs => throw new Exception(errs.toString), identity)
     }
   }
 
@@ -91,7 +95,7 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
           .map { m =>
             m.map {
               case (ono, lis) =>
-                val singleOrders = 
+                val singleOrders =
                   makeSingleLineItemOrders(
                     ono,
                     lis
@@ -129,7 +133,9 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
     session.prepare(deleteLineItems).use(_.execute(ord.no.value.value)) *>
       session
         .prepare(upsertOrder)
-        .use(_.execute(ord.no.value.value ~ ord.date ~ ord.accountNo.value.value)) *>
+        .use(
+          _.execute(ord.no.value.value ~ ord.date ~ ord.accountNo.value.value)
+        ) *>
       session
         .prepareAndExecute(lineItems)(insertLineItems(ord.no, lineItems))
         .void
@@ -156,7 +162,9 @@ private object OrderQueries {
 
   val orderEncoder: Encoder[Order] =
     (varchar ~ varchar ~ timestamp).values
-      .contramap((o: Order) => o.no.value.value ~ o.accountNo.value.value ~ o.date)
+      .contramap(
+        (o: Order) => o.no.value.value ~ o.accountNo.value.value ~ o.date
+      )
 
   def lineItemEncoder(orderNo: OrderNo) =
     (varchar ~ varchar ~ numeric ~ numeric ~ buySell).values.contramap(

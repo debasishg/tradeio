@@ -32,18 +32,19 @@ object instrument {
 
     private[model] def validateInstrumentName(
         name: String
-    ): ValidationResult[InstrumentName] = validate[InstrumentName](name).toValidated
+    ): ValidationResult[InstrumentName] =
+      validate[InstrumentName](name).toValidated
 
     private[domain] def instrument(
-      isinCode: String,
-      name: String,
-      instrumentType: InstrumentType,
-      dateOfIssue: Option[LocalDateTime], // for non CCY
-      dateOfMaturity: Option[LocalDateTime], // for Fixed Income
-      lotSize: LotSize,
-      unitPrice: Option[Money], // for Equity
-      couponRate: Option[Money], // for Fixed Income
-      couponFrequency: Option[BigDecimal] // for Fixed Income
+        isinCode: String,
+        name: String,
+        instrumentType: InstrumentType,
+        dateOfIssue: Option[LocalDateTime], // for non CCY
+        dateOfMaturity: Option[LocalDateTime], // for Fixed Income
+        lotSize: LotSize,
+        unitPrice: Option[Money], // for Equity
+        couponRate: Option[Money], // for Fixed Income
+        couponFrequency: Option[BigDecimal] // for Fixed Income
     ): ValidationResult[Instrument] = {
       (
         validateISINCode(isinCode),
