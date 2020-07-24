@@ -3,11 +3,13 @@ package model
 
 import java.time.LocalDateTime
 
+import cats.data._
 import cats.implicits._
 
 import squants.market._
 
 import common._
+import NewtypeRefinedOps._
 import newtypes._
 import enums._
 
@@ -25,11 +27,14 @@ object instrument {
   )
 
   object Instrument {
+    private[model] def validateISINCode(isin: String): ValidationResult[ISINCode] = validate[ISINCode](isin).toValidated
+    /*
     private[model] def validateISINCode(
         isin: ISINCode
     ): ValidationResult[ISINCode] =
       if (isin.value.isEmpty || isin.value.size != 12)
         s"ISIN code has to be 12 characters long: found $isin".invalidNec
       else isin.validNec
+      */
   }
 }

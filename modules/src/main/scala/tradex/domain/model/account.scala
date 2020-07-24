@@ -8,6 +8,8 @@ import cats.implicits._
 import squants.market._
 
 import common._
+import NewtypeRefinedOps._
+
 import newtypes._
 import enums._
 
@@ -25,8 +27,8 @@ object account {
 
   object Account {
     def tradingAccount(
-        no: AccountNo,
-        name: AccountName,
+        no: String,
+        name: String,
         openDate: Option[LocalDateTime],
         closeDate: Option[LocalDateTime],
         baseCcy: Currency,
@@ -34,11 +36,12 @@ object account {
     ): ErrorOr[Account] = {
       (
         validateAccountNo(no),
+        validateAccountName(name),
         validateOpenCloseDate(openDate.getOrElse(today), closeDate)
-      ).mapN { (n, d) =>
+      ).mapN { (n, nm, d) =>
         Account(
           n,
-          name,
+          nm,
           d._1,
           d._2,
           AccountType.Trading,
@@ -50,8 +53,8 @@ object account {
     }
 
     def settlementAccount(
-        no: AccountNo,
-        name: AccountName,
+        no: String,
+        name: String,
         openDate: Option[LocalDateTime],
         closeDate: Option[LocalDateTime],
         baseCcy: Currency,
@@ -59,11 +62,12 @@ object account {
     ): ErrorOr[Account] = {
       (
         validateAccountNo(no),
+        validateAccountName(name),
         validateOpenCloseDate(openDate.getOrElse(today), closeDate)
-      ).mapN { (n, d) =>
+      ).mapN { (n, nm, d) =>
         Account(
           n,
-          name,
+          nm,
           d._1,
           d._2,
           AccountType.Settlement,
@@ -75,8 +79,8 @@ object account {
     }
 
     def tradingAndSettlementAccount(
-        no: AccountNo,
-        name: AccountName,
+        no: String,
+        name: String,
         openDate: Option[LocalDateTime],
         closeDate: Option[LocalDateTime],
         baseCcy: Currency,
@@ -85,11 +89,12 @@ object account {
     ): ErrorOr[Account] = {
       (
         validateAccountNo(no),
+        validateAccountName(name),
         validateOpenCloseDate(openDate.getOrElse(today), closeDate)
-      ).mapN { (n, d) =>
+      ).mapN { (n, nm, d) =>
         Account(
           n,
-          name,
+          nm,
           d._1,
           d._2,
           AccountType.Both,
@@ -101,11 +106,14 @@ object account {
     }
 
     private[model] def validateAccountNo(
-        no: AccountNo
+        no: String
     ): ValidationResult[AccountNo] =
-      if (no.value.isEmpty || no.value.size < 5)
-        s"Account No has to be at least 5 characters long: found $no".invalidNec
-      else no.validNec
+      validate[AccountNo](no).toValidated.leftMap(_ :+ s"Account No has to be at least 5 characters long: found $no")
+
+    private[model] def validateAccountName(
+        name: String
+    ): ValidationResult[AccountName] =
+      validate[AccountName](name).toValidated.leftMap(_ :+ s"Account Name cannot be blank")
 
     private def validateOpenCloseDate(
         od: LocalDateTime,

@@ -7,10 +7,12 @@ import java.util.UUID
 
 import cats.data.NonEmptyList
 import cats.implicits._
+import cats.instances.list._
 
 import instrument._
 import account._
 import common._
+import NewtypeRefinedOps._
 import newtypes._
 import enums._
 
@@ -44,73 +46,88 @@ object order {
       * records after validation
       */
     private[domain] def create(
-        frontOfficeOrders: List[FrontOfficeOrder]
+        frontOfficeOrders: NonEmptyList[FrontOfficeOrder]
     ): ErrorOr[List[Order]] = {
       frontOfficeOrders
-        .traverse(validateFrontOfficeOrder)
-        .fold(
-          Left(_),
-          fos => Right(createImpl(fos))
-        )
-    }
-
-    /**
-      * Creates `Order` from `FrontOfficeOrder`
-      */
-    private def createImpl(foOrders: List[FrontOfficeOrder]): List[Order] = {
-      foOrders
-        .groupBy(_.accountNo)
-        .map { orderForAccount =>
-          val ano = orderForAccount._1
-          val fords = orderForAccount._2
-          val lineItems = fords.map { ford =>
-            LineItem(
-              ISINCode(ford.isin),
-              Quantity(ford.qty),
-              UnitPrice(ford.unitPrice),
-              BuySell.withName(ford.buySell)
-            )
-          }
-          Order(
-            OrderNo(UUID.randomUUID().toString()),
-            today,
-            AccountNo(ano),
-            NonEmptyList.of(lineItems.head, lineItems.tail: _*)
-          )
-        }
         .toList
+        .groupBy(_.accountNo)
+        .map { case (ano, forders) => makeOrder(UUID.randomUUID.toString, ano, forders) }
+        .toList
+        .sequence
+        .toEither
     }
 
-    /**
-      * Validates a single `FrontOfficeOrder` record (applicative style)
-      */
-    private def validateFrontOfficeOrder(
-        fo: FrontOfficeOrder
-    ): ErrorOr[FrontOfficeOrder] = {
+    private[domain] def makeOrder(
+        ono: String,
+        ano: String, 
+        forders: List[FrontOfficeOrder]
+    ): ValidationResult[Order] = {
+      forders.map{ fo => 
+        makeLineItem(fo.isin, fo.qty, fo.unitPrice, fo.buySell)
+      }
+      .sequence
+      .map { items =>
+        makeOrder(ono, ano, NonEmptyList.of(items.head, items.tail: _*))
+      }
+      .fold(_.invalid[Order], identity)
+    }
+
+    private[domain] def makeLineItem(
+      isin: String,
+      quantity: BigDecimal,
+      unitPrice: BigDecimal,
+      buySell: String
+    ): ValidationResult[LineItem] = {
       (
-        Account.validateAccountNo(AccountNo(fo.accountNo)),
-        Instrument.validateISINCode(ISINCode(fo.isin)),
-        validateQuantity(Quantity(fo.qty)),
-        validateUnitPrice(UnitPrice(fo.unitPrice)),
-        validateBuySell(fo.buySell)
-      ).mapN { (ano, ins, q, p, bs) =>
-        FrontOfficeOrder(ano.value, fo.date, ins.value, q, p, bs)
-      }.toEither
+        Instrument.validateISINCode(isin),
+        validateQuantity(quantity),
+        validateUnitPrice(unitPrice),
+        validateBuySell(buySell)
+      ).mapN { (isin, qty, price, bs) =>
+        LineItem(isin, qty, price, BuySell.withName(bs))
+      }
+    }
+
+    private[domain] def makeOrder(
+        orderNo: String, 
+        accountNo: String, 
+        lineItems: NonEmptyList[LineItem]
+    ): ValidationResult[Order] = {
+      (
+        validateOrderNo(orderNo),
+        Account.validateAccountNo(accountNo),
+      ).mapN { (orderNo, accountNo) => 
+        Order(
+          orderNo,
+          today,
+          accountNo, 
+          lineItems
+        ) 
+      }
     }
 
     private[model] def validateQuantity(
-        qty: Quantity
-    ): ValidationResult[BigDecimal] =
-      (if (qty.value <= 0)
-         s"Quantity has to be positive: found $qty".invalidNec
-       else qty.validNec).map(_.value)
+      qty: BigDecimal
+    ): ValidationResult[Quantity] = { 
+      validate[Quantity](qty)
+        .toValidated
+        .leftMap(_ :+ s"Quantity has to be positive: found $qty")
+    }
 
     private[model] def validateUnitPrice(
-        price: UnitPrice
-    ): ValidationResult[BigDecimal] =
-      (if (price.value <= 0)
-         s"Unit Price has to be positive: found $price".invalidNec
-       else price.validNec).map(_.value)
+      price: BigDecimal
+    ): ValidationResult[UnitPrice] = { 
+      validate[UnitPrice](price)
+        .toValidated
+        .leftMap(_ :+ s"Unit Price has to be positive: found $price")
+    }
+
+    private[model] def validateOrderNo(
+      orderNo: String
+    ): ValidationResult[OrderNo] = {
+      validate[OrderNo](orderNo)
+        .toValidated
+    }
 
     private[model] def validateBuySell(bs: String): ValidationResult[String] = {
       BuySell
