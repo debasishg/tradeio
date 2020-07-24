@@ -78,7 +78,7 @@ object trade {
     principal(trade) + taxFeeAmounts.map(_.amount).foldLeft(Money(0))(_ + _)
   }
 
-  private[domain] final case class Trade(
+  private[domain] final case class Trade private (
       accountNo: AccountNo,
       isin: ISINCode,
       refNo: TradeReferenceNo,

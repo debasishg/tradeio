@@ -14,7 +14,7 @@ import newtypes._
 import enums._
 
 object account {
-  private[domain] final case class Account(
+  private[domain] final case class Account private (
       no: AccountNo,
       name: AccountName,
       dateOfOpen: LocalDateTime,

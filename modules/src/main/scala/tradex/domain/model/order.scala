@@ -17,21 +17,21 @@ import newtypes._
 import enums._
 
 object order {
-  private[domain] final case class LineItem(
+  private[domain] final case class LineItem private (
       instrument: ISINCode,
       quantity: Quantity,
       unitPrice: UnitPrice,
       buySell: BuySell
   )
 
-  private[domain] final case class Order(
+  private[domain] final case class Order private (
       no: OrderNo,
       date: LocalDateTime,
       accountNo: AccountNo,
       items: NonEmptyList[LineItem]
   )
 
-  private[domain] final case class FrontOfficeOrder(
+  private[domain] final case class FrontOfficeOrder private (
       accountNo: String,
       date: Instant,
       isin: String,

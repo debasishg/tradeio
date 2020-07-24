@@ -17,7 +17,7 @@ import java.time.LocalDateTime
 
 object execution {
   // primary domain entity
-  private[domain] final case class Execution(
+  private[domain] final case class Execution private (
       executionRefNo: ExecutionReferenceNo,
       accountNo: AccountNo,
       orderNo: OrderNo,
@@ -30,7 +30,7 @@ object execution {
   )
 
   // as per layout obtained from exchange
-  private[domain] final case class ExchangeExecution(
+  private[domain] final case class ExchangeExecution private (
       executionRefNo: String,
       accountNo: String,
       orderNo: String,

@@ -13,7 +13,7 @@ import newtypes._
 import enums._
 
 object instrument {
-  private[domain] final case class Instrument(
+  private[domain] final case class Instrument private (
       isinCode: ISINCode,
       name: InstrumentName,
       instrumentType: InstrumentType,
