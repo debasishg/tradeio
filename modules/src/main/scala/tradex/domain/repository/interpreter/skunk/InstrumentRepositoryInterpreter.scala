@@ -16,14 +16,13 @@ import common._
 import model.newtypes._
 import model.enums._
 import model.instrument._
-import ext.skunkx._
 
 final class InstrumentRepositoryInterpreter[M[_]: Sync] private (
     sessionPool: Resource[M, Session[M]]
 ) extends InstrumentRepository[M] {
   import InstrumentQueries._
 
-  def query(isin: ISINCode): M[Option[Instrument]] =
+  def query(isin: String): M[Option[Instrument]] =
     sessionPool.use { session =>
       session.prepare(selectByISINCode).use { ps =>
         ps.option(isin)
@@ -54,9 +53,9 @@ private object InstrumentQueries {
     (varchar ~ varchar ~ instrumentType ~ timestamp.opt ~ timestamp.opt ~ int2.opt ~ numeric.opt ~ numeric.opt ~ numeric.opt)
       .map {
         case isin ~ nm ~ tp ~ di ~ dm ~ ls ~ up ~ cr ~ cf =>
-          Instrument(
-            ISINCode(isin),
-            InstrumentName(nm),
+          Instrument.instrument(
+            isin,
+            nm,
             tp,
             di,
             dm,
@@ -64,14 +63,14 @@ private object InstrumentQueries {
             up.map(Money(_)),
             cr.map(Money(_)),
             cf
-          )
+          ).fold(errs => throw new Exception(errs.toString), identity)
       }
 
-  val selectByISINCode: Query[ISINCode, Instrument] =
+  val selectByISINCode: Query[String, Instrument] =
     sql"""
         SELECT i.isinCode, i.name, i.type, i.dateOfIssue, i.dateOfMaturity, i.lotSize, i.unitPrice, i.couponRate, i.couponFrequency
         FROM instruments AS i
-        WHERE i.isinCode = ${varchar.cimap[ISINCode]}
+        WHERE i.isinCode = $varchar
        """.query(decoder)
 
   val selectByInstrumentType: Query[InstrumentType, Instrument] =
@@ -108,7 +107,7 @@ private object InstrumentQueries {
               couponRate,
               couponFrequency
               ) =>
-            isinCode.value ~ name.value ~ typ ~ dateOfIssue ~ dateOfMaturity ~ Option(
+            isinCode.value.value ~ name.value.value ~ typ ~ dateOfIssue ~ dateOfMaturity ~ Option(
               lotSize.value
             ) ~ unitPrice.map(u => BigDecimal.decimal(u.value)) ~ couponRate
               .map(c => BigDecimal.decimal(c.value)) ~ couponFrequency

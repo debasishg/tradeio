@@ -18,6 +18,8 @@ import model.newtypes._
 import model.enums._
 import model.order._
 import ext.skunkx._
+import common._
+import NewtypeRefinedOps._
 
 final class OrderRepositoryInterpreter[M[_]: Sync] private (
     sessionPool: Resource[M, Session[M]]
@@ -33,7 +35,7 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
       Order(x.no, x.date, x.accountNo, x.items ++ y.items.toList)
   }
 
-  def query(no: OrderNo): M[Option[Order]] =
+  def query(no: String): M[Option[Order]] =
     sessionPool.use { session =>
       session.prepare(selectByOrderNo).use { ps =>
         ps.stream(no, 1024)
@@ -54,21 +56,26 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
     * and returns an `Order` with a single `LineItem` in it.
     */
   private def makeSingleLineItemOrders(
-      ono: OrderNo,
+      ono: String,
       lis: List[
         LocalDateTime ~ String ~ String ~ BigDecimal ~ BigDecimal ~ BuySell ~ String
       ]
   ): List[Order] = {
     lis.map {
       case odt ~ ano ~ isin ~ qty ~ up ~ bs ~ ono =>
-        Order(
-          OrderNo(ono),
-          odt,
-          AccountNo(ano),
+        Order.makeOrder(
+          ono, 
+          odt, 
+          ano, 
           NonEmptyList.one(
-            LineItem(ISINCode(isin), Quantity(qty), UnitPrice(up), bs)
+            Order.makeLineItem(
+              isin,
+              qty,
+              up,
+              bs.entryName
+            ).fold(errs => throw new Exception(errs.toString), identity)
           )
-        )
+        ).fold(errs => throw new Exception(errs.toString), identity)
     }
   }
 
@@ -86,7 +93,11 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
           .map { m =>
             m.map {
               case (ono, lis) =>
-                val singleOrders = makeSingleLineItemOrders(OrderNo(ono), lis)
+                val singleOrders = 
+                  makeSingleLineItemOrders(
+                    ono,
+                    lis
+                  )
                 singleOrders.tail
                   .foldLeft(singleOrders.head)(Semigroup[Order].combine)
             }.toList
@@ -117,10 +128,10 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
       session: Session[M]
   ): M[Order] = {
     val lineItems = ord.items.toList
-    session.prepare(deleteLineItems).use(_.execute(ord.no.value)) *>
+    session.prepare(deleteLineItems).use(_.execute(ord.no.value.value)) *>
       session
         .prepare(upsertOrder)
-        .use(_.execute(ord.no.value ~ ord.date ~ ord.accountNo.value)) *>
+        .use(_.execute(ord.no.value.value ~ ord.date ~ ord.accountNo.value.value)) *>
       session
         .prepareAndExecute(lineItems)(insertLineItems(ord.no, lineItems))
         .void
@@ -147,19 +158,19 @@ private object OrderQueries {
 
   val orderEncoder: Encoder[Order] =
     (varchar ~ varchar ~ timestamp).values
-      .contramap((o: Order) => o.no.value ~ o.accountNo.value ~ o.date)
+      .contramap((o: Order) => o.no.value.value ~ o.accountNo.value.value ~ o.date)
 
   def lineItemEncoder(orderNo: OrderNo) =
     (varchar ~ varchar ~ numeric ~ numeric ~ buySell).values.contramap(
       (li: LineItem) =>
-        orderNo.value ~ li.instrument.value ~ li.quantity.value ~ li.unitPrice.value ~ li.buySell
+        orderNo.value.value ~ li.instrument.value.value ~ li.quantity.value.value ~ li.unitPrice.value.value ~ li.buySell
     )
 
   val selectByOrderNo =
     sql"""
         SELECT o.dateOfOrder, o.accountNo, l.isinCode, l.quantity, l.unitPrice, l.buySellFlag, o.no
         FROM orders o, lineItems l
-        WHERE o.no = ${varchar.cimap[OrderNo]}
+        WHERE o.no = $varchar
         AND   o.no = l.orderNo
        """.query(orderLineItemDecoder)
 

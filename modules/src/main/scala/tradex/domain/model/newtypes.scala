@@ -32,7 +32,7 @@ object newtypes {
   ]
 
   @newtype case class ISINCode(value: ISINCodeString)
-  @newtype case class InstrumentName(value: String)
+  @newtype case class InstrumentName(value: NonEmptyString)
   @newtype case class LotSize(value: Short)
 
   // order

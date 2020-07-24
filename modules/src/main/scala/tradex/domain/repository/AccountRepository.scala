@@ -3,14 +3,13 @@ package repository
 
 import java.time.LocalDate
 
-import model.newtypes._
 import model.enums._
 
 import model.account._
 
 trait AccountRepository[M[_]] {
   /** query by account number */
-  def query(no: AccountNo): M[Option[Account]]
+  def query(no: String): M[Option[Account]]
 
   /** store */
   def store(a: Account): M[Account]

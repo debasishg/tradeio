@@ -26,7 +26,7 @@ object AppData {
   ).toList.sequence
 
   val order: ValidationResult[Order] = lis.map { lineItems =>
-    Order.makeOrder("o1", ano1, NonEmptyList.fromList(lineItems).get)
+    Order.makeOrder("o1", today, ano1, NonEmptyList.fromList(lineItems).get)
   }.fold(_.invalid[Order], identity)
 
   val e1 = Execution.execution(

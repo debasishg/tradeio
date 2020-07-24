@@ -51,7 +51,7 @@ object order {
       frontOfficeOrders
         .toList
         .groupBy(_.accountNo)
-        .map { case (ano, forders) => makeOrder(UUID.randomUUID.toString, ano, forders) }
+        .map { case (ano, forders) => makeOrder(UUID.randomUUID.toString, today, ano, forders) }
         .toList
         .sequence
         .toEither
@@ -59,6 +59,7 @@ object order {
 
     private[domain] def makeOrder(
         ono: String,
+        odt: LocalDateTime,
         ano: String, 
         forders: List[FrontOfficeOrder]
     ): ValidationResult[Order] = {
@@ -67,7 +68,7 @@ object order {
       }
       .sequence
       .map { items =>
-        makeOrder(ono, ano, NonEmptyList.of(items.head, items.tail: _*))
+        makeOrder(ono, odt, ano, NonEmptyList.of(items.head, items.tail: _*))
       }
       .fold(_.invalid[Order], identity)
     }
@@ -90,6 +91,7 @@ object order {
 
     private[domain] def makeOrder(
         orderNo: String, 
+        orderDate: LocalDateTime,
         accountNo: String, 
         lineItems: NonEmptyList[LineItem]
     ): ValidationResult[Order] = {
@@ -99,7 +101,7 @@ object order {
       ).mapN { (orderNo, accountNo) => 
         Order(
           orderNo,
-          today,
+          orderDate,
           accountNo, 
           lineItems
         ) 
