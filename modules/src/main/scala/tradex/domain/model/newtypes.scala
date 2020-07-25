@@ -12,6 +12,7 @@ import eu.timepit.refined.types.string.NonEmptyString
 
 import _root_.shapeless.::
 import _root_.shapeless.HNil
+import eu.timepit.refined.string.MatchesRegex
 
 object newtypes {
   // account
@@ -27,8 +28,9 @@ object newtypes {
   // instrument
   type ISINCodeString = String Refined AllOf[
     MaxSize[W.`12`.T] ::
-      MinSize[W.`12`.T] ::
-      HNil
+    MinSize[W.`12`.T] ::
+    MatchesRegex[W.`"([A-Z]{2})((?![A-Z]{10}\b)[A-Z0-9]{10})"`.T] ::
+    HNil
   ]
 
   @newtype case class ISINCode(value: ISINCodeString)
