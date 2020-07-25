@@ -412,7 +412,7 @@ object Exchange {
               .fold(errs => throw new Exception(errs.toString), identity)
             clientAccounts
               .map { accountNo =>
-                Trade(
+                val trd = Trade(
                   accountNo,
                   execution.isin,
                   Trade.generateTradeReferenceNo(),
@@ -421,6 +421,7 @@ object Exchange {
                   execution.unitPrice,
                   qty
                 )
+                Trade.withTaxFee(trd)
               }
           }
         }

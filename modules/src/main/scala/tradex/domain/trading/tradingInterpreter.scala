@@ -93,7 +93,7 @@ class TradingInterpreter[M[_]: MonadThrowable](
           .fold(errs => throw new Exception(errs.toString), identity)
         clientAccounts
           .map { accountNo =>
-            Trade(
+            val trd = Trade(
               accountNo,
               execution.isin,
               Trade.generateTradeReferenceNo(),
@@ -102,6 +102,7 @@ class TradingInterpreter[M[_]: MonadThrowable](
               execution.unitPrice,
               qty
             )
+            Trade.withTaxFee(trd)
           }
       }
     persistTrades(trades) *> ev.pure(trades)

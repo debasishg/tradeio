@@ -130,6 +130,15 @@ object trade {
       }.toEither
     }
 
+    def withTaxFee(trade: Trade): Trade = {
+      if (trade.taxFees.isEmpty && !trade.netAmount.isDefined) {
+        val taxFees =
+          forTrade(trade).map(taxFeeCalculate(trade, _)).getOrElse(List.empty)
+        val netAmt = netAmount(trade, taxFees)
+        trade.copy(taxFees = taxFees, netAmount = Option(netAmt))
+      } else trade
+    }
+
     private[model] def validateTradeRefNo(
         refNo: String
     ): ValidationResult[TradeReferenceNo] = {
