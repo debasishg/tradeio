@@ -79,3 +79,10 @@ CREATE TABLE IF NOT EXISTS taxFees (
     description varchar NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS balance (
+    balanceId serial PRIMARY KEY,
+    accountNo varchar NOT NULL references accounts(no),
+    amount decimal NOT NULL,
+    asOf timestamp NOT NULL,
+    currency varchar NOT NULL
+);
