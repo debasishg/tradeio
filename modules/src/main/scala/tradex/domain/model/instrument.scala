@@ -35,28 +35,33 @@ object instrument {
     ): ValidationResult[InstrumentName] =
       validate[InstrumentName](name).toValidated
 
+    private[model] def validateLotSize(
+        size: Short
+    ): ValidationResult[LotSize] = validate[LotSize](size).toValidated
+
     private[domain] def instrument(
         isinCode: String,
         name: String,
         instrumentType: InstrumentType,
         dateOfIssue: Option[LocalDateTime], // for non CCY
         dateOfMaturity: Option[LocalDateTime], // for Fixed Income
-        lotSize: LotSize,
+        lotSize: Option[Short],
         unitPrice: Option[Money], // for Equity
         couponRate: Option[Money], // for Fixed Income
         couponFrequency: Option[BigDecimal] // for Fixed Income
     ): ValidationResult[Instrument] = {
       (
         validateISINCode(isinCode),
-        validateInstrumentName(name)
-      ).mapN { (isin, name) =>
+        validateInstrumentName(name),
+        validateLotSize(lotSize.getOrElse(0))
+      ).mapN { (isin, name, ls) =>
         Instrument(
           isin,
           name,
           instrumentType,
           dateOfIssue,
           dateOfMaturity,
-          lotSize,
+          ls,
           unitPrice,
           couponRate,
           couponFrequency

@@ -60,7 +60,7 @@ private object InstrumentQueries {
               tp,
               di,
               dm,
-              LotSize(ls.getOrElse(0)),
+              ls,
               up.map(Money(_)),
               cr.map(Money(_)),
               cf
@@ -110,7 +110,7 @@ private object InstrumentQueries {
               couponFrequency
               ) =>
             isinCode.value.value ~ name.value.value ~ typ ~ dateOfIssue ~ dateOfMaturity ~ Option(
-              lotSize.value
+              lotSize.value.value
             ) ~ unitPrice.map(u => BigDecimal.decimal(u.value)) ~ couponRate
               .map(c => BigDecimal.decimal(c.value)) ~ couponFrequency
         }
