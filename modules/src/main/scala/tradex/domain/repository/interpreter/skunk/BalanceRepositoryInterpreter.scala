@@ -8,14 +8,12 @@ import cats.implicits._
 import cats.effect._
 
 import skunk._
-import skunk.data.Type
 import skunk.codec.all._
 import skunk.implicits._
 
 import squants.market._
 
 import model.balance._
-import Balance._
 import common._
 
 final class BalanceRepositoryInterpreter[M[_]: Sync] private (
@@ -45,33 +43,24 @@ final class BalanceRepositoryInterpreter[M[_]: Sync] private (
     }
 
   def all: M[List[Balance]] = sessionPool.use(_.execute(selectAll))
-
 }
 
 private object BalanceQueries {
-
-  /*
-CREATE TABLE IF NOT EXISTS balance (
-    balanceId serial PRIMARY KEY,
-    accountNo varchar NOT NULL references accounts(no),
-    amount decimal NOT NULL,
-    asOf timestamp NOT NULL,
-    currency varchar NOT NULL
-);
-*/
   val decoder: Decoder[Balance] =
     (varchar ~ numeric ~ timestamp ~ varchar)
       .map {
-        case ano ~ amt ~ asOf ~ ccy => 
-          Balance.balance(
-            ano, 
-            Money(amt), 
-            Currency(ccy).get, 
-            asOf
-          ).fold(
-            exs => throw new Exception(exs.toList.mkString("/")),
-            identity  
-          )
+        case ano ~ amt ~ asOf ~ ccy =>
+          Balance
+            .balance(
+              ano,
+              Money(amt),
+              Currency(ccy).get,
+              asOf
+            )
+            .fold(
+              exs => throw new Exception(exs.toList.mkString("/")),
+              identity
+            )
       }
 
   val encoder: Encoder[Balance] =
@@ -119,7 +108,7 @@ CREATE TABLE IF NOT EXISTS balance (
       case b =>
         b match {
           case Balance(accountNo, amount, ccy, asOf) =>
-            accountNo.value.value ~ BigDecimal(amount.value) ~ asOf ~ ccy.toString 
+            accountNo.value.value ~ BigDecimal(amount.value) ~ asOf ~ ccy.toString
         }
     }
 }

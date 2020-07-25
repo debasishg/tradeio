@@ -10,18 +10,18 @@ import account._
 
 object balance {
   private[domain] final case class Balance private (
-    accountNo: AccountNo,
-    amount: Money,
-    currency: Currency,
-    asOf: LocalDateTime
+      accountNo: AccountNo,
+      amount: Money,
+      currency: Currency,
+      asOf: LocalDateTime
   )
 
   object Balance {
     def balance(
-      accountNo: String,
-      amount: Money,
-      currency: Currency,
-      asOf: LocalDateTime
+        accountNo: String,
+        amount: Money,
+        currency: Currency,
+        asOf: LocalDateTime
     ): ValidationResult[Balance] = {
       (
         Account.validateAccountNo(accountNo),

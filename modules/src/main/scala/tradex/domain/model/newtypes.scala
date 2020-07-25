@@ -4,7 +4,6 @@ package model
 import io.estatico.newtype.macros.newtype
 
 import eu.timepit.refined._
-import eu.timepit.refined.auto._
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.numeric._
 import eu.timepit.refined.collection._
@@ -29,9 +28,9 @@ object newtypes {
   // instrument
   type ISINCodeString = String Refined AllOf[
     MaxSize[W.`12`.T] ::
-    MinSize[W.`12`.T] ::
-    MatchesRegex[W.`"([A-Z]{2})((?![A-Z]{10}\b)[A-Z0-9]{10})"`.T] ::
-    HNil
+      MinSize[W.`12`.T] ::
+      MatchesRegex[W.`"([A-Z]{2})((?![A-Z]{10}\b)[A-Z0-9]{10})"`.T] ::
+      HNil
   ]
 
   @newtype case class ISINCode(value: ISINCodeString)
