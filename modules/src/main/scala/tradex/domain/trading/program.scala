@@ -15,23 +15,27 @@ import model.newtypes._
 import model.market._
 import model.order._
 import model.trade._
+import model.balance._
 
 import AppData._
 
 object program {
   def tradeGeneration[F[_]: FlatMap](
       trading: Trading[F],
+      accounting: Accounting[F],
       csvOrder: String,
       brokerAccountNo: AccountNo,
       market: Market,
       clientAccountNos: NonEmptyList[AccountNo]
-  ): F[NonEmptyList[Trade]] = {
+  ): F[(NonEmptyList[Trade], NonEmptyList[Balance])] = {
     import trading._
+    import accounting._
     for {
       orders <- orders(csvOrder)
       executions <- execute(orders, market, brokerAccountNo)
       trades <- allocate(executions, clientAccountNos)
-    } yield trades
+      balances <- postBalance(trades)
+    } yield (trades, balances)
   }
 }
 

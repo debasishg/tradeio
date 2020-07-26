@@ -28,12 +28,16 @@ object Algebras {
       tradeRepositoryInterpreter <- TradeRepositoryInterpreter.make[F](
         sessionPool
       )
+      balanceRepositoryInterpreter <- BalanceRepositoryInterpreter.make[F](
+        sessionPool
+      )
     } yield new Algebras[F](
       accountRepositoryInterpreter,
       executionRepositoryInterpreter,
       instrumentRepositoryInterpreter,
       orderRepositoryInterpreter,
-      tradeRepositoryInterpreter
+      tradeRepositoryInterpreter,
+      balanceRepositoryInterpreter
     )
   }
 
@@ -45,12 +49,14 @@ object Algebras {
       instrumentRepositoryInterpreter <- InstrumentRepositoryInterpreter.make[F]
       orderRepositoryInterpreter <- OrderRepositoryInterpreter.make[F]
       tradeRepositoryInterpreter <- TradeRepositoryInterpreter.make[F]
+      balanceRepositoryInterpreter <- BalanceRepositoryInterpreter.make[F]
     } yield new Algebras[F](
       accountRepositoryInterpreter,
       executionRepositoryInterpreter,
       instrumentRepositoryInterpreter,
       orderRepositoryInterpreter,
-      tradeRepositoryInterpreter
+      tradeRepositoryInterpreter,
+      balanceRepositoryInterpreter
     )
   }
 }
@@ -60,5 +66,6 @@ final class Algebras[F[_]](
     val executionRepository: ExecutionRepository[F],
     val instrumentRepository: InstrumentRepository[F],
     val orderRepository: OrderRepository[F],
-    val tradeRepository: TradeRepository[F]
+    val tradeRepository: TradeRepository[F],
+    val balanceRepository: BalanceRepository[F]
 )

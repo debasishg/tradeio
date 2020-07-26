@@ -33,9 +33,12 @@ object Main extends IOApp {
               askRepo[OrderRepository[IO]](algebras.orderRepository)
             implicit val tradeRepositoryAsk =
               askRepo[TradeRepository[IO]](algebras.tradeRepository)
+            implicit val balanceRepositoryAsk =
+              askRepo[BalanceRepository[IO]](algebras.balanceRepository)
 
             program.tradeGeneration(
               new TradingInterpreter[IO],
+              new AccountingInterpreter[IO],
               csvOrder,
               brokerAccountNo,
               Market.NewYork,
@@ -44,7 +47,8 @@ object Main extends IOApp {
           }
         }
       }
-    trades.unsafeRunSync().toList.foreach(println)
+    trades.map(_._1).unsafeRunSync().toList.foreach(println)
+    trades.map(_._2).unsafeRunSync().toList.foreach(println)
     IO(ExitCode.Success)
   }
 }

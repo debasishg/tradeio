@@ -4,6 +4,7 @@ package interpreter.skunk
 
 import java.time.LocalDate
 
+import cats.data.NonEmptyList
 import cats.implicits._
 import cats.effect._
 
@@ -34,6 +35,8 @@ final class BalanceRepositoryInterpreter[M[_]: Sync] private (
         cmd.execute(b).void.map(_ => b)
       }
     }
+
+  def store(balances: NonEmptyList[Balance]): M[Unit] = ???
 
   def query(date: LocalDate): M[List[Balance]] =
     sessionPool.use { session =>

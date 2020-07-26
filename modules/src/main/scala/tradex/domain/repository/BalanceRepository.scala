@@ -3,6 +3,7 @@ package repository
 
 import java.time.LocalDate
 
+// import cats.data.NonEmptyList
 import model.balance._
 
 trait BalanceRepository[M[_]] {
@@ -11,6 +12,9 @@ trait BalanceRepository[M[_]] {
 
   /** store */
   def store(a: Balance): M[Balance]
+
+  /** store many balances */
+  // def store(balances: NonEmptyList[Balance]): M[Unit]
 
   /** query all balances that have amount as of this date */
   /** asOf date <= this date */
