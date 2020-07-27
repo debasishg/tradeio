@@ -16,10 +16,12 @@ import repository._
 class AccountingInterpreter[M[_]: MonadThrowable](
     implicit B: ApplicativeAsk[M, BalanceRepository[M]]
 ) extends Accounting[M] {
+  import Accounting._
+
   private final val ev = implicitly[MonadThrowable[M]]
 
   def postBalance(trade: Trade): M[Balance] = {
-    trade.netAmount
+    val action = trade.netAmount
       .map { amt =>
         for {
           repo <- B.ask
@@ -35,20 +37,36 @@ class AccountingInterpreter[M[_]: MonadThrowable](
           )
         )
       )
+    action.adaptError {
+      case e =>
+        AccountingError(Option(e.getMessage()).getOrElse("Unknown error"))
+    }
   }
 
   def postBalance(trades: NonEmptyList[Trade]): M[NonEmptyList[Balance]] =
     trades.map(postBalance).sequence
 
-  def getBalance(accountNo: String): M[Option[Balance]] =
-    for {
+  def getBalance(accountNo: String): M[Option[Balance]] = {
+    val action = for {
       repo <- B.ask
       balance <- repo.query(accountNo)
     } yield balance
 
-  def getBalanceByDate(date: LocalDate): M[List[Balance]] =
-    for {
+    action.adaptError {
+      case e =>
+        AccountingError(Option(e.getMessage()).getOrElse("Unknown error"))
+    }
+  }
+
+  def getBalanceByDate(date: LocalDate): M[List[Balance]] = {
+    val action = for {
       repo <- B.ask
       balance <- repo.query(date)
     } yield balance
+
+    action.adaptError {
+      case e =>
+        AccountingError(Option(e.getMessage()).getOrElse("Unknown error"))
+    }
+  }
 }

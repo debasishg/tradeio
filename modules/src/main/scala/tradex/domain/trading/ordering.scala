@@ -5,7 +5,7 @@ import java.io.InputStream
 
 import cats.effect._
 import cats.implicits._
-import cats.data.{ NonEmptyList, EitherNec }
+import cats.data.{NonEmptyList, EitherNec}
 
 import io.chrisdavenport.cormorant._
 import io.chrisdavenport.cormorant.generic.semiauto._

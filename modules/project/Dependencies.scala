@@ -52,6 +52,13 @@ object Dependencies {
   val flywayDb            = "org.flywaydb"                  % "flyway-core"                      % "5.2.4"
   val log4cats            = "io.chrisdavenport"            %% "log4cats-slf4j"                   % log4catsVersion
 
+  // Runtime
+  val logback             = "ch.qos.logback"                % "logback-classic"                  % logbackVersion % Runtime
+  val sl4jSimple          = "org.slf4j"                     % "slf4j-simple"                     % "1.7.30" % Runtime
+  val sl4jAPI             = "org.slf4j"                     % "slf4j-api"                        % "1.7.30" % Runtime
+
+
+
 
   val kindProjector = compilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)
 
@@ -63,5 +70,5 @@ object Dependencies {
       Seq(Refined.refinedCore, Refined.refinedCats, Refined.refinedShapeless) ++ 
       Seq(Ciris.cirisCore, Ciris.cirisEnum, Ciris.cirisRefined) ++ 
       Seq(Cormorant.core, Cormorant.generic, Cormorant.parser, Cormorant.refined) ++
-      Seq(Skunk.skunkCore, Skunk.skunkCirce)
+      Seq(Skunk.skunkCore, Skunk.skunkCirce) ++ Seq(sl4jAPI)
 }

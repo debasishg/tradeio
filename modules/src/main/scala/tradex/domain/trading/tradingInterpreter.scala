@@ -20,13 +20,15 @@ import model.newtypes._
 
 import repository._
 
-class TradingInterpreter[M[_]: MonadThrowable: Logger](
+class TradingInterpreter[M[+_]: MonadThrowable: Logger](
     implicit A: ApplicativeAsk[M, AccountRepository[M]],
     E: ApplicativeAsk[M, ExecutionRepository[M]],
     I: ApplicativeAsk[M, InstrumentRepository[M]],
     O: ApplicativeAsk[M, OrderRepository[M]],
     T: ApplicativeAsk[M, TradeRepository[M]]
 ) extends Trading[M] {
+  import Trading._
+
   private final val ev = implicitly[MonadThrowable[M]]
 
   def getAccountsOpenedOn(openDate: LocalDate): M[List[Account]] =
@@ -45,7 +47,7 @@ class TradingInterpreter[M[_]: MonadThrowable: Logger](
     } yield trades
 
   def orders(csvOrder: String): M[NonEmptyList[Order]] = {
-    ordering
+    val action = ordering
       .createOrders(csvOrder)
       .fold(
         nec =>
@@ -59,6 +61,9 @@ class TradingInterpreter[M[_]: MonadThrowable: Logger](
           }
         }
       )
+    action.adaptError {
+      case e => OrderingError(Option(e.getMessage()).getOrElse("Unknown error"))
+    }
   }
 
   def execute(
@@ -81,7 +86,11 @@ class TradingInterpreter[M[_]: MonadThrowable: Logger](
         )
       }
     }
-    persistExecutions(exes) *> ev.pure(exes)
+    val action = persistExecutions(exes) *> ev.pure(exes)
+    action.adaptError {
+      case e =>
+        ExecutionError(Option(e.getMessage()).getOrElse("Unknown error"))
+    }
   }
 
   def allocate(
@@ -107,7 +116,11 @@ class TradingInterpreter[M[_]: MonadThrowable: Logger](
             Trade.withTaxFee(trd)
           }
       }
-    persistTrades(trades) *> ev.pure(trades)
+    val action = persistTrades(trades) *> ev.pure(trades)
+    action.adaptError {
+      case e =>
+        AllocationError(Option(e.getMessage()).getOrElse("Unknown error"))
+    }
   }
 
   private def persistOrders(orders: NonEmptyList[Order]) =

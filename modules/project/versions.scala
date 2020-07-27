@@ -19,4 +19,5 @@ object Versions {
   val cormorantVersion = "0.3.0"
   val fs2Version = "2.1.0"
   val log4catsVersion = "1.1.1"
+  val logbackVersion = "1.2.3"
 }

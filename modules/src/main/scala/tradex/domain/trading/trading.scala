@@ -11,6 +11,7 @@ import model.order.Order
 import model.trade.Trade
 import model.market.Market
 import model.newtypes._
+import scala.util.control.NoStackTrace
 
 trait Trading[F[_]] {
   /**
@@ -70,4 +71,10 @@ trait Trading[F[_]] {
       executions: NonEmptyList[Execution],
       clientAccounts: NonEmptyList[AccountNo]
   ): F[NonEmptyList[Trade]]
+}
+
+object Trading {
+  case class OrderingError(cause: String) extends NoStackTrace
+  case class ExecutionError(cause: String) extends NoStackTrace
+  case class AllocationError(cause: String) extends NoStackTrace
 }
