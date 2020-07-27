@@ -3,6 +3,7 @@ package model
 
 import java.time.LocalDateTime
 
+import cats.data.{EitherNec, NonEmptyChain}
 import cats.implicits._
 
 import squants.market._
@@ -33,12 +34,12 @@ object account {
         closeDate: Option[LocalDateTime],
         baseCcy: Currency,
         tradingCcy: Currency
-    ): ErrorOr[Account] = {
+    ): EitherNec[String, Account] = {
       (
         validateAccountNo(no),
         validateAccountName(name),
         validateOpenCloseDate(openDate.getOrElse(today), closeDate)
-      ).mapN { (n, nm, d) =>
+      ).parMapN { (n, nm, d) =>
         Account(
           n,
           nm,
@@ -49,7 +50,7 @@ object account {
           tradingCcy.some,
           None
         )
-      }.toEither
+      }
     }
 
     def settlementAccount(
@@ -59,12 +60,12 @@ object account {
         closeDate: Option[LocalDateTime],
         baseCcy: Currency,
         settlementCcy: Currency
-    ): ErrorOr[Account] = {
+    ): EitherNec[String, Account] = {
       (
         validateAccountNo(no),
         validateAccountName(name),
         validateOpenCloseDate(openDate.getOrElse(today), closeDate)
-      ).mapN { (n, nm, d) =>
+      ).parMapN { (n, nm, d) =>
         Account(
           n,
           nm,
@@ -75,7 +76,7 @@ object account {
           None,
           settlementCcy.some
         )
-      }.toEither
+      }
     }
 
     def tradingAndSettlementAccount(
@@ -86,12 +87,12 @@ object account {
         baseCcy: Currency,
         tradingCcy: Currency,
         settlementCcy: Currency
-    ): ErrorOr[Account] = {
+    ): EitherNec[String, Account] = {
       (
         validateAccountNo(no),
         validateAccountName(name),
         validateOpenCloseDate(openDate.getOrElse(today), closeDate)
-      ).mapN { (n, nm, d) =>
+      ).parMapN { (n, nm, d) =>
         Account(
           n,
           nm,
@@ -102,55 +103,65 @@ object account {
           tradingCcy.some,
           settlementCcy.some
         )
-      }.toEither
+      }
     }
 
     private[model] def validateAccountNo(
         no: String
-    ): ValidationResult[AccountNo] =
-      validate[AccountNo](no).toValidated.leftMap(
+    ): EitherNec[String, AccountNo] =
+      validate[AccountNo](no).leftMap(
         _ :+ s"Account No has to be at least 5 characters long: found $no"
       )
 
     private[model] def validateAccountName(
         name: String
-    ): ValidationResult[AccountName] =
-      validate[AccountName](name).toValidated
+    ): EitherNec[String, AccountName] =
+      validate[AccountName](name)
         .leftMap(_ :+ s"Account Name cannot be blank")
 
     private def validateOpenCloseDate(
         od: LocalDateTime,
         cd: Option[LocalDateTime]
-    ): ValidationResult[(LocalDateTime, Option[LocalDateTime])] =
+    ): EitherNec[String, (LocalDateTime, Option[LocalDateTime])] =
       cd.map { c =>
           if (c isBefore od)
-            s"Close date [$c] cannot be earlier than open date [$od]".invalidNec
-          else (od, cd).validNec
+            Left(
+              NonEmptyChain
+                .one(s"Close date [$c] cannot be earlier than open date [$od]")
+            )
+          else Right((od, cd))
         }
-        .getOrElse { (od, cd).validNec }
+        .getOrElse { Right((od, cd)) }
 
     private def validateAccountAlreadyClosed(
         a: Account
-    ): ValidationResult[Account] = {
+    ): EitherNec[String, Account] = {
       if (a.dateOfClose isDefined)
-        s"Account ${a.no} is already closed".invalidNec
-      else a.validNec
+        Left(NonEmptyChain.one(s"Account ${a.no} is already closed"))
+      else Right(a)
     }
 
     private def validateCloseDate(
         a: Account,
         cd: LocalDateTime
-    ): ValidationResult[LocalDateTime] = {
+    ): EitherNec[String, LocalDateTime] = {
       if (cd isBefore a.dateOfOpen)
-        s"Close date [$cd] cannot be earlier than open date [${a.dateOfOpen}]".invalidNec
-      else cd.validNec
+        Left(
+          NonEmptyChain.one(
+            s"Close date [$cd] cannot be earlier than open date [${a.dateOfOpen}]"
+          )
+        )
+      else Right(cd)
     }
 
-    def close(a: Account, closeDate: LocalDateTime): ErrorOr[Account] = {
-      (validateAccountAlreadyClosed(a), validateCloseDate(a, closeDate)).mapN {
-        (acc, _) =>
+    def close(
+        a: Account,
+        closeDate: LocalDateTime
+    ): EitherNec[String, Account] = {
+      (validateAccountAlreadyClosed(a), validateCloseDate(a, closeDate))
+        .parMapN { (acc, _) =>
           acc.copy(dateOfClose = Some(closeDate))
-      }.toEither
+        }
     }
   }
 }

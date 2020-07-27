@@ -19,24 +19,34 @@ class AccountingInterpreter[M[_]: MonadThrowable](
   private final val ev = implicitly[MonadThrowable[M]]
 
   def postBalance(trade: Trade): M[Balance] = {
-    trade.netAmount.map { amt =>
-      for {
-        repo <- B.ask
-        balance <- repo.store(Balance(trade.accountNo, amt, amt.currency, today))
-      } yield balance
-    }.getOrElse(ev.raiseError(new Throwable(s"Net amount for trade $trade not available for posting")))
+    trade.netAmount
+      .map { amt =>
+        for {
+          repo <- B.ask
+          balance <- repo.store(
+            Balance(trade.accountNo, amt, amt.currency, today)
+          )
+        } yield balance
+      }
+      .getOrElse(
+        ev.raiseError(
+          new Throwable(
+            s"Net amount for trade $trade not available for posting"
+          )
+        )
+      )
   }
 
   def postBalance(trades: NonEmptyList[Trade]): M[NonEmptyList[Balance]] =
     trades.map(postBalance).sequence
 
-  def getBalance(accountNo: String): M[Option[Balance]] = 
+  def getBalance(accountNo: String): M[Option[Balance]] =
     for {
       repo <- B.ask
       balance <- repo.query(accountNo)
     } yield balance
 
-  def getBalanceByDate(date: LocalDate): M[List[Balance]] = 
+  def getBalanceByDate(date: LocalDate): M[List[Balance]] =
     for {
       repo <- B.ask
       balance <- repo.query(date)

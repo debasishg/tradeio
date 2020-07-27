@@ -12,8 +12,6 @@ import eu.timepit.refined.api._
 import eu.timepit.refined.auto._
 
 object common {
-  type ValidationResult[A] = ValidatedNec[String, A]
-  type ErrorOr[A] = Either[NonEmptyChain[String], A]
   type MonadThrowable[F[_]] = MonadError[F, Throwable]
 
   def today = LocalDateTime.now

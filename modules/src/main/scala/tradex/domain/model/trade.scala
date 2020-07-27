@@ -3,6 +3,7 @@ package model
 
 import java.time.LocalDateTime
 
+import cats.data.EitherNec
 import cats.implicits._
 
 import enumeratum._
@@ -110,7 +111,7 @@ object trade {
         vd: Option[LocalDateTime] = None,
         taxFees: List[TradeTaxFee] = List.empty,
         netAmt: Option[Money] = None
-    ): ErrorOr[Trade] = {
+    ): EitherNec[String, Trade] = {
       (
         validateTradeRefNo(refNo),
         Account.validateAccountNo(accountNo),
@@ -127,7 +128,7 @@ object trade {
           val netAmt = netAmount(trd, taxFees)
           trd.copy(taxFees = taxFees, netAmount = Option(netAmt))
         } else trd
-      }.toEither
+      }
     }
 
     def withTaxFee(trade: Trade): Trade = {
@@ -141,8 +142,8 @@ object trade {
 
     private[model] def validateTradeRefNo(
         refNo: String
-    ): ValidationResult[TradeReferenceNo] = {
-      validate[TradeReferenceNo](refNo).toValidated
+    ): EitherNec[String, TradeReferenceNo] = {
+      validate[TradeReferenceNo](refNo)
     }
 
     def generateTradeReferenceNo(): TradeReferenceNo =

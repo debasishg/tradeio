@@ -3,6 +3,7 @@ package trading
 
 import java.io.InputStream
 
+import cats.data.EitherNec
 import cats.effect._
 import cats.implicits._
 
@@ -11,7 +12,6 @@ import io.chrisdavenport.cormorant.generic.semiauto._
 import io.chrisdavenport.cormorant.parser._
 import io.chrisdavenport.cormorant.implicits._
 
-import common._
 import model.execution._
 
 object executing {
@@ -22,7 +22,7 @@ object executing {
     * Create executions reading an input stream containing csv data from
     * exchange.
     */
-  def createExecutions(in: InputStream): IO[ErrorOr[List[Execution]]] = {
+  def createExecutions(in: InputStream): IO[EitherNec[String, List[Execution]]] = {
     val acquire = IO {
       scala.io.Source.fromInputStream(in)
     }
@@ -36,7 +36,7 @@ object executing {
     * Create executions reading a string containing newline separated csv data from
     * exchange.
     */
-  def createExecutions(exchangeCsv: String): ErrorOr[List[Execution]] = {
+  def createExecutions(exchangeCsv: String): EitherNec[String, List[Execution]] = {
     fromExchange(exchangeCsv) match {
       case Left(errs) => Left(errs)
       case Right(eexs) => eexs.traverse(Execution.createExecution)
@@ -49,7 +49,7 @@ object executing {
     */
   private def fromExchange(
       executions: String
-  ): ErrorOr[List[ExchangeExecution]] = {
+  ): EitherNec[String, List[ExchangeExecution]] = {
     parseComplete(executions)
       .leftWiden[Error]
       .flatMap(_.readLabelled[ExchangeExecution].sequence)
