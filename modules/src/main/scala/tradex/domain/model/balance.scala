@@ -3,6 +3,7 @@ package model
 
 import java.time.LocalDateTime
 import squants.market._
+import cats.data.{ EitherNec, NonEmptyChain }
 import cats.implicits._
 import newtypes._
 import common._
@@ -22,20 +23,20 @@ object balance {
         amount: Money,
         currency: Currency,
         asOf: LocalDateTime
-    ): ValidationResult[Balance] = {
+    ): EitherNec[String, Balance] = {
       (
         Account.validateAccountNo(accountNo),
         validateAsOfDate(asOf)
-      ).mapN { (ano, dt) =>
+      ).parMapN { (ano, dt) =>
         Balance(ano, amount, currency, dt)
       }
     }
 
     private def validateAsOfDate(
         date: LocalDateTime
-    ): ValidationResult[LocalDateTime] =
+    ): EitherNec[String, LocalDateTime] =
       if (date.isAfter(today))
-        s"Balance date [$date] cannot be later than today".invalidNec
-      else date.validNec
+        Left(NonEmptyChain.one(s"Balance date [$date] cannot be later than today"))
+      else Right(date) 
   }
 }

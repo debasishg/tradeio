@@ -6,6 +6,7 @@ import java.time.Instant
 import java.util.UUID
 
 import cats.data.NonEmptyList
+import cats.data.EitherNec
 import cats.implicits._
 import cats.instances.list._
 
@@ -47,7 +48,7 @@ object order {
       */
     private[domain] def create(
         frontOfficeOrders: NonEmptyList[FrontOfficeOrder]
-    ): ErrorOr[List[Order]] = {
+    ): EitherNec[String, List[Order]] = {
       frontOfficeOrders.toList
         .groupBy(_.accountNo)
         .map {
@@ -56,7 +57,6 @@ object order {
         }
         .toList
         .sequence
-        .toEither
     }
 
     private[domain] def makeOrder(
@@ -64,7 +64,7 @@ object order {
         odt: LocalDateTime,
         ano: String,
         forders: List[FrontOfficeOrder]
-    ): ValidationResult[Order] = {
+    ): EitherNec[String, Order] = {
       forders
         .map { fo =>
           makeLineItem(fo.isin, fo.qty, fo.unitPrice, fo.buySell)
@@ -73,7 +73,7 @@ object order {
         .map { items =>
           makeOrder(ono, odt, ano, NonEmptyList.of(items.head, items.tail: _*))
         }
-        .fold(_.invalid[Order], identity)
+        .fold(Left(_), identity)
     }
 
     private[domain] def makeLineItem(
@@ -81,7 +81,7 @@ object order {
         quantity: BigDecimal,
         unitPrice: BigDecimal,
         buySell: String
-    ): ValidationResult[LineItem] = {
+    ): EitherNec[String, LineItem] = {
       (
         Instrument.validateISINCode(isin),
         validateQuantity(quantity),
@@ -97,7 +97,7 @@ object order {
         orderDate: LocalDateTime,
         accountNo: String,
         lineItems: NonEmptyList[LineItem]
-    ): ValidationResult[Order] = {
+    ): EitherNec[String, Order] = {
       (
         validateOrderNo(orderNo),
         Account.validateAccountNo(accountNo)
@@ -113,28 +113,28 @@ object order {
 
     private[model] def validateQuantity(
         qty: BigDecimal
-    ): ValidationResult[Quantity] = {
-      validate[Quantity](qty).toValidated
+    ): EitherNec[String, Quantity] = {
+      validate[Quantity](qty)
         .leftMap(_ :+ s"Quantity has to be positive: found $qty")
     }
 
     private[model] def validateUnitPrice(
         price: BigDecimal
-    ): ValidationResult[UnitPrice] = {
-      validate[UnitPrice](price).toValidated
+    ): EitherNec[String, UnitPrice] = {
+      validate[UnitPrice](price)
         .leftMap(_ :+ s"Unit Price has to be positive: found $price")
     }
 
     private[model] def validateOrderNo(
         orderNo: String
-    ): ValidationResult[OrderNo] = {
-      validate[OrderNo](orderNo).toValidated
+    ): EitherNec[String, OrderNo] = {
+      validate[OrderNo](orderNo)
     }
 
-    private[model] def validateBuySell(bs: String): ValidationResult[String] = {
+    private[model] def validateBuySell(bs: String): EitherNec[String, String] = {
       BuySell
         .withNameEither(bs)
-        .toValidatedNec
+        .toEitherNec
         .map(_.entryName)
         .leftMap(_.map(_.toString))
     }

@@ -4,6 +4,7 @@ package model
 import java.util.UUID
 
 import cats.implicits._
+import cats.data.EitherNec
 
 import common._
 import NewtypeRefinedOps._
@@ -54,7 +55,7 @@ object execution {
         unitPrice: BigDecimal,
         quantity: BigDecimal,
         dateOfExecution: LocalDateTime
-    ): ValidationResult[Execution] = {
+    ): EitherNec[String, Execution] = {
       (
         validateExecutionRefNo(executionRefNo),
         Account.validateAccountNo(accountNo),
@@ -64,7 +65,7 @@ object execution {
         Order.validateBuySell(buySell),
         Order.validateUnitPrice(unitPrice),
         Order.validateQuantity(quantity)
-      ).mapN { (ref, ano, ono, isin, m, bs, up, qty) =>
+      ).parMapN { (ref, ano, ono, isin, m, bs, up, qty) =>
         Execution(
           ref,
           ano,
@@ -82,7 +83,7 @@ object execution {
     // smart constructor from data received from exchange
     private[domain] def createExecution(
         eex: ExchangeExecution
-    ): ErrorOr[Execution] = {
+    ): EitherNec[String, Execution] = {
       (
         validateExecutionRefNo(eex.executionRefNo),
         Account.validateAccountNo(eex.accountNo),
@@ -91,7 +92,7 @@ object execution {
         Order.validateUnitPrice(eex.unitPrice),
         Order.validateQuantity(eex.quantity),
         Order.validateOrderNo(eex.orderNo)
-      ).mapN { (ref, ano, ins, bs, up, q, ono) =>
+      ).parMapN { (ref, ano, ins, bs, up, q, ono) =>
         Execution(
           ref,
           ano,
@@ -103,19 +104,19 @@ object execution {
           q,
           eex.dateOfExecution
         )
-      }.toEither
+      }
     }
 
     private[model] def validateExecutionRefNo(
         refNo: String
-    ): ValidationResult[ExecutionReferenceNo] = {
-      validate[ExecutionReferenceNo](refNo).toValidated
+    ): EitherNec[String, ExecutionReferenceNo] = {
+      validate[ExecutionReferenceNo](refNo)
     }
 
-    private[model] def validateMarket(m: String): ValidationResult[Market] = {
+    private[model] def validateMarket(m: String): EitherNec[String, Market] = {
       Market
         .withNameEither(m)
-        .toValidatedNec
+        .toEitherNec
         .leftMap(_.map(_.toString))
     }
 
