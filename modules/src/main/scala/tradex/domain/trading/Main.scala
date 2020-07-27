@@ -3,6 +3,10 @@ package trading
 
 import cats.data._
 import cats.effect._
+import cats.implicits._
+
+import io.chrisdavenport.log4cats.Logger
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 
 import model.market._
 
@@ -17,10 +21,13 @@ object Main extends IOApp {
     val brokerAccountNo = ano3
     val clientAccounts = NonEmptyList.of(ano1, ano2)
 
+    implicit val logger = Slf4jLogger.getLogger[IO]
+
     def askRepo[A](repo: A) = DefaultApplicativeAsk.constant[IO, A](repo)
 
     val trades =
       config.load[IO].flatMap { cfg =>
+        Logger[IO].info(s"Loaded config $cfg") >>
         AppResources.make[IO](cfg).use { res =>
           Algebras.make[IO](res.psql).flatMap { algebras =>
             implicit val accountRepositoryAsk =

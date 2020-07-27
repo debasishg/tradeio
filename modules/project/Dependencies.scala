@@ -50,10 +50,12 @@ object Dependencies {
   }
 
   val flywayDb            = "org.flywaydb"                  % "flyway-core"                      % "5.2.4"
+  val log4cats            = "io.chrisdavenport"            %% "log4cats-slf4j"                   % log4catsVersion
+
 
   val kindProjector = compilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)
 
-  val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect)
+  val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect, log4cats)
 
   val tradeioDependencies: Seq[ModuleID] = 
     commonDependencies ++ Seq(Cats.catsMtl) ++ Seq(kindProjector) ++ 
