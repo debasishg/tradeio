@@ -3,7 +3,7 @@ package model
 
 import java.time.LocalDateTime
 import squants.market._
-import cats.data.{ EitherNec, NonEmptyChain }
+import cats.data.{EitherNec, NonEmptyChain}
 import cats.implicits._
 import newtypes._
 import common._
@@ -36,7 +36,9 @@ object balance {
         date: LocalDateTime
     ): EitherNec[String, LocalDateTime] =
       if (date.isAfter(today))
-        Left(NonEmptyChain.one(s"Balance date [$date] cannot be later than today"))
-      else Right(date) 
+        Left(
+          NonEmptyChain.one(s"Balance date [$date] cannot be later than today")
+        )
+      else Right(date)
   }
 }

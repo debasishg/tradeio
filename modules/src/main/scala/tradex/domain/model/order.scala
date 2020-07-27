@@ -131,7 +131,9 @@ object order {
       validate[OrderNo](orderNo)
     }
 
-    private[model] def validateBuySell(bs: String): EitherNec[String, String] = {
+    private[model] def validateBuySell(
+        bs: String
+    ): EitherNec[String, String] = {
       BuySell
         .withNameEither(bs)
         .toEitherNec

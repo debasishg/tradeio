@@ -5,14 +5,13 @@ import java.io.InputStream
 
 import cats.effect._
 import cats.implicits._
-import cats.data.NonEmptyList
+import cats.data.{ NonEmptyList, EitherNec }
 
 import io.chrisdavenport.cormorant._
 import io.chrisdavenport.cormorant.generic.semiauto._
 import io.chrisdavenport.cormorant.parser._
 import io.chrisdavenport.cormorant.implicits._
 
-import common._
 import model.order._
 import Order._
 
@@ -26,7 +25,7 @@ object ordering {
     * The format is as follows:
     * accountNo,date,isin,qty,buySell
     */
-  def createOrders(in: InputStream): IO[ErrorOr[List[Order]]] = {
+  def createOrders(in: InputStream): IO[EitherNec[String, List[Order]]] = {
     val acquire = IO {
       scala.io.Source.fromInputStream(in)
     }
@@ -42,7 +41,7 @@ object ordering {
     * The format is as follows:
     * accountNo,date,isin,qty,buySell
     */
-  def createOrders(frontOfficeCsv: String): ErrorOr[List[Order]] =
+  def createOrders(frontOfficeCsv: String): EitherNec[String, List[Order]] =
     fromFrontOffice(frontOfficeCsv).flatMap(create)
 
   /**
@@ -51,7 +50,7 @@ object ordering {
     */
   private def fromFrontOffice(
       order: String
-  ): ErrorOr[NonEmptyList[FrontOfficeOrder]] = {
+  ): EitherNec[String, NonEmptyList[FrontOfficeOrder]] = {
     parseComplete(order)
       .leftWiden[Error]
       .flatMap(_.readLabelled[FrontOfficeOrder].sequence)

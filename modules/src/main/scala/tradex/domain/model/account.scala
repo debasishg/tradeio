@@ -3,7 +3,7 @@ package model
 
 import java.time.LocalDateTime
 
-import cats.data.{ EitherNec, NonEmptyChain }
+import cats.data.{EitherNec, NonEmptyChain}
 import cats.implicits._
 
 import squants.market._
@@ -125,7 +125,10 @@ object account {
     ): EitherNec[String, (LocalDateTime, Option[LocalDateTime])] =
       cd.map { c =>
           if (c isBefore od)
-            Left(NonEmptyChain.one(s"Close date [$c] cannot be earlier than open date [$od]"))
+            Left(
+              NonEmptyChain
+                .one(s"Close date [$c] cannot be earlier than open date [$od]")
+            )
           else Right((od, cd))
         }
         .getOrElse { Right((od, cd)) }
@@ -143,15 +146,22 @@ object account {
         cd: LocalDateTime
     ): EitherNec[String, LocalDateTime] = {
       if (cd isBefore a.dateOfOpen)
-        Left(NonEmptyChain.one(s"Close date [$cd] cannot be earlier than open date [${a.dateOfOpen}]"))
+        Left(
+          NonEmptyChain.one(
+            s"Close date [$cd] cannot be earlier than open date [${a.dateOfOpen}]"
+          )
+        )
       else Right(cd)
     }
 
-    def close(a: Account, closeDate: LocalDateTime): EitherNec[String, Account] = {
-      (validateAccountAlreadyClosed(a), validateCloseDate(a, closeDate)).parMapN {
-        (acc, _) =>
+    def close(
+        a: Account,
+        closeDate: LocalDateTime
+    ): EitherNec[String, Account] = {
+      (validateAccountAlreadyClosed(a), validateCloseDate(a, closeDate))
+        .parMapN { (acc, _) =>
           acc.copy(dateOfClose = Some(closeDate))
-      }
+        }
     }
   }
 }

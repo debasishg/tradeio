@@ -111,7 +111,7 @@ object trade {
         vd: Option[LocalDateTime] = None,
         taxFees: List[TradeTaxFee] = List.empty,
         netAmt: Option[Money] = None
-    ): ErrorOr[Trade] = {
+    ): EitherNec[String, Trade] = {
       (
         validateTradeRefNo(refNo),
         Account.validateAccountNo(accountNo),

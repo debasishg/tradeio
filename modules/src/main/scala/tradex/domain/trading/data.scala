@@ -2,7 +2,7 @@ package tradex.domain
 package trading
 
 import java.util.UUID
-import cats.data.NonEmptyList
+import cats.data.{NonEmptyList, EitherNec}
 import cats.implicits._
 import cats.instances.list._
 
@@ -35,7 +35,7 @@ object AppData {
     .toList
     .sequence
 
-  val order: ValidationResult[Order] = lis
+  val order: EitherNec[String, Order] = lis
     .map { lineItems =>
       Order.makeOrder(
         "o1",
@@ -44,7 +44,7 @@ object AppData {
         NonEmptyList.fromList(lineItems).get
       )
     }
-    .fold(_.invalid[Order], identity)
+    .fold(Left(_), identity)
 
   val o1 = order.fold(errs => throw new Exception(errs.toString), identity)
 
