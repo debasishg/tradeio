@@ -1,4 +1,4 @@
-package tradex.domain
+package tradex
 
 import java.time.LocalDateTime
 
@@ -14,7 +14,7 @@ import eu.timepit.refined._
 import eu.timepit.refined.api._
 import eu.timepit.refined.auto._
 
-object common {
+package object domain {
   type MonadThrowable[F[_]] = MonadError[F, Throwable]
 
   def today = LocalDateTime.now

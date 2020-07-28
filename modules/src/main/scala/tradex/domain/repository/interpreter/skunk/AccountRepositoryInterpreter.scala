@@ -17,7 +17,6 @@ import squants.market._
 import model.enums._
 import model.account._
 import Account._
-import common._
 
 final class AccountRepositoryInterpreter[M[_]: Sync] private (
     sessionPool: Resource[M, Session[M]]

@@ -8,11 +8,9 @@ import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 
 import repository._
-import common._
 
 object Main extends IOApp {
   override def run(args: List[String]): IO[ExitCode] = {
-
     implicit val logger = Slf4jLogger.getLogger[IO]
 
     val trades =

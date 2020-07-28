@@ -19,12 +19,10 @@ import model.balance._
 import AppData._
 
 object program {
-
   def tradeGeneration[F[_]: FlatMap](
       trading: Trading[F],
       accounting: Accounting[F]
   ): F[(NonEmptyList[Trade], NonEmptyList[Balance])] = {
-
     import trading._
     import accounting._
 

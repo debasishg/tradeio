@@ -8,7 +8,6 @@ import cats.implicits._
 
 import squants.market._
 
-import common._
 import NewtypeRefinedOps._
 import newtypes._
 import enums._

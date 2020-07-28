@@ -6,7 +6,6 @@ import cats.data.{NonEmptyList, EitherNec}
 import cats.implicits._
 import cats.instances.list._
 
-import common._
 import NewtypeRefinedOps._
 import model.order._
 import model.newtypes._

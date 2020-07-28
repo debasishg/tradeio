@@ -9,7 +9,6 @@ import cats.mtl._
 
 import io.chrisdavenport.log4cats.Logger
 
-import common._
 import NewtypeRefinedOps._
 import model.account.Account
 import model.execution.Execution
