@@ -6,7 +6,6 @@ import java.util.UUID
 import cats.implicits._
 import cats.data.EitherNec
 
-import common._
 import NewtypeRefinedOps._
 import newtypes._
 import account._

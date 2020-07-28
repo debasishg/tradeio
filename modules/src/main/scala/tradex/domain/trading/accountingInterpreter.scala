@@ -7,7 +7,6 @@ import cats.data.NonEmptyList
 import cats.implicits._
 import cats.mtl._
 
-import common._
 import model.trade.Trade
 import model.balance.Balance
 

@@ -15,7 +15,6 @@ import skunk.implicits._
 import squants.market._
 
 import model.balance._
-import common._
 
 final class BalanceRepositoryInterpreter[M[_]: Sync] private (
     sessionPool: Resource[M, Session[M]]

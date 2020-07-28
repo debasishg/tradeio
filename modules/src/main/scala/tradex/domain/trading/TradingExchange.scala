@@ -14,7 +14,6 @@ import model.order._
 import model.execution._
 import model.trade._
 import model.newtypes._
-import common._
 import NewtypeRefinedOps._
 import AppData._
 
