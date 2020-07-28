@@ -9,6 +9,7 @@ import skunk._
 import repository._
 
 object Algebras {
+  // smart constructor for skunk based algebras
   def make[F[_]: Sync](
       sessionPool: Resource[F, Session[F]]
   ): F[Algebras[F]] = {
@@ -41,6 +42,7 @@ object Algebras {
     )
   }
 
+  // smart constructor for memory based algebras
   def make[F[_]: Sync]: F[Algebras[F]] = {
     import repository.interpreter.memory._
     for {
@@ -61,7 +63,7 @@ object Algebras {
   }
 }
 
-final class Algebras[F[_]](
+final class Algebras[F[_]] private (
     val accountRepository: AccountRepository[F],
     val executionRepository: ExecutionRepository[F],
     val instrumentRepository: InstrumentRepository[F],

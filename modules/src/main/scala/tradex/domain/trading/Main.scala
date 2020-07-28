@@ -1,29 +1,19 @@
 package tradex.domain
 package trading
 
-import cats.data._
 import cats.effect._
 import cats.implicits._
 
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 
-import model.market._
-
 import repository._
-
-import Implicits._
-import AppData._
+import common._
 
 object Main extends IOApp {
   override def run(args: List[String]): IO[ExitCode] = {
-    val csvOrder = orderGenerator.generateOrders()
-    val brokerAccountNo = ano3
-    val clientAccounts = NonEmptyList.of(ano1, ano2)
 
     implicit val logger = Slf4jLogger.getLogger[IO]
-
-    def askRepo[A](repo: A) = DefaultApplicativeAsk.constant[IO, A](repo)
 
     val trades =
       config.load[IO].flatMap { cfg =>
@@ -45,15 +35,12 @@ object Main extends IOApp {
 
               program.tradeGeneration(
                 new TradingInterpreter[IO],
-                new AccountingInterpreter[IO],
-                csvOrder,
-                brokerAccountNo,
-                Market.NewYork,
-                clientAccounts
+                new AccountingInterpreter[IO]
               )
             }
           }
       }
+
     trades.map(_._1).unsafeRunSync().toList.foreach(println)
     trades.map(_._2).unsafeRunSync().toList.foreach(println)
     IO(ExitCode.Success)

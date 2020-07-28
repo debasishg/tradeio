@@ -54,15 +54,10 @@ object Dependencies {
 
   // Runtime
   val logback             = "ch.qos.logback"                % "logback-classic"                  % logbackVersion % Runtime
-  val sl4jSimple          = "org.slf4j"                     % "slf4j-simple"                     % "1.7.30" % Runtime
-  val sl4jAPI             = "org.slf4j"                     % "slf4j-api"                        % "1.7.30" % Runtime
-
-
-
 
   val kindProjector = compilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)
 
-  val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect, log4cats)
+  val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect)
 
   val tradeioDependencies: Seq[ModuleID] = 
     commonDependencies ++ Seq(Cats.catsMtl) ++ Seq(kindProjector) ++ 
@@ -70,5 +65,5 @@ object Dependencies {
       Seq(Refined.refinedCore, Refined.refinedCats, Refined.refinedShapeless) ++ 
       Seq(Ciris.cirisCore, Ciris.cirisEnum, Ciris.cirisRefined) ++ 
       Seq(Cormorant.core, Cormorant.generic, Cormorant.parser, Cormorant.refined) ++
-      Seq(Skunk.skunkCore, Skunk.skunkCirce) ++ Seq(sl4jAPI)
+      Seq(Skunk.skunkCore, Skunk.skunkCirce) ++ Seq(log4cats, logback)
 }

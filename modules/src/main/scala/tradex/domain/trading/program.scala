@@ -11,7 +11,6 @@ import io.chrisdavenport.cormorant._
 import io.chrisdavenport.cormorant.generic.semiauto._
 import io.chrisdavenport.cormorant.implicits._
 
-import model.newtypes._
 import model.market._
 import model.order._
 import model.trade._
@@ -20,19 +19,22 @@ import model.balance._
 import AppData._
 
 object program {
+
   def tradeGeneration[F[_]: FlatMap](
       trading: Trading[F],
-      accounting: Accounting[F],
-      csvOrder: String,
-      brokerAccountNo: AccountNo,
-      market: Market,
-      clientAccountNos: NonEmptyList[AccountNo]
+      accounting: Accounting[F]
   ): F[(NonEmptyList[Trade], NonEmptyList[Balance])] = {
+
     import trading._
     import accounting._
+
+    val csvOrder = orderGenerator.generateOrders()
+    val brokerAccountNo = ano3
+    val clientAccountNos = NonEmptyList.of(ano1, ano2)
+
     for {
       orders <- orders(csvOrder)
-      executions <- execute(orders, market, brokerAccountNo)
+      executions <- execute(orders, Market.NewYork, brokerAccountNo)
       trades <- allocate(executions, clientAccountNos)
       balances <- postBalance(trades)
     } yield (trades, balances)
