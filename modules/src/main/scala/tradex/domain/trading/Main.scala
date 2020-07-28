@@ -18,23 +18,23 @@ object Main extends IOApp {
         Logger[IO].info(s"Loaded config $cfg") >>
           AppResources.make[IO](cfg).use { res =>
             Algebras.make[IO](res.psql).flatMap { algebras =>
-              implicit val accountRepositoryAsk =
-                askRepo[AccountRepository[IO]](algebras.accountRepository)
-              implicit val executionRepositoryAsk =
-                askRepo[ExecutionRepository[IO]](algebras.executionRepository)
-              implicit val instrumentRepositoryAsk =
-                askRepo[InstrumentRepository[IO]](algebras.instrumentRepository)
-              implicit val orderRepositoryAsk =
-                askRepo[OrderRepository[IO]](algebras.orderRepository)
-              implicit val tradeRepositoryAsk =
-                askRepo[TradeRepository[IO]](algebras.tradeRepository)
-              implicit val balanceRepositoryAsk =
-                askRepo[BalanceRepository[IO]](algebras.balanceRepository)
+              Programs.make[IO](algebras).flatMap { programs =>
+                implicit val accountRepositoryAsk =
+                  askRepo[AccountRepository[IO]](algebras.accountRepository)
+                implicit val executionRepositoryAsk =
+                  askRepo[ExecutionRepository[IO]](algebras.executionRepository)
+                implicit val orderRepositoryAsk =
+                  askRepo[OrderRepository[IO]](algebras.orderRepository)
+                implicit val tradeRepositoryAsk =
+                  askRepo[TradeRepository[IO]](algebras.tradeRepository)
+                implicit val balanceRepositoryAsk =
+                  askRepo[BalanceRepository[IO]](algebras.balanceRepository)
 
-              program.tradeGeneration(
-                new TradingInterpreter[IO],
-                new AccountingInterpreter[IO]
-              )
+                programs.generateTrade(
+                  new TradingInterpreter[IO],
+                  new AccountingInterpreter[IO]
+                )
+              }
             }
           }
       }

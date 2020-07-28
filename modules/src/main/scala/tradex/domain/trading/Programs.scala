@@ -3,9 +3,11 @@ package trading
 
 import java.time.Instant
 
-import cats._
 import cats.data._
 import cats.implicits._
+import cats.effect.Sync
+
+import io.chrisdavenport.log4cats.Logger
 
 import io.chrisdavenport.cormorant._
 import io.chrisdavenport.cormorant.generic.semiauto._
@@ -18,8 +20,19 @@ import model.balance._
 
 import AppData._
 
-object program {
-  def tradeGeneration[F[_]: FlatMap](
+object Programs {
+  def make[F[_]: Logger: MonadThrowable: Sync](
+    algebras: Algebras[F]
+  ): F[Programs[F]] = {
+    Sync[F].delay(new Programs[F](algebras))
+  }
+}
+
+final class Programs[F[_]: Logger: MonadThrowable] private (
+  algebras: Algebras[F]
+) {
+
+  def generateTrade(
       trading: Trading[F],
       accounting: Accounting[F]
   ): F[(NonEmptyList[Trade], NonEmptyList[Balance])] = {
@@ -37,6 +50,7 @@ object program {
       balances <- postBalance(trades)
     } yield (trades, balances)
   }
+
 }
 
 // generate order from front office

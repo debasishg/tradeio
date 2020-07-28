@@ -22,7 +22,6 @@ import repository._
 class TradingInterpreter[M[+_]: MonadThrowable: Logger](
     implicit A: ApplicativeAsk[M, AccountRepository[M]],
     E: ApplicativeAsk[M, ExecutionRepository[M]],
-    I: ApplicativeAsk[M, InstrumentRepository[M]],
     O: ApplicativeAsk[M, OrderRepository[M]],
     T: ApplicativeAsk[M, TradeRepository[M]]
 ) extends Trading[M] {
