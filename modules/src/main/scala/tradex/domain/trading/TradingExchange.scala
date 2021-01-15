@@ -2,6 +2,8 @@ package tradex.domain
 package trading
 
 import cats.data.NonEmptyList
+import cats.{Order => _, _}
+
 import cats.implicits._
 import cats.effect._
 import cats.effect.concurrent.{Deferred, Ref}
@@ -69,15 +71,24 @@ object Exchange {
   ) {
     // check if all order items have been fulfilled by executions
     def orderFulfilled: Boolean = {
+      val forder = fulfilledOrder.foldLeft(Map.empty[String, BigDecimal]) {
+        (a, e) =>
+          a ++ Map(e._1.value.value -> e._2.value.value)
+      }
       order
         .map { ord =>
           val lis = ord.items
-          lis.foldLeft(true) { (a, li) =>
-            val ins = li.instrument
-            val qty = li.quantity
-            val zero: BigDecimal Refined NonNegative = BigDecimal(0)
-            if (fulfilledOrder.get(ins).getOrElse(Quantity(zero)) == qty) a
-            else false
+          val liMap = lis.foldLeft(Map.empty[String, BigDecimal]) { (a, li) =>
+            Monoid.combineAll(
+              List(a, Map(li.instrument.value.value -> li.quantity.value.value))
+            )
+          }
+          val zero: BigDecimal Refined NonNegative = BigDecimal(0)
+          liMap.foldLeft(true) { (a, e) =>
+            if (forder
+                .get(e._1)
+                .getOrElse(zero) == e._2) (a && true)
+            else (a && false)
           }
         }
         .getOrElse(false)
@@ -206,21 +217,28 @@ object Exchange {
             orderNo: OrderNo,
             executions: NonEmptyList[Execution]
         ): ApplicationState = {
-          val newFulfillmentMap = executions.foldLeft(appState.fulfilledOrder) {
-            (a, e) =>
+          val newFulfillmentMap =
+            executions.foldLeft(appState.fulfilledOrder) { (a, e) =>
               val ins = e.isin
               val qty = e.quantity
               a.updatedWith(ins)(
                 _.map(
-                  q =>
+                  q => {
                     validate[Quantity](q.value.value + qty.value.value)
                       .fold(
                         errs => throw new Exception(errs.toString),
                         identity
                       )
+                  }
+                ).orElse(
+                  validate[Quantity](qty.value.value)
+                    .fold(
+                      errs => throw new Exception(errs.toString),
+                      q => Some(q)
+                    )
                 )
               )
-          }
+            }
           appState.copy(
             executions = appState.executions ++ executions.toList
               .filter(_.orderNo == orderNo),
