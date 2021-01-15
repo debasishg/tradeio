@@ -39,69 +39,6 @@ object ExchangeApp extends IOApp {
     tradeGen.unsafeRunSync().foreach(t => println(s"Trade $t"))
     IO(ExitCode.Success)
   }
-
-  /*
-  override def run(args: List[String]): IO[ExitCode] = {
-    val tradeGen = Exchange.create[IO].flatMap { exchange =>
-      exchange
-        .feedOrder(o1)
-        .start
-        .bracket { fOrders =>
-          exchange
-            .feedExecutions(o1.no, NonEmptyList.of(e1, e2, e3, e4))
-            .start
-            .bracket { fExecutions =>
-              for {
-                _ <- fOrders.join
-                _ <- fExecutions.join
-                fTrades <- exchange
-                  .allocate(o1.no, NonEmptyList.of(ano2, ano3))
-                  .start
-                trades <- fTrades.join
-              } yield trades
-            }(_.cancel)
-        }(_.cancel)
-    }
-
-    tradeGen.unsafeRunSync().foreach(t => println(s"Trade $t"))
-    IO(ExitCode.Success)
-  }
-   */
-
-  /*
-  // selectively leaks fibers on cancellation and interrupts
-  override def run(args: List[String]): IO[ExitCode] = {
-    val tradeGen = for {
-      exchange <- Exchange.create[IO]
-      fOrders <- exchange.feedOrder(o1).start
-      fExecutions <- exchange.feedExecutions(o1.no, NonEmptyList.of(e1, e2, e3, e4)).start
-      _ <- fOrders.join
-      _ <- fExecutions.join
-      fTrades <- exchange.allocate(o1.no, NonEmptyList.of(ano2, ano3)).start
-      trades <- fTrades.join
-    } yield trades
-
-    tradeGen.unsafeRunSync().foreach(t => println(s"Trade $t"))
-    IO(ExitCode.Success)
-  }
-   */
-
-  /*
-  // leaks fibers on cancellation and interrupts
-  override def run(args: List[String]): IO[ExitCode] = {
-    for {
-      s <- Exchange.create[IO]
-      _ <- s.feedOrder(o1)
-      _ <- s.feedExecutions(o1.no, NonEmptyList.of(e1, e2))
-      _ <- s.allocate(o1.no, NonEmptyList.of(ano2, ano3))
-      _ <- s.feedExecutions(o1.no, NonEmptyList.of(e3))
-      _ <- s.feedExecutions(o1.no, NonEmptyList.of(e4))
-      trades <- s.allocate(o1.no, NonEmptyList.of(ano2, ano3))
-
-      _ = trades.foreach(println)
-    } yield ExitCode.Success
-  }
- */
 }
 
 // FSM with the algebra of the commands
