@@ -23,8 +23,8 @@ package object domain {
   implicit val moneyContext = defaultMoneyContext
 
   object DefaultApplicativeAsk {
-    def constant[F[_]: Applicative, E](e: E): ApplicativeAsk[F, E] = {
-      new DefaultApplicativeAsk[F, E] {
+    def constant[F[_]: Applicative, E](e: E): Ask[F, E] = {
+      new Ask[F, E] {
         val applicative: Applicative[F] = Applicative[F]
         def ask: F[E] = applicative.pure(e)
       }

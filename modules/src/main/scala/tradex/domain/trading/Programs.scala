@@ -7,7 +7,7 @@ import cats.data._
 import cats.implicits._
 import cats.effect.Sync
 
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 
 import io.chrisdavenport.cormorant._
 import io.chrisdavenport.cormorant.generic.semiauto._
@@ -22,16 +22,15 @@ import AppData._
 
 object Programs {
   def make[F[_]: Logger: MonadThrowable: Sync](
-    algebras: Algebras[F]
+      algebras: Algebras[F]
   ): F[Programs[F]] = {
     Sync[F].delay(new Programs[F](algebras))
   }
 }
 
 final class Programs[F[_]: Logger: MonadThrowable] private (
-  algebras: Algebras[F]
+    algebras: Algebras[F]
 ) {
-
   def generateTrade(
       trading: Trading[F],
       accounting: Accounting[F]
@@ -50,7 +49,6 @@ final class Programs[F[_]: Logger: MonadThrowable] private (
       balances <- postBalance(trades)
     } yield (trades, balances)
   }
-
 }
 
 // generate order from front office

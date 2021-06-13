@@ -3,9 +3,10 @@ package trading
 
 import cats.effect._
 import cats.implicits._
+import cats.effect.unsafe.implicits.global
 
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import repository._
 
@@ -39,8 +40,9 @@ object Main extends IOApp {
           }
       }
 
-    trades.map(_._1).unsafeRunSync().toList.foreach(println)
-    trades.map(_._2).unsafeRunSync().toList.foreach(println)
+    // FIXME
+    trades.map(_._1).unsafeRunSync() // .toList.foreach(println)
+    trades.map(_._2).unsafeRunSync() // .toList.foreach(println)
     IO(ExitCode.Success)
   }
 }

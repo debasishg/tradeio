@@ -7,7 +7,7 @@ import cats.data.NonEmptyList
 import cats.implicits._
 import cats.mtl._
 
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 
 import NewtypeRefinedOps._
 import model.account.Account
@@ -20,10 +20,10 @@ import model.newtypes._
 import repository._
 
 class TradingInterpreter[M[+_]: MonadThrowable: Logger](
-    implicit A: ApplicativeAsk[M, AccountRepository[M]],
-    E: ApplicativeAsk[M, ExecutionRepository[M]],
-    O: ApplicativeAsk[M, OrderRepository[M]],
-    T: ApplicativeAsk[M, TradeRepository[M]]
+    implicit A: Ask[M, AccountRepository[M]],
+    E: Ask[M, ExecutionRepository[M]],
+    O: Ask[M, OrderRepository[M]],
+    T: Ask[M, TradeRepository[M]]
 ) extends Trading[M] {
   import Trading._
 

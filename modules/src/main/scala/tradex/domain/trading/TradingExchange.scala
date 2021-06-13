@@ -6,7 +6,8 @@ import cats.{Order => _, _}
 
 import cats.implicits._
 import cats.effect._
-import cats.effect.concurrent.{Deferred, Ref}
+import cats.effect.{Deferred, Ref}
+import cats.effect.unsafe.implicits.global
 
 import eu.timepit.refined.auto._
 import eu.timepit.refined.api.Refined
@@ -19,7 +20,7 @@ import model.newtypes._
 import NewtypeRefinedOps._
 import AppData._
 
-object ExchangeApp extends IOApp {
+object ExchangeApp extends IOApp.Simple {
   override def run(args: List[String]): IO[ExitCode] = {
     val tradeGen = Exchange.create[IO]().flatMap { exchange =>
       import exchange._
@@ -38,7 +39,9 @@ object ExchangeApp extends IOApp {
           .bracket { _.join }(_.cancel)
     }
 
-    tradeGen.unsafeRunSync().foreach(t => println(s"Trade $t"))
+    // FIXME
+    tradeGen.unsafeRunSync()
+
     IO(ExitCode.Success)
   }
 }

@@ -28,7 +28,7 @@ object Dependencies {
   object Cats {
     val cats              = "org.typelevel"                %%   "cats-core"                      % catsVersion
     val catsEffect        = "org.typelevel"                %%   "cats-effect"                    % catsEffectVersion
-    val catsMtl           = "org.typelevel"                %%   "cats-mtl-core"                  % catsMtlVersion
+    val catsMtl           = "org.typelevel"                %%   "cats-mtl"                       % catsMtlVersion
   }
 
   object Doobie {
@@ -50,12 +50,12 @@ object Dependencies {
   }
 
   val flywayDb            = "org.flywaydb"                  % "flyway-core"                      % "5.2.4"
-  val log4cats            = "io.chrisdavenport"            %% "log4cats-slf4j"                   % log4catsVersion
+  val log4cats            = "org.typelevel"                %% "log4cats-slf4j"                   % log4catsVersion
 
   // Runtime
   val logback             = "ch.qos.logback"                % "logback-classic"                  % logbackVersion % Runtime
 
-  val kindProjector = compilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)
+  val kindProjector = compilerPlugin("org.typelevel" %% "kind-projector" % "0.12.0" cross CrossVersion.full)
 
   val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect)
 

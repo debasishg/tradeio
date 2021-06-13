@@ -1,8 +1,8 @@
 package tradex.domain
 package config
 
-import cats.effect._
-import cats.implicits._
+import cats.effect.Async
+import cats.syntax.all._
 import ciris._
 import ciris.refined._
 import environments._
@@ -12,7 +12,7 @@ import eu.timepit.refined.types.string.NonEmptyString
 import config._
 
 object load {
-  def apply[F[_]: Async: ContextShift]: F[AppConfig] =
+  def apply[F[_]: Async]: F[AppConfig] =
     env("TRADING_APP_ENV")
       .as[AppEnvironment]
       .default(Prod)
@@ -22,7 +22,7 @@ object load {
       }
       .load[F]
 
-  private def default: ConfigValue[AppConfig] =
+  private def default[F[_]]: ConfigValue[F, AppConfig] =
     (
       env("DATABASE_USER").as[NonEmptyString].default("postgres"),
       env("DATABASE_NAME").as[NonEmptyString].default("trading")

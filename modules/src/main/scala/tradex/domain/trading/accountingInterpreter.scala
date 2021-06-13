@@ -13,7 +13,7 @@ import model.balance.Balance
 import repository._
 
 class AccountingInterpreter[M[_]: MonadThrowable](
-    implicit B: ApplicativeAsk[M, BalanceRepository[M]]
+    implicit B: Ask[M, BalanceRepository[M]]
 ) extends Accounting[M] {
   import Accounting._
 
