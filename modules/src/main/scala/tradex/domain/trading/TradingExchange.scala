@@ -21,7 +21,7 @@ import NewtypeRefinedOps._
 import AppData._
 
 object ExchangeApp extends IOApp.Simple {
-  override def run(args: List[String]): IO[ExitCode] = {
+  override def run: IO[Unit] = {
     val tradeGen = Exchange.create[IO]().flatMap { exchange =>
       import exchange._
 
@@ -42,7 +42,7 @@ object ExchangeApp extends IOApp.Simple {
     // FIXME
     tradeGen.unsafeRunSync()
 
-    IO(ExitCode.Success)
+    IO.unit
   }
 }
 

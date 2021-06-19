@@ -17,7 +17,6 @@ import skunk.implicits._
 import model.newtypes._
 import model.enums._
 import model.order._
-import ext.skunkx._
 
 final class OrderRepositoryInterpreter[M[_]: Sync] private (
     sessionPool: Resource[M, Session[M]]
@@ -137,7 +136,10 @@ final class OrderRepositoryInterpreter[M[_]: Sync] private (
           _.execute(ord.no.value.value ~ ord.date ~ ord.accountNo.value.value)
         ) *>
       session
-        .prepareAndExecute(lineItems)(insertLineItems(ord.no, lineItems))
+        .prepare(insertLineItems(ord.no, lineItems))
+        .use { cmd =>
+          cmd.execute(lineItems)
+        }
         .void
         .map(_ => ord)
   }

@@ -22,16 +22,7 @@ package object domain {
 
   implicit val moneyContext = defaultMoneyContext
 
-  object DefaultApplicativeAsk {
-    def constant[F[_]: Applicative, E](e: E): Ask[F, E] = {
-      new Ask[F, E] {
-        val applicative: Applicative[F] = Applicative[F]
-        def ask: F[E] = applicative.pure(e)
-      }
-    }
-  }
-
-  def askRepo[A](repo: A) = DefaultApplicativeAsk.constant[IO, A](repo)
+  def askRepo[A](repo: A) = Ask.const[IO, A](repo)
 
   object NewtypeRefinedOps {
     import io.estatico.newtype.Coercible

@@ -2,7 +2,6 @@ package tradex.domain
 package trading
 
 import cats.effect._
-import cats.implicits._
 import cats.effect.unsafe.implicits.global
 
 import org.typelevel.log4cats.Logger

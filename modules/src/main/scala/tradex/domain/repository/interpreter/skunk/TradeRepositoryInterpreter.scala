@@ -19,7 +19,6 @@ import squants.market._
 import model.newtypes._
 import model.enums._
 import model.trade._
-import ext.skunkx._
 
 final class TradeRepositoryInterpreter[M[_]: Sync] private (
     sessionPool: Resource[M, Session[M]]
@@ -103,7 +102,10 @@ final class TradeRepositoryInterpreter[M[_]: Sync] private (
     val taxFees = t.taxFees
     session.prepare(insertTrade).use(_.execute(t)) *>
       session
-        .prepareAndExecute(taxFees)(insertTaxFees(t.refNo, taxFees))
+        .prepare(insertTaxFees(t.refNo, taxFees))
+        .use { cmd =>
+          cmd.execute(taxFees)
+        }
         .void
         .map(_ => t)
   }
