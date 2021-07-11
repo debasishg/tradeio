@@ -44,6 +44,7 @@ object AppResources {
           max = c.max.value,
           strategy = Typer.Strategy.SearchPath
         )
+        .evalTap(checkPostgresConnection)
 
     mkPostgreSqlResource(cfg.postgreSQL).map(AppResources.apply[F])
   }

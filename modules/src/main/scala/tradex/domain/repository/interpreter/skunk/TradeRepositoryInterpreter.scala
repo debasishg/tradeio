@@ -98,6 +98,7 @@ final class TradeRepositoryInterpreter[M[_]: Sync] private (
       }
     }
 
+  // FIXME: Need to make transactional: Refer to Page 177 of pfp-scala
   private def storeTradeAndTaxFees(t: Trade, session: Session[M]): M[Trade] = {
     val taxFees = t.taxFees
     session.prepare(insertTrade).use(_.execute(t)) *>
