@@ -15,7 +15,7 @@ import squants.market._
 import model.enums._
 import model.instrument._
 
-final class InstrumentRepositoryInterpreter[M[_]: Sync] private (
+final class InstrumentRepositoryInterpreter[M[_]: Concurrent] private (
     sessionPool: Resource[M, Session[M]]
 ) extends InstrumentRepository[M] {
   import InstrumentQueries._
@@ -117,8 +117,8 @@ private object InstrumentQueries {
 
 // Smart constructor
 object InstrumentRepositoryInterpreter {
-  def make[M[_]: Sync](
+  def make[M[_]: Concurrent](
       sessionPool: Resource[M, Session[M]]
-  ): M[InstrumentRepositoryInterpreter[M]] =
-    Sync[M].delay(new InstrumentRepositoryInterpreter[M](sessionPool))
+  ): InstrumentRepositoryInterpreter[M] =
+    new InstrumentRepositoryInterpreter[M](sessionPool)
 }

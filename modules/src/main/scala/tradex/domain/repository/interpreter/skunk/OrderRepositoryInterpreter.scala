@@ -18,7 +18,7 @@ import model.newtypes._
 import model.enums._
 import model.order._
 
-final class OrderRepositoryInterpreter[M[_]: Sync] private (
+final class OrderRepositoryInterpreter[M[_]: Concurrent] private (
     sessionPool: Resource[M, Session[M]]
 ) extends OrderRepository[M] {
   import OrderQueries._
@@ -224,8 +224,8 @@ private object OrderQueries {
 
 // Smart constructor
 object OrderRepositoryInterpreter {
-  def make[M[_]: Sync](
+  def make[M[_]: Concurrent](
       sessionPool: Resource[M, Session[M]]
-  ): M[OrderRepositoryInterpreter[M]] =
-    Sync[M].delay(new OrderRepositoryInterpreter[M](sessionPool))
+  ): OrderRepositoryInterpreter[M] =
+    new OrderRepositoryInterpreter[M](sessionPool)
 }

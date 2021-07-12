@@ -10,35 +10,17 @@ import repository._
 
 object Algebras {
   // smart constructor for skunk based algebras
-  def make[F[_]: Sync](
+  def make[F[_]: Concurrent](
       sessionPool: Resource[F, Session[F]]
-  ): F[Algebras[F]] = {
+  ): Algebras[F] = {
     import repository.interpreter.skunk._
-    for {
-      accountRepositoryInterpreter <- AccountRepositoryInterpreter.make[F](
-        sessionPool
-      )
-      executionRepositoryInterpreter <- ExecutionRepositoryInterpreter.make[F](
-        sessionPool
-      )
-      instrumentRepositoryInterpreter <- InstrumentRepositoryInterpreter
-        .make[F](sessionPool)
-      orderRepositoryInterpreter <- OrderRepositoryInterpreter.make[F](
-        sessionPool
-      )
-      tradeRepositoryInterpreter <- TradeRepositoryInterpreter.make[F](
-        sessionPool
-      )
-      balanceRepositoryInterpreter <- BalanceRepositoryInterpreter.make[F](
-        sessionPool
-      )
-    } yield new Algebras[F](
-      accountRepositoryInterpreter,
-      executionRepositoryInterpreter,
-      instrumentRepositoryInterpreter,
-      orderRepositoryInterpreter,
-      tradeRepositoryInterpreter,
-      balanceRepositoryInterpreter
+    new Algebras[F](
+      AccountRepositoryInterpreter.make[F](sessionPool),
+      ExecutionRepositoryInterpreter.make[F](sessionPool),
+      InstrumentRepositoryInterpreter.make[F](sessionPool),
+      OrderRepositoryInterpreter.make[F](sessionPool),
+      TradeRepositoryInterpreter.make[F](sessionPool),
+      BalanceRepositoryInterpreter.make[F](sessionPool)
     )
   }
 

@@ -18,7 +18,7 @@ import model.enums._
 import model.account._
 import Account._
 
-final class AccountRepositoryInterpreter[M[_]: Sync] private (
+final class AccountRepositoryInterpreter[M[_]: Concurrent] private (
     sessionPool: Resource[M, Session[M]]
 ) extends AccountRepository[M] {
   import AccountQueries._
@@ -247,8 +247,8 @@ private object AccountQueries {
 
 // Smart constructor
 object AccountRepositoryInterpreter {
-  def make[M[_]: Sync](
+  def make[M[_]: Concurrent](
       sessionPool: Resource[M, Session[M]]
-  ): M[AccountRepositoryInterpreter[M]] =
-    Sync[M].delay(new AccountRepositoryInterpreter[M](sessionPool))
+  ): AccountRepositoryInterpreter[M] =
+    new AccountRepositoryInterpreter[M](sessionPool)
 }

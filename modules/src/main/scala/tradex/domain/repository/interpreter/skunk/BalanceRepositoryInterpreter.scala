@@ -16,7 +16,7 @@ import squants.market._
 
 import model.balance._
 
-final class BalanceRepositoryInterpreter[M[_]: Sync] private (
+final class BalanceRepositoryInterpreter[M[_]: Concurrent] private (
     sessionPool: Resource[M, Session[M]]
 ) extends BalanceRepository[M] {
   import BalanceQueries._
@@ -117,8 +117,8 @@ private object BalanceQueries {
 
 // Smart constructor
 object BalanceRepositoryInterpreter {
-  def make[M[_]: Sync](
+  def make[M[_]: Concurrent](
       sessionPool: Resource[M, Session[M]]
-  ): M[BalanceRepositoryInterpreter[M]] =
-    Sync[M].delay(new BalanceRepositoryInterpreter[M](sessionPool))
+  ): BalanceRepositoryInterpreter[M] =
+    new BalanceRepositoryInterpreter[M](sessionPool)
 }

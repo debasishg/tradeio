@@ -14,7 +14,7 @@ import skunk.implicits._
 import model.enums._
 import model.execution._
 
-final class ExecutionRepositoryInterpreter[M[_]: Sync] private (
+final class ExecutionRepositoryInterpreter[M[_]: Concurrent] private (
     sessionPool: Resource[M, Session[M]]
 ) extends ExecutionRepository[M] {
   import ExecutionQueries._
@@ -74,8 +74,8 @@ private object ExecutionQueries {
 
 // Smart constructor
 object ExecutionRepositoryInterpreter {
-  def make[M[_]: Sync](
+  def make[M[_]: Concurrent](
       sessionPool: Resource[M, Session[M]]
-  ): M[ExecutionRepositoryInterpreter[M]] =
-    Sync[M].delay(new ExecutionRepositoryInterpreter[M](sessionPool))
+  ): ExecutionRepositoryInterpreter[M] =
+    new ExecutionRepositoryInterpreter[M](sessionPool)
 }

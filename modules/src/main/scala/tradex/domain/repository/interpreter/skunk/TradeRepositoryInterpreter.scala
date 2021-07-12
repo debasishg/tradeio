@@ -20,7 +20,7 @@ import model.newtypes._
 import model.enums._
 import model.trade._
 
-final class TradeRepositoryInterpreter[M[_]: Sync] private (
+final class TradeRepositoryInterpreter[M[_]: Concurrent] private (
     sessionPool: Resource[M, Session[M]]
 ) extends TradeRepository[M] {
   import TradeQueries._
@@ -206,8 +206,8 @@ private object TradeQueries {
 
 // Smart constructor
 object TradeRepositoryInterpreter {
-  def make[M[_]: Sync](
+  def make[M[_]: Concurrent](
       sessionPool: Resource[M, Session[M]]
-  ): M[TradeRepositoryInterpreter[M]] =
-    Sync[M].delay(new TradeRepositoryInterpreter[M](sessionPool))
+  ): TradeRepositoryInterpreter[M] =
+    new TradeRepositoryInterpreter[M](sessionPool)
 }
