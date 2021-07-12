@@ -17,19 +17,19 @@ import squants.market._
 import model.balance._
 
 final class BalanceRepositoryInterpreter[M[_]: Concurrent] private (
-    sessionPool: Resource[M, Session[M]]
+    postgres: Resource[M, Session[M]]
 ) extends BalanceRepository[M] {
   import BalanceQueries._
 
   def query(no: String): M[Option[Balance]] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       session.prepare(selectByAccountNo).use { ps =>
         ps.option(no)
       }
     }
 
   def store(b: Balance): M[Balance] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       session.prepare(upsertBalance).use { cmd =>
         cmd.execute(b).void.map(_ => b)
       }
@@ -38,13 +38,13 @@ final class BalanceRepositoryInterpreter[M[_]: Concurrent] private (
   def store(balances: NonEmptyList[Balance]): M[Unit] = ???
 
   def query(date: LocalDate): M[List[Balance]] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       session.prepare(selectByDate).use { ps =>
         ps.stream(date, 1024).compile.toList
       }
     }
 
-  def all: M[List[Balance]] = sessionPool.use(_.execute(selectAll))
+  def all: M[List[Balance]] = postgres.use(_.execute(selectAll))
 }
 
 private object BalanceQueries {
@@ -118,7 +118,7 @@ private object BalanceQueries {
 // Smart constructor
 object BalanceRepositoryInterpreter {
   def make[M[_]: Concurrent](
-      sessionPool: Resource[M, Session[M]]
+      postgres: Resource[M, Session[M]]
   ): BalanceRepositoryInterpreter[M] =
-    new BalanceRepositoryInterpreter[M](sessionPool)
+    new BalanceRepositoryInterpreter[M](postgres)
 }

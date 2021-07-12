@@ -16,12 +16,12 @@ import model.enums._
 import model.instrument._
 
 final class InstrumentRepositoryInterpreter[M[_]: Concurrent] private (
-    sessionPool: Resource[M, Session[M]]
+    postgres: Resource[M, Session[M]]
 ) extends InstrumentRepository[M] {
   import InstrumentQueries._
 
   def query(isin: String): M[Option[Instrument]] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       session.prepare(selectByISINCode).use { ps =>
         ps.option(isin)
       }
@@ -30,14 +30,14 @@ final class InstrumentRepositoryInterpreter[M[_]: Concurrent] private (
   def queryByInstrumentType(
       instrumentType: InstrumentType
   ): M[List[Instrument]] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       session.prepare(selectByInstrumentType).use { ps =>
         ps.stream(instrumentType, 1024).compile.toList
       }
     }
 
   def store(ins: Instrument): M[Instrument] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       session.prepare(upsertInstrument).use { cmd =>
         cmd.execute(ins).void.map(_ => ins)
       }
@@ -118,7 +118,7 @@ private object InstrumentQueries {
 // Smart constructor
 object InstrumentRepositoryInterpreter {
   def make[M[_]: Concurrent](
-      sessionPool: Resource[M, Session[M]]
+      postgres: Resource[M, Session[M]]
   ): InstrumentRepositoryInterpreter[M] =
-    new InstrumentRepositoryInterpreter[M](sessionPool)
+    new InstrumentRepositoryInterpreter[M](postgres)
 }

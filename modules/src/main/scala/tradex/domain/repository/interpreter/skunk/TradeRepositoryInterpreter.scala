@@ -21,7 +21,7 @@ import model.enums._
 import model.trade._
 
 final class TradeRepositoryInterpreter[M[_]: Concurrent] private (
-    sessionPool: Resource[M, Session[M]]
+    postgres: Resource[M, Session[M]]
 ) extends TradeRepository[M] {
   import TradeQueries._
 
@@ -35,7 +35,7 @@ final class TradeRepositoryInterpreter[M[_]: Concurrent] private (
   }
 
   def query(accountNo: String, date: LocalDate): M[List[Trade]] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       session.prepare(selectByAccountNoAndDate).use { ps =>
         ps.stream(accountNo ~ date, 1024)
           .compile
@@ -92,7 +92,7 @@ final class TradeRepositoryInterpreter[M[_]: Concurrent] private (
   }
 
   def store(exe: Trade): M[Trade] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       session.prepare(insertTrade).use {
         _.execute(exe).void.map(_ => exe)
       }
@@ -112,7 +112,7 @@ final class TradeRepositoryInterpreter[M[_]: Concurrent] private (
   }
 
   def store(trades: NonEmptyList[Trade]): M[Unit] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       val ts = trades.toList
       session.prepare(insertTrades(ts)).use(_.execute(ts)).void.map(_ => ())
     }
@@ -221,7 +221,7 @@ private object TradeQueries {
 // Smart constructor
 object TradeRepositoryInterpreter {
   def make[M[_]: Concurrent](
-      sessionPool: Resource[M, Session[M]]
+      postgres: Resource[M, Session[M]]
   ): TradeRepositoryInterpreter[M] =
-    new TradeRepositoryInterpreter[M](sessionPool)
+    new TradeRepositoryInterpreter[M](postgres)
 }

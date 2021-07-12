@@ -19,35 +19,35 @@ import model.account._
 import Account._
 
 final class AccountRepositoryInterpreter[M[_]: Concurrent] private (
-    sessionPool: Resource[M, Session[M]]
+    postgres: Resource[M, Session[M]]
 ) extends AccountRepository[M] {
   import AccountQueries._
 
   def query(no: String): M[Option[Account]] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       session.prepare(selectByAccountNo).use { ps =>
         ps.option(no)
       }
     }
 
   def store(a: Account): M[Account] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       session.prepare(upsertAccount).use { cmd =>
         cmd.execute(a).void.map(_ => a)
       }
     }
 
   def query(openedOn: LocalDate): M[List[Account]] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       session.prepare(selectByOpenedDate).use { ps =>
         ps.stream(openedOn, 1024).compile.toList
       }
     }
 
-  def all: M[List[Account]] = sessionPool.use(_.execute(selectAll))
+  def all: M[List[Account]] = postgres.use(_.execute(selectAll))
 
   def allClosed(closeDate: Option[LocalDate]): M[List[Account]] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       closeDate
         .map { cd =>
           session.prepare(selectClosedAfter).use { ps =>
@@ -60,7 +60,7 @@ final class AccountRepositoryInterpreter[M[_]: Concurrent] private (
     }
 
   def allAccountsOfType(accountType: AccountType): M[List[Account]] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       session.prepare(selectByAccountType).use { ps =>
         ps.stream(accountType, 1024).compile.toList
       }
@@ -248,7 +248,7 @@ private object AccountQueries {
 // Smart constructor
 object AccountRepositoryInterpreter {
   def make[M[_]: Concurrent](
-      sessionPool: Resource[M, Session[M]]
+      postgres: Resource[M, Session[M]]
   ): AccountRepositoryInterpreter[M] =
-    new AccountRepositoryInterpreter[M](sessionPool)
+    new AccountRepositoryInterpreter[M](postgres)
 }

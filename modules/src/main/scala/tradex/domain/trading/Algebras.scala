@@ -11,16 +11,16 @@ import repository._
 object Algebras {
   // smart constructor for skunk based algebras
   def make[F[_]: Concurrent](
-      sessionPool: Resource[F, Session[F]]
+      postgres: Resource[F, Session[F]]
   ): Algebras[F] = {
     import repository.interpreter.skunk._
     new Algebras[F](
-      AccountRepositoryInterpreter.make[F](sessionPool),
-      ExecutionRepositoryInterpreter.make[F](sessionPool),
-      InstrumentRepositoryInterpreter.make[F](sessionPool),
-      OrderRepositoryInterpreter.make[F](sessionPool),
-      TradeRepositoryInterpreter.make[F](sessionPool),
-      BalanceRepositoryInterpreter.make[F](sessionPool)
+      AccountRepositoryInterpreter.make[F](postgres),
+      ExecutionRepositoryInterpreter.make[F](postgres),
+      InstrumentRepositoryInterpreter.make[F](postgres),
+      OrderRepositoryInterpreter.make[F](postgres),
+      TradeRepositoryInterpreter.make[F](postgres),
+      BalanceRepositoryInterpreter.make[F](postgres)
     )
   }
 

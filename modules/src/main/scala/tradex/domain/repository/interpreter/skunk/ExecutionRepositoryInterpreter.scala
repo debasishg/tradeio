@@ -15,19 +15,19 @@ import model.enums._
 import model.execution._
 
 final class ExecutionRepositoryInterpreter[M[_]: Concurrent] private (
-    sessionPool: Resource[M, Session[M]]
+    postgres: Resource[M, Session[M]]
 ) extends ExecutionRepository[M] {
   import ExecutionQueries._
 
   def store(exe: Execution): M[Execution] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       session.prepare(insertExecution).use { cmd =>
         cmd.execute(exe).void.map(_ => exe)
       }
     }
 
   def store(executions: NonEmptyList[Execution]): M[Unit] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       session.prepare(insertExecutions(executions.size)).use { cmd =>
         cmd.execute(executions.toList).void.map(_ => ())
       }
@@ -75,7 +75,7 @@ private object ExecutionQueries {
 // Smart constructor
 object ExecutionRepositoryInterpreter {
   def make[M[_]: Concurrent](
-      sessionPool: Resource[M, Session[M]]
+      postgres: Resource[M, Session[M]]
   ): ExecutionRepositoryInterpreter[M] =
-    new ExecutionRepositoryInterpreter[M](sessionPool)
+    new ExecutionRepositoryInterpreter[M](postgres)
 }

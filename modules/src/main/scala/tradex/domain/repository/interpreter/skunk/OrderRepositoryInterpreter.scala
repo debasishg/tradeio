@@ -19,7 +19,7 @@ import model.enums._
 import model.order._
 
 final class OrderRepositoryInterpreter[M[_]: Concurrent] private (
-    sessionPool: Resource[M, Session[M]]
+    postgres: Resource[M, Session[M]]
 ) extends OrderRepository[M] {
   import OrderQueries._
 
@@ -33,7 +33,7 @@ final class OrderRepositoryInterpreter[M[_]: Concurrent] private (
   }
 
   def query(no: String): M[Option[Order]] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       session.prepare(selectByOrderNo).use { ps =>
         ps.stream(no, 1024)
           .compile
@@ -85,7 +85,7 @@ final class OrderRepositoryInterpreter[M[_]: Concurrent] private (
     else orders.tail.foldLeft(orders.head)(Semigroup[Order].combine).some
 
   def queryByOrderDate(date: LocalDate): M[List[Order]] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       session.prepare(selectByOrderDate).use { ps =>
         ps.stream(date, 1024)
           .compile
@@ -117,7 +117,7 @@ final class OrderRepositoryInterpreter[M[_]: Concurrent] private (
     * @return the order with an effect
     */
   def store(ord: Order): M[Order] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       session.transaction.use { _ =>
         storeOrderAndLineItems(ord, session)
       }
@@ -145,7 +145,7 @@ final class OrderRepositoryInterpreter[M[_]: Concurrent] private (
   }
 
   def store(orders: NonEmptyList[Order]): M[Unit] =
-    sessionPool.use { session =>
+    postgres.use { session =>
       session.transaction.use { xa =>
         orders.toList
           .map { ord =>
@@ -225,7 +225,7 @@ private object OrderQueries {
 // Smart constructor
 object OrderRepositoryInterpreter {
   def make[M[_]: Concurrent](
-      sessionPool: Resource[M, Session[M]]
+      postgres: Resource[M, Session[M]]
   ): OrderRepositoryInterpreter[M] =
-    new OrderRepositoryInterpreter[M](sessionPool)
+    new OrderRepositoryInterpreter[M](postgres)
 }
