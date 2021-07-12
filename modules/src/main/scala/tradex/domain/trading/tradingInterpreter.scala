@@ -117,6 +117,7 @@ class TradingInterpreter[M[+_]: MonadThrowable: Logger](
     val action = persistTrades(trades) *> ev.pure(trades)
     action.adaptError {
       case e =>
+        e.printStackTrace()
         AllocationError(Option(e.getMessage()).getOrElse("Unknown error"))
     }
   }

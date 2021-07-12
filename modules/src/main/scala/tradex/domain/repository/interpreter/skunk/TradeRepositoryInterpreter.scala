@@ -179,8 +179,22 @@ private object TradeQueries {
 //   }
 
   def insertTrades(trades: List[Trade]): Command[trades.type] = {
-    val enc = tradeEncoder.values.list(trades)
-    sql"INSERT INTO trades VALUES $enc".command
+    val enc = tradeEncoder.list(trades)
+    sql"""
+        INSERT INTO trades
+        (
+          tradeRefNo
+          , accountNo
+          , isinCode
+          , market
+          , buySellFlag
+          , unitPrice
+          , quantity
+          , tradeDate
+          , valueDate
+          , netAmount
+        )
+        VALUES $enc""".command
   }
 
   val selectByAccountNoAndDate =

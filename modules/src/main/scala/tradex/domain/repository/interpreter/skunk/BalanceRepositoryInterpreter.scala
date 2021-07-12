@@ -94,13 +94,13 @@ private object BalanceQueries {
 
   val insertBalance: Command[Balance] =
     sql"""
-        INSERT INTO balance
+        INSERT INTO balance (accountNo, amount, asOf, currency)
         VALUES $encoder
        """.command
 
   val upsertBalance: Command[Balance] =
     sql"""
-        INSERT INTO balance
+        INSERT INTO balance (accountNo, amount, asOf, currency)
         VALUES ($varchar, $numeric, $timestamp, $varchar)
         ON CONFLICT(accountNo) DO UPDATE SET
           amount    = EXCLUDED.amount,
