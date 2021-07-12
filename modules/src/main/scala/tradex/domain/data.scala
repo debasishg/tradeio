@@ -1,5 +1,4 @@
 package tradex.domain
-package trading
 
 import java.util.UUID
 import cats.data.{NonEmptyList, EitherNec}

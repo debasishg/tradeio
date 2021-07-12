@@ -1,5 +1,4 @@
 package tradex.domain
-package trading
 
 import cats.data.NonEmptyList
 import cats.{Order => _, _}

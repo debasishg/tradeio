@@ -1,5 +1,4 @@
 package tradex.domain
-package trading
 
 import cats.effect._
 import cats.effect.unsafe.implicits.global
@@ -8,6 +7,7 @@ import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import repository._
+import trading._
 import accounting._
 
 object Main extends IOApp {
