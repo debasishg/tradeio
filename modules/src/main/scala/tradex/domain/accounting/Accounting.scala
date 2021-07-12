@@ -1,5 +1,5 @@
 package tradex.domain
-package trading
+package accounting
 
 import java.time.LocalDate
 

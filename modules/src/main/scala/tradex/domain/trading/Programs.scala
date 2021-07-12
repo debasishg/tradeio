@@ -18,6 +18,8 @@ import model.order._
 import model.trade._
 import model.balance._
 
+import accounting._
+
 import AppData._
 
 object Programs {

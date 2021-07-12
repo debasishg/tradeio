@@ -8,6 +8,7 @@ import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import repository._
+import accounting._
 
 object Main extends IOApp {
   override def run(args: List[String]): IO[ExitCode] = {

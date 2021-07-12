@@ -1,5 +1,5 @@
 package tradex.domain
-package trading
+package accounting
 
 import java.time.LocalDate
 
@@ -15,8 +15,6 @@ import repository._
 class AccountingInterpreter[M[_]: MonadThrowable](
     implicit B: Ask[M, BalanceRepository[M]]
 ) extends Accounting[M] {
-  import Accounting._
-
   private final val ev = implicitly[MonadThrowable[M]]
 
   def postBalance(trade: Trade): M[Balance] = {
@@ -38,7 +36,9 @@ class AccountingInterpreter[M[_]: MonadThrowable](
       )
     action.adaptError {
       case e =>
-        AccountingError(Option(e.getMessage()).getOrElse("Unknown error"))
+        Accounting.AccountingError(
+          Option(e.getMessage()).getOrElse("Unknown error")
+        )
     }
   }
 
@@ -53,7 +53,9 @@ class AccountingInterpreter[M[_]: MonadThrowable](
 
     action.adaptError {
       case e =>
-        AccountingError(Option(e.getMessage()).getOrElse("Unknown error"))
+        Accounting.AccountingError(
+          Option(e.getMessage()).getOrElse("Unknown error")
+        )
     }
   }
 
@@ -65,7 +67,9 @@ class AccountingInterpreter[M[_]: MonadThrowable](
 
     action.adaptError {
       case e =>
-        AccountingError(Option(e.getMessage()).getOrElse("Unknown error"))
+        Accounting.AccountingError(
+          Option(e.getMessage()).getOrElse("Unknown error")
+        )
     }
   }
 }
