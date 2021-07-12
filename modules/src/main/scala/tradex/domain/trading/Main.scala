@@ -38,9 +38,17 @@ object Main extends IOApp {
           }
       }
 
-    // FIXME
-    trades.map(_._1).unsafeRunSync() // .toList.foreach(println)
-    trades.map(_._2).unsafeRunSync() // .toList.foreach(println)
+    trades
+      .flatMap { ts =>
+        IO {
+          val trades = ts._1
+          val balance = ts._2
+          trades.toList.foreach(println)
+          balance.toList.foreach(println)
+        }
+      }
+      .unsafeRunSync()
+
     IO(ExitCode.Success)
   }
 }
