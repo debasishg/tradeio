@@ -39,8 +39,22 @@ object ExchangeApp extends IOApp.Simple {
           .bracket { _.join }(_.cancel)
     }
 
-    // FIXME
-    tradeGen.unsafeRunSync()
+    tradeGen
+      .flatMap { f =>
+        IO {
+          f.fold(
+            println("Trade generation canceled"),
+            th => th.printStackTrace(),
+            iots =>
+              iots
+                .flatMap { ts =>
+                  IO(ts.foreach(println))
+                }
+                .unsafeRunSync()
+          )
+        }
+      }
+      .unsafeRunSync()
 
     IO.unit
   }

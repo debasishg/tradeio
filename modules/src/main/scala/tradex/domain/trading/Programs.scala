@@ -52,7 +52,7 @@ final class Programs[F[_]: Logger: MonadThrowable] private (
 }
 
 // generate order from front office
-object orderGenerator {
+private[trading] object orderGenerator {
   def generateOrders(): String = {
     val o1 =
       FrontOfficeOrder(

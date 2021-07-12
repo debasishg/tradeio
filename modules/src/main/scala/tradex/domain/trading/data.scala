@@ -94,7 +94,7 @@ object AppData {
       executionRefNo = UUID.randomUUID().toString(),
       accountNo = ano1String,
       orderNo = "o1",
-      isin = ibmISIN,
+      isin = appleISIN,
       market = "New York",
       buySell = "buy",
       unitPrice = 32.25,
