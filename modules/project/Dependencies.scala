@@ -28,7 +28,6 @@ object Dependencies {
   object Cats {
     val cats              = "org.typelevel"                %%   "cats-core"                      % catsVersion
     val catsEffect        = "org.typelevel"                %%   "cats-effect"                    % catsEffectVersion
-    val catsMtl           = "org.typelevel"                %%   "cats-mtl"                       % catsMtlVersion
   }
 
   object Doobie {
@@ -60,7 +59,7 @@ object Dependencies {
   val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect)
 
   val tradeioDependencies: Seq[ModuleID] = 
-    commonDependencies ++ Seq(Cats.catsMtl) ++ Seq(kindProjector) ++ 
+    commonDependencies ++ Seq(kindProjector) ++ 
       Seq(Misc.newtype, Misc.squants) ++ 
       Seq(Refined.refinedCore, Refined.refinedCats, Refined.refinedShapeless) ++ 
       Seq(Ciris.cirisCore, Ciris.cirisEnum, Ciris.cirisRefined) ++ 

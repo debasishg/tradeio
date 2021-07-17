@@ -4,9 +4,7 @@ import java.time.LocalDateTime
 
 import cats._
 import cats.data._
-import cats.mtl._
 import cats.implicits._
-import cats.effect.IO
 
 import squants.market._
 
@@ -21,8 +19,6 @@ package object domain {
   final val ZERO_BIG_DECIMAL = BigDecimal(0)
 
   implicit val moneyContext = defaultMoneyContext
-
-  def askRepo[A](repo: A) = Ask.const[IO, A](repo)
 
   object NewtypeRefinedOps {
     import io.estatico.newtype.Coercible
