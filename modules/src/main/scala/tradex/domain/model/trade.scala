@@ -11,16 +11,19 @@ import enumeratum._
 import squants.market._
 
 import NewtypeRefinedOps._
-import newtypes._
 import account._
 import instrument._
 import order._
 import execution._
 import market._
-import enums._
 import java.{util => ju}
+import io.estatico.newtype.macros.newtype
+
+import eu.timepit.refined.types.string.NonEmptyString
 
 object trade {
+  // replace with UUID
+  @newtype case class TradeReferenceNo(value: NonEmptyString)
   sealed abstract class TaxFeeId(override val entryName: String)
       extends EnumEntry
 
@@ -40,7 +43,7 @@ object trade {
     Map(TradeTax -> 0.2, Commission -> 0.15, VAT -> 0.1)
 
   // tax and fees applicable for each market
-  // Other signifies the general rule
+  // Other signifies the general rule applicable for all markets
   final val taxFeeForMarket: Map[Market, List[TaxFeeId]] =
     Map(
       Market.Other -> List(TradeTax, Commission),
@@ -48,7 +51,7 @@ object trade {
     )
 
   // get the list of tax/fees applicable for this trade
-  // depends on the market
+  // depending on the market
   final val forTrade: Trade => Option[List[TaxFeeId]] = { trade =>
     taxFeeForMarket.get(trade.market).orElse(taxFeeForMarket.get(Market.Other))
   }

@@ -8,12 +8,11 @@ import cats.syntax.all._
 
 import NewtypeRefinedOps._
 import org.typelevel.log4cats.Logger
-import model.account.Account
+import model.account._
 import model.execution.Execution
-import model.order.Order
+import model.order.{Order, Quantity}
 import model.trade.Trade
 import model.market.Market
-import model.newtypes._
 import scala.util.control.NoStackTrace
 import repository._
 

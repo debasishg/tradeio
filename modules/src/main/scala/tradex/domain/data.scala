@@ -6,8 +6,8 @@ import cats.syntax.all._
 import cats.instances.list._
 
 import NewtypeRefinedOps._
+import model.account._
 import model.order._
-import model.newtypes._
 import model.execution._
 
 object AppData {

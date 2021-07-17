@@ -20,4 +20,6 @@ object Versions {
   val fs2Version = "3.0.4"
   val log4catsVersion = "2.1.1"
   val logbackVersion = "1.2.3"
+  val monocleVersion = "3.0.0"
+  val derevoVersion = "0.12.6"
 }

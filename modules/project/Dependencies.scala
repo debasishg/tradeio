@@ -4,6 +4,8 @@ import Versions._
 
 object Dependencies {
 
+  def derevo(artifact: String): ModuleID = "tf.tofu"       %% s"derevo-$artifact"                % derevoVersion
+
   object Misc {
     val newtype           = "io.estatico"                  %% "newtype"                          % newtypeVersion
     val squants           = "org.typelevel"                %% "squants"                          % squantsVersion
@@ -15,6 +17,12 @@ object Dependencies {
     val refinedCore       = "eu.timepit"                   %% "refined"                          % refinedVersion
     val refinedCats       = "eu.timepit"                   %% "refined-cats"                     % refinedVersion
     val refinedShapeless  = "eu.timepit"                   %% "refined-shapeless"                % refinedVersion
+  }
+
+  object Derevo {
+    val derevoCore  = derevo("core")
+    val derevoCats  = derevo("cats")
+    val derevoCirce = derevo("circe-magnolia")
   }
 
   object Cormorant {
@@ -30,13 +38,6 @@ object Dependencies {
     val catsEffect        = "org.typelevel"                %%   "cats-effect"                    % catsEffectVersion
   }
 
-  object Doobie {
-    val doobieCore        = "org.tpolecat"                 %% "doobie-core"                      % doobieVersion
-    val doobieH2          = "org.tpolecat"                 %% "doobie-h2"                        % doobieVersion
-    val doobieHikari      = "org.tpolecat"                 %% "doobie-hikari"                    % doobieVersion
-    val doobiePostgres    = "org.tpolecat"                 %% "doobie-postgres"                  % doobieVersion
-  }
-
   object Skunk {
     val skunkCore         = "org.tpolecat"                 %% "skunk-core"                       % skunkVersion
     val skunkCirce        = "org.tpolecat"                 %% "skunk-circe"                      % skunkVersion
@@ -47,6 +48,8 @@ object Dependencies {
     val cirisEnum         = "is.cir"                       %% "ciris-enumeratum"                 % cirisVersion
     val cirisRefined      = "is.cir"                       %% "ciris-refined"                    % cirisVersion
   }
+
+  val monocleCore         = "dev.optics"                   %% "monocle-core"                     % monocleVersion
 
   val flywayDb            = "org.flywaydb"                  % "flyway-core"                      % "5.2.4"
   val log4cats            = "org.typelevel"                %% "log4cats-slf4j"                   % log4catsVersion
@@ -61,6 +64,8 @@ object Dependencies {
   val tradeioDependencies: Seq[ModuleID] = 
     commonDependencies ++ Seq(kindProjector) ++ 
       Seq(Misc.newtype, Misc.squants) ++ 
+      Seq(Derevo.derevoCore, Derevo.derevoCats, Derevo.derevoCirce) ++
+      Seq(monocleCore) ++
       Seq(Refined.refinedCore, Refined.refinedCats, Refined.refinedShapeless) ++ 
       Seq(Ciris.cirisCore, Ciris.cirisEnum, Ciris.cirisRefined) ++ 
       Seq(Cormorant.core, Cormorant.generic, Cormorant.parser, Cormorant.refined) ++

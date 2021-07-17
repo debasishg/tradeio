@@ -12,10 +12,11 @@ import eu.timepit.refined.auto._
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.numeric._
 
+import model.account.AccountNo
+import model.instrument.ISINCode
 import model.order._
 import model.execution._
 import model.trade._
-import model.newtypes._
 import NewtypeRefinedOps._
 import AppData._
 

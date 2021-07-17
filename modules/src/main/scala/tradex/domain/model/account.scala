@@ -10,10 +10,39 @@ import squants.market._
 
 import NewtypeRefinedOps._
 
-import newtypes._
-import enums._
+import enumeratum._
+
+import io.estatico.newtype.macros.newtype
+
+import eu.timepit.refined._
+import eu.timepit.refined.api.Refined
+import eu.timepit.refined.collection._
+import eu.timepit.refined.boolean.AllOf
+import eu.timepit.refined.types.string.NonEmptyString
+
+import _root_.shapeless.::
+import _root_.shapeless.HNil
 
 object account {
+  type AccountNoString = String Refined AllOf[
+    MaxSize[W.`12`.T] ::
+      MinSize[W.`5`.T] ::
+      HNil
+  ]
+
+  @newtype case class AccountNo(value: AccountNoString)
+  @newtype case class AccountName(value: NonEmptyString)
+
+  sealed trait AccountType extends EnumEntry
+
+  object AccountType extends Enum[AccountType] {
+    case object Trading extends AccountType
+    case object Settlement extends AccountType
+    case object Both extends AccountType
+
+    val values = findValues
+  }
+
   private[domain] final case class Account private (
       no: AccountNo,
       name: AccountName,

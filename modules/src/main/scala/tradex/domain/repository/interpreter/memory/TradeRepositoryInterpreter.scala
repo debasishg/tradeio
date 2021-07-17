@@ -12,8 +12,8 @@ import cats.syntax.all._
 import cats.effect.Ref
 import cats.effect.Sync
 
+import model.instrument.ISINCode
 import model.trade._
-import model.newtypes._
 
 // Constructor private for the interpreter to prevent the Ref from leaking
 // access through smart constructor below

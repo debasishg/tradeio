@@ -9,10 +9,43 @@ import cats.syntax.all._
 import squants.market._
 
 import NewtypeRefinedOps._
-import newtypes._
-import enums._
+import enumeratum._
+import io.estatico.newtype.macros.newtype
+
+import eu.timepit.refined._
+import eu.timepit.refined.api.Refined
+import eu.timepit.refined.numeric._
+import eu.timepit.refined.collection._
+import eu.timepit.refined.boolean.AllOf
+import eu.timepit.refined.types.string.NonEmptyString
+
+import _root_.shapeless.::
+import _root_.shapeless.HNil
+import eu.timepit.refined.string.MatchesRegex
 
 object instrument {
+  // instrument
+  type ISINCodeString = String Refined AllOf[
+    MaxSize[W.`12`.T] ::
+      MinSize[W.`12`.T] ::
+      MatchesRegex[W.`"([A-Z]{2})((?![A-Z]{10}\b)[A-Z0-9]{10})"`.T] ::
+      HNil
+  ]
+
+  @newtype case class ISINCode(value: ISINCodeString)
+  @newtype case class InstrumentName(value: NonEmptyString)
+  @newtype case class LotSize(value: Short Refined Positive)
+
+  sealed trait InstrumentType extends EnumEntry
+
+  object InstrumentType extends Enum[InstrumentType] {
+    case object CCY extends InstrumentType
+    case object Equity extends InstrumentType
+    case object FixedIncome extends InstrumentType
+
+    val values = findValues
+  }
+
   private[domain] final case class Instrument private (
       isinCode: ISINCode,
       name: InstrumentName,

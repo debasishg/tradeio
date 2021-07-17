@@ -10,8 +10,8 @@ import skunk.data.Type
 import skunk.codec.all._
 import skunk.implicits._
 
-import model.enums._
 import model.execution._
+import model.order.BuySell
 
 trait ExecutionRepository[F[_]] {
   /** store */

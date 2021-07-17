@@ -7,16 +7,19 @@ import cats.syntax.all._
 import cats.data.EitherNec
 
 import NewtypeRefinedOps._
-import newtypes._
 import account._
 import instrument._
 import order._
 import market._
-import enums._
 import java.time.LocalDateTime
+import io.estatico.newtype.macros.newtype
+
+import eu.timepit.refined.types.string.NonEmptyString
 
 object execution {
-  // primary domain entity
+  @newtype case class ExecutionReferenceNo(value: NonEmptyString)
+
+  // primary domain entity for execution from exchange
   private[domain] final case class Execution private (
       executionRefNo: ExecutionReferenceNo,
       accountNo: AccountNo,
@@ -43,7 +46,7 @@ object execution {
   )
 
   object Execution {
-    // smart constructor
+    // smart constructor : adds validation
     def execution(
         executionRefNo: String,
         accountNo: String,

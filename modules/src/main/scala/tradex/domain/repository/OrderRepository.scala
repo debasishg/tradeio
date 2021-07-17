@@ -13,8 +13,6 @@ import skunk.data.Type
 import skunk.codec.all._
 import skunk.implicits._
 
-import model.newtypes._
-import model.enums._
 import model.order._
 
 trait OrderRepository[F[_]] {

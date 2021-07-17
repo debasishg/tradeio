@@ -13,10 +13,29 @@ import cats.instances.list._
 import instrument._
 import account._
 import NewtypeRefinedOps._
-import newtypes._
-import enums._
+import enumeratum._
+import io.estatico.newtype.macros.newtype
+
+import eu.timepit.refined.api.Refined
+import eu.timepit.refined.numeric._
+import eu.timepit.refined.types.string.NonEmptyString
 
 object order {
+  @newtype case class OrderNo(value: NonEmptyString)
+  @newtype case class Quantity(value: BigDecimal Refined NonNegative)
+  @newtype case class UnitPrice(value: BigDecimal Refined Positive)
+
+  sealed abstract class BuySell(override val entryName: String)
+      extends EnumEntry
+
+  object BuySell extends Enum[BuySell] {
+    case object Buy extends BuySell("buy")
+    case object Sell extends BuySell("sell")
+
+    val values = findValues
+  }
+
+  // domain entity
   private[domain] final case class LineItem private (
       instrument: ISINCode,
       quantity: Quantity,

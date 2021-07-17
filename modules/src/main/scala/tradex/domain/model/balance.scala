@@ -5,7 +5,6 @@ import java.time.LocalDateTime
 import squants.market._
 import cats.data.{EitherNec, NonEmptyChain}
 import cats.syntax.all._
-import newtypes._
 import account._
 
 object balance {

@@ -15,9 +15,8 @@ import skunk.implicits._
 
 import squants.market._
 
-import model.newtypes._
-import model.enums._
 import model.trade._
+import model.order.BuySell
 
 trait TradeRepository[F[_]] {
   /** query by account number and trade date (compares using the date part only) */

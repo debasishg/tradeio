@@ -11,7 +11,6 @@ import skunk.implicits._
 
 import squants.market._
 
-import model.enums._
 import model.instrument._
 
 trait InstrumentRepository[F[_]] {
