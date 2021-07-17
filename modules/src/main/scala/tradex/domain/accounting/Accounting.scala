@@ -6,7 +6,7 @@ import scala.util.control.NoStackTrace
 import java.time.LocalDate
 
 import cats.data.NonEmptyList
-import cats.implicits._
+import cats.syntax.all._
 
 import model.trade.Trade
 import model.balance.Balance

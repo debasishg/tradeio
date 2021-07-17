@@ -4,7 +4,7 @@ package trading
 import java.io.InputStream
 
 import cats.effect._
-import cats.implicits._
+import cats.syntax.all._
 import cats.data.{NonEmptyList, EitherNec}
 
 import io.chrisdavenport.cormorant._

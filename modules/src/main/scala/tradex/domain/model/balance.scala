@@ -4,7 +4,7 @@ package model
 import java.time.LocalDateTime
 import squants.market._
 import cats.data.{EitherNec, NonEmptyChain}
-import cats.implicits._
+import cats.syntax.all._
 import newtypes._
 import account._
 

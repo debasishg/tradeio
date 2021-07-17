@@ -5,7 +5,7 @@ import java.io.InputStream
 
 import cats.data.EitherNec
 import cats.effect._
-import cats.implicits._
+import cats.syntax.all._
 
 import io.chrisdavenport.cormorant._
 import io.chrisdavenport.cormorant.generic.semiauto._

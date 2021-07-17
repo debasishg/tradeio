@@ -15,21 +15,25 @@ object Main extends IOApp {
     implicit val logger = Slf4jLogger.getLogger[IO]
 
     val trades =
-      config.load[IO].flatMap { cfg =>
-        Logger[IO].info(s"Loaded config $cfg") >>
-          AppResources.make[IO](cfg).use { res =>
-            Programs.make[IO]().flatMap { programs =>
-              programs.generateTrade(
-                Trading.make[IO](
-                  AccountRepository.make[IO](res.psql),
-                  ExecutionRepository.make[IO](res.psql),
-                  OrderRepository.make[IO](res.psql),
-                  TradeRepository.make[IO](res.psql)
-                ),
-                Accounting.make[IO](BalanceRepository.make[IO](res.psql))
-              )
+      config.load[IO].flatMap { cfg => // load config
+        Logger[IO].info(s"Loaded application configuration $cfg") >>
+          AppResources
+            .make[IO](cfg)
+            .use { res => // make resources based on config
+              Programs
+                .make[IO]()
+                .flatMap { // make the program that will give me the generators
+                  _.generateTrade(
+                    Trading.make[IO](
+                      AccountRepository.make[IO](res.psql),
+                      ExecutionRepository.make[IO](res.psql),
+                      OrderRepository.make[IO](res.psql),
+                      TradeRepository.make[IO](res.psql)
+                    ),
+                    Accounting.make[IO](BalanceRepository.make[IO](res.psql))
+                  )
+                }
             }
-          }
       }
 
     trades

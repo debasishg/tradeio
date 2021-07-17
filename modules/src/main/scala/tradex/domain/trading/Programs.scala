@@ -4,7 +4,7 @@ package trading
 import java.time.Instant
 
 import cats.data._
-import cats.implicits._
+import cats.syntax.all._
 import cats.effect.Sync
 
 import org.typelevel.log4cats.Logger

@@ -2,7 +2,7 @@ package tradex.domain
 
 import java.util.UUID
 import cats.data.{NonEmptyList, EitherNec}
-import cats.implicits._
+import cats.syntax.all._
 import cats.instances.list._
 
 import NewtypeRefinedOps._

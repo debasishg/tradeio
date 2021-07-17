@@ -3,7 +3,7 @@ package model
 
 import java.util.UUID
 
-import cats.implicits._
+import cats.syntax.all._
 import cats.data.EitherNec
 
 import NewtypeRefinedOps._

@@ -7,7 +7,7 @@ import java.util.UUID
 
 import cats.data.NonEmptyList
 import cats.data.EitherNec
-import cats.implicits._
+import cats.syntax.all._
 import cats.instances.list._
 
 import instrument._

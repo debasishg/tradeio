@@ -3,7 +3,7 @@ package tradex.domain
 import cats.data.NonEmptyList
 import cats.{Order => _, _}
 
-import cats.implicits._
+import cats.syntax.all._
 import cats.effect._
 import cats.effect.{Deferred, Ref}
 import cats.effect.unsafe.implicits.global

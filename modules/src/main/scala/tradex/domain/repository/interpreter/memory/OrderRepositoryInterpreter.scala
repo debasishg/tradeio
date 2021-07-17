@@ -8,7 +8,7 @@ import scala.collection.immutable.Map
 
 import cats._
 import cats.data.NonEmptyList
-import cats.implicits._
+import cats.syntax.all._
 import cats.effect.Ref
 import cats.effect.Sync
 

@@ -1,7 +1,7 @@
 package tradex.domain
 package repository
 
-import cats.implicits._
+import cats.syntax.all._
 import cats.effect._
 
 import skunk._

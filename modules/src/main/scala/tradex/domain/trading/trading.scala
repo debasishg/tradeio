@@ -4,7 +4,7 @@ package trading
 import java.time.LocalDate
 
 import cats.data.NonEmptyList
-import cats.implicits._
+import cats.syntax.all._
 
 import NewtypeRefinedOps._
 import org.typelevel.log4cats.Logger
