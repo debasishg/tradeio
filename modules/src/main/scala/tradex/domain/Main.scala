@@ -18,22 +18,15 @@ object Main extends IOApp {
       config.load[IO].flatMap { cfg =>
         Logger[IO].info(s"Loaded config $cfg") >>
           AppResources.make[IO](cfg).use { res =>
-            val algebras = Algebras.make[IO](res.psql)
-            Programs.make[IO](algebras).flatMap { programs =>
-              implicit val accountRepositoryAsk =
-                askRepo[AccountRepository[IO]](algebras.accountRepository)
-              implicit val executionRepositoryAsk =
-                askRepo[ExecutionRepository[IO]](algebras.executionRepository)
-              implicit val orderRepositoryAsk =
-                askRepo[OrderRepository[IO]](algebras.orderRepository)
-              implicit val tradeRepositoryAsk =
-                askRepo[TradeRepository[IO]](algebras.tradeRepository)
-              implicit val balanceRepositoryAsk =
-                askRepo[BalanceRepository[IO]](algebras.balanceRepository)
-
+            Programs.make[IO]().flatMap { programs =>
               programs.generateTrade(
-                new TradingInterpreter[IO],
-                new AccountingInterpreter[IO]
+                Trading.make[IO](
+                  AccountRepository.make[IO](res.psql),
+                  ExecutionRepository.make[IO](res.psql),
+                  OrderRepository.make[IO](res.psql),
+                  TradeRepository.make[IO](res.psql)
+                ),
+                Accounting.make[IO](BalanceRepository.make[IO](res.psql))
               )
             }
           }

@@ -4,7 +4,10 @@ package trading
 import java.time.LocalDate
 
 import cats.data.NonEmptyList
+import cats.implicits._
 
+import NewtypeRefinedOps._
+import org.typelevel.log4cats.Logger
 import model.account.Account
 import model.execution.Execution
 import model.order.Order
@@ -12,6 +15,7 @@ import model.trade.Trade
 import model.market.Market
 import model.newtypes._
 import scala.util.control.NoStackTrace
+import repository._
 
 trait Trading[F[_]] {
   /**
@@ -77,4 +81,118 @@ object Trading {
   case class OrderingError(cause: String) extends NoStackTrace
   case class ExecutionError(cause: String) extends NoStackTrace
   case class AllocationError(cause: String) extends NoStackTrace
+
+  def make[F[+_]: MonadThrowable: Logger](
+      accountRepository: AccountRepository[F],
+      executionRepository: ExecutionRepository[F],
+      orderRepository: OrderRepository[F],
+      tradeRepository: TradeRepository[F]
+  ): Trading[F] =
+    new Trading[F] {
+      private final val ev = implicitly[MonadThrowable[F]]
+
+      def getAccountsOpenedOn(openDate: LocalDate): F[List[Account]] =
+        accountRepository.query(openDate)
+
+      def getTrades(
+          forAccountNo: String,
+          forDate: Option[LocalDate] = None
+      ): F[List[Trade]] =
+        tradeRepository.query(
+          forAccountNo,
+          forDate.getOrElse(today.toLocalDate())
+        )
+
+      def orders(csvOrder: String): F[NonEmptyList[Order]] = {
+        val action = ordering
+          .createOrders(csvOrder)
+          .fold(
+            nec =>
+              ev.raiseError(
+                new Throwable(nec.toNonEmptyList.toList.mkString("/"))
+              ),
+            os => {
+              if (os isEmpty)
+                ev.raiseError(
+                  new Throwable("Empty order list received from csv")
+                )
+              else {
+                val nlos = NonEmptyList.fromList(os).get
+                persistOrders(nlos) *> ev.pure(nlos)
+              }
+            }
+          )
+        action.adaptError {
+          case e =>
+            OrderingError(Option(e.getMessage()).getOrElse("Unknown error"))
+        }
+      }
+
+      def execute(
+          orders: NonEmptyList[Order],
+          market: Market,
+          brokerAccountNo: AccountNo
+      ): F[NonEmptyList[Execution]] = {
+        val exes = orders.flatMap { order =>
+          order.items.map { item =>
+            Execution(
+              Execution.generateExecutionReferenceNo(),
+              brokerAccountNo,
+              order.no,
+              item.instrument,
+              market,
+              item.buySell,
+              item.unitPrice,
+              item.quantity,
+              today
+            )
+          }
+        }
+        val action = persistExecutions(exes) *> ev.pure(exes)
+        action.adaptError {
+          case e =>
+            ExecutionError(Option(e.getMessage()).getOrElse("Unknown error"))
+        }
+      }
+
+      def allocate(
+          executions: NonEmptyList[Execution],
+          clientAccounts: NonEmptyList[AccountNo]
+      ): F[NonEmptyList[Trade]] = {
+        val trades: NonEmptyList[Trade] = executions
+          .flatMap { execution =>
+            val q = execution.quantity.value.value / clientAccounts.size
+            val qty = validate[Quantity](q)
+              .fold(errs => throw new Exception(errs.toString), identity)
+            clientAccounts
+              .map { accountNo =>
+                val trd = Trade(
+                  accountNo,
+                  execution.isin,
+                  Trade.generateTradeReferenceNo(),
+                  execution.market,
+                  execution.buySell,
+                  execution.unitPrice,
+                  qty
+                )
+                Trade.withTaxFee(trd)
+              }
+          }
+        val action = persistTrades(trades) *> ev.pure(trades)
+        action.adaptError {
+          case e =>
+            e.printStackTrace()
+            AllocationError(Option(e.getMessage()).getOrElse("Unknown error"))
+        }
+      }
+
+      private def persistOrders(orders: NonEmptyList[Order]) =
+        orderRepository.store(orders)
+
+      private def persistExecutions(executions: NonEmptyList[Execution]) =
+        executionRepository.store(executions)
+
+      private def persistTrades(trades: NonEmptyList[Trade]) =
+        tradeRepository.store(trades)
+    }
 }
