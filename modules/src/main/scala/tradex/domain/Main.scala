@@ -10,8 +10,8 @@ import repository._
 import trading._
 import accounting._
 
-object Main extends IOApp {
-  override def run(args: List[String]): IO[ExitCode] = {
+object Main extends IOApp.Simple {
+  override def run: IO[Unit] = {
     implicit val logger = Slf4jLogger.getLogger[IO]
 
     val trades =
@@ -36,17 +36,17 @@ object Main extends IOApp {
             }
       }
 
-    trades
-      .flatMap { ts =>
-        IO {
-          val trades = ts._1
-          val balance = ts._2
-          trades.toList.foreach(println)
-          balance.toList.foreach(println)
+    IO {
+      trades
+        .flatMap { ts =>
+          IO {
+            val trades = ts._1
+            val balance = ts._2
+            trades.toList.foreach(println)
+            balance.toList.foreach(println)
+          }
         }
-      }
-      .unsafeRunSync()
-
-    IO(ExitCode.Success)
+        .unsafeRunSync()
+    }
   }
 }
