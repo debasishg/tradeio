@@ -14,7 +14,7 @@ import io.chrisdavenport.cormorant.implicits._
 
 import model.execution._
 
-object executing {
+private[trading] object executing {
   implicit val lr: LabelledRead[ExchangeExecution] = deriveLabelledRead
   implicit val lw: LabelledWrite[ExchangeExecution] = deriveLabelledWrite
 

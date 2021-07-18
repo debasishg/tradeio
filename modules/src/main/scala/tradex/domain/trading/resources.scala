@@ -17,7 +17,7 @@ import natchez.Trace.Implicits.noop // needed for skunk
 
 import config.config._
 
-final case class AppResources[F[_]](
+final case class AppResources[F[_]] private (
     psql: Resource[F, Session[F]]
 )
 

@@ -15,7 +15,7 @@ import io.chrisdavenport.cormorant.implicits._
 import model.order._
 import Order._
 
-object ordering {
+private[trading] object ordering {
   implicit val lr: LabelledRead[FrontOfficeOrder] = deriveLabelledRead
   implicit val lw: LabelledWrite[FrontOfficeOrder] = deriveLabelledWrite
 
