@@ -5,9 +5,13 @@ import java.time.LocalDateTime
 import squants.market._
 import cats.data.{EitherNec, NonEmptyChain}
 import cats.syntax.all._
+import derevo.cats._
+import derevo.circe.magnolia._
+import derevo.derive
 import account._
 
 object balance {
+  @derive(decoder, encoder, eqv, show)
   private[domain] final case class Balance private (
       accountNo: AccountNo,
       amount: Money,

@@ -2,8 +2,12 @@ package tradex.domain
 package model
 
 import enumeratum._
+import derevo.cats._
+import derevo.circe.magnolia._
+import derevo.derive
 
 object market {
+  @derive(decoder, encoder, eqv, show)
   sealed abstract class Market(override val entryName: String) extends EnumEntry
 
   object Market extends Enum[Market] {

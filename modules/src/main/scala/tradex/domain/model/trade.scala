@@ -18,12 +18,20 @@ import execution._
 import market._
 import java.{util => ju}
 import io.estatico.newtype.macros.newtype
+import derevo.cats._
+import derevo.circe.magnolia._
+import derevo.derive
+import io.circe.refined._
+import eu.timepit.refined.cats._
 
 import eu.timepit.refined.types.string.NonEmptyString
 
 object trade {
   // replace with UUID
+  @derive(decoder, encoder, eqv, show)
   @newtype case class TradeReferenceNo(value: NonEmptyString)
+
+  @derive(decoder, encoder, eqv, show)
   sealed abstract class TaxFeeId(override val entryName: String)
       extends EnumEntry
 
@@ -81,6 +89,7 @@ object trade {
     principal(trade) + taxFeeAmounts.map(_.amount).foldLeft(Money(0))(_ + _)
   }
 
+  @derive(decoder, encoder, eqv, show)
   private[domain] final case class Trade private (
       accountNo: AccountNo,
       isin: ISINCode,
@@ -95,6 +104,7 @@ object trade {
       netAmount: Option[Money] = None
   )
 
+  @derive(decoder, encoder, eqv, show)
   private[domain] final case class TradeTaxFee(
       taxFeeId: TaxFeeId,
       amount: Money

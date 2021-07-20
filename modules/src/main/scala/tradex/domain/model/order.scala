@@ -19,12 +19,25 @@ import io.estatico.newtype.macros.newtype
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.numeric._
 import eu.timepit.refined.types.string.NonEmptyString
+import eu.timepit.refined.auto._
+import eu.timepit.refined.cats._
+
+import derevo.cats._
+import derevo.circe.magnolia._
+import derevo.derive
+import io.circe.refined._
 
 object order {
+  @derive(decoder, encoder, eqv, show)
   @newtype case class OrderNo(value: NonEmptyString)
+
+  @derive(decoder, encoder, eqv, show)
   @newtype case class Quantity(value: BigDecimal Refined NonNegative)
+
+  @derive(decoder, encoder, eqv, show)
   @newtype case class UnitPrice(value: BigDecimal Refined Positive)
 
+  @derive(decoder, encoder, eqv, show)
   sealed abstract class BuySell(override val entryName: String)
       extends EnumEntry
 

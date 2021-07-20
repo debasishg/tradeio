@@ -13,13 +13,20 @@ import order._
 import market._
 import java.time.LocalDateTime
 import io.estatico.newtype.macros.newtype
+import derevo.cats._
+import derevo.circe.magnolia._
+import derevo.derive
+import io.circe.refined._
+import eu.timepit.refined.cats._
 
 import eu.timepit.refined.types.string.NonEmptyString
 
 object execution {
+  @derive(decoder, encoder, eqv, show)
   @newtype case class ExecutionReferenceNo(value: NonEmptyString)
 
   // primary domain entity for execution from exchange
+  @derive(decoder, encoder, eqv, show)
   private[domain] final case class Execution private (
       executionRefNo: ExecutionReferenceNo,
       accountNo: AccountNo,

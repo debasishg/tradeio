@@ -12,16 +12,23 @@ import NewtypeRefinedOps._
 import enumeratum._
 import io.estatico.newtype.macros.newtype
 
+import eu.timepit.refined.numeric._
+import eu.timepit.refined.string.MatchesRegex
 import eu.timepit.refined._
 import eu.timepit.refined.api.Refined
-import eu.timepit.refined.numeric._
 import eu.timepit.refined.collection._
 import eu.timepit.refined.boolean.AllOf
 import eu.timepit.refined.types.string.NonEmptyString
+import eu.timepit.refined.auto._
+import eu.timepit.refined.cats._
+
+import derevo.cats._
+import derevo.circe.magnolia._
+import derevo.derive
+import io.circe.refined._
 
 import _root_.shapeless.::
 import _root_.shapeless.HNil
-import eu.timepit.refined.string.MatchesRegex
 
 object instrument {
   // instrument
@@ -32,10 +39,16 @@ object instrument {
       HNil
   ]
 
+  @derive(decoder, encoder, eqv, show)
   @newtype case class ISINCode(value: ISINCodeString)
+
+  @derive(decoder, encoder, eqv, show)
   @newtype case class InstrumentName(value: NonEmptyString)
+
+  @derive(decoder, encoder, eqv, show)
   @newtype case class LotSize(value: Short Refined Positive)
 
+  @derive(decoder, encoder, eqv, show)
   sealed trait InstrumentType extends EnumEntry
 
   object InstrumentType extends Enum[InstrumentType] {
@@ -46,6 +59,7 @@ object instrument {
     val values = findValues
   }
 
+  @derive(decoder, encoder, eqv, show)
   private[domain] final case class Instrument private (
       isinCode: ISINCode,
       name: InstrumentName,

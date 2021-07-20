@@ -47,4 +47,7 @@ trait OrphanInstances {
     Show[String].contramap[Currency] { c =>
       s"Name: ${c.name.show}, Code: ${c.code.show}, Symbol: ${c.symbol.show}"
     }
+
+  implicit val showMoney: Show[Money] =
+    Show[String].contramap[Money](_.toString)
 }

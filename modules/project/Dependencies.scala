@@ -8,6 +8,7 @@ object Dependencies {
   def derevo(artifact: String): ModuleID = "tf.tofu"       %% s"derevo-$artifact"                % derevoVersion
   def circe(artifact: String): ModuleID  = "io.circe"      %% s"circe-$artifact"                 % circeVersion
   def http4s(artifact: String): ModuleID = "org.http4s"    %% s"http4s-$artifact"                % http4sVersion
+  def cormorant(artifact: String): ModuleID = "io.chrisdavenport"    %% s"cormorant-$artifact"   % cormorantVersion
 
   object Misc {
     val newtype           = "io.estatico"                  %% "newtype"                          % newtypeVersion
@@ -38,11 +39,11 @@ object Dependencies {
   }
 
   object Cormorant {
-    val core              = "io.chrisdavenport" %% "cormorant-core"     % cormorantVersion
-    val generic           = "io.chrisdavenport" %% "cormorant-generic"  % cormorantVersion
-    val parser            = "io.chrisdavenport" %% "cormorant-parser"   % cormorantVersion
-    val refined           = "io.chrisdavenport" %% "cormorant-refined"  % cormorantVersion
-    val fs2               = "io.chrisdavenport" %% "cormorant-fs2"      % cormorantVersion
+    val core        = cormorant("core")
+    val generic     = cormorant("generic")
+    val parser      = cormorant("parser")
+    val refined     = cormorant("refined")
+    val fs2         = cormorant("fs2")
   }
 
   object Cats {
