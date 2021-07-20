@@ -1,10 +1,13 @@
 import sbt._
 import Keys._
 import Versions._
+import _root_.sbt.librarymanagement.Http
 
 object Dependencies {
 
   def derevo(artifact: String): ModuleID = "tf.tofu"       %% s"derevo-$artifact"                % derevoVersion
+  def circe(artifact: String): ModuleID  = "io.circe"      %% s"circe-$artifact"                 % circeVersion
+  def http4s(artifact: String): ModuleID = "org.http4s"    %% s"http4s-$artifact"                % http4sVersion
 
   object Misc {
     val newtype           = "io.estatico"                  %% "newtype"                          % newtypeVersion
@@ -19,10 +22,19 @@ object Dependencies {
     val refinedShapeless  = "eu.timepit"                   %% "refined-shapeless"                % refinedVersion
   }
 
+  object Circe {
+    val circeCore    = circe("core")
+    val circeGeneric = circe("generic")
+    val circeParser  = circe("parser")
+    val circeRefined = circe("refined")
+  }
+
   object Derevo {
     val derevoCore  = derevo("core")
     val derevoCats  = derevo("cats")
-    val derevoCirce = derevo("circe-magnolia")
+    val derevoCiris = derevo("ciris")
+    val derevoCirce = derevo("circe")
+    val derevoCirceMagnolia = derevo("circe-magnolia")
   }
 
   object Cormorant {
@@ -47,6 +59,15 @@ object Dependencies {
     val cirisCore         = "is.cir"                       %% "ciris"                            % cirisVersion
     val cirisEnum         = "is.cir"                       %% "ciris-enumeratum"                 % cirisVersion
     val cirisRefined      = "is.cir"                       %% "ciris-refined"                    % cirisVersion
+    val cirisCirce        = "is.cir"                       %% "ciris-circe"                      % cirisVersion
+    val cirisSquants      = "is.cir"                       %% "ciris-squants"                    % cirisVersion
+  }
+
+  object Http4s {
+    val http4sDsl    = http4s("dsl")
+    val http4sServer = http4s("ember-server")
+    val http4sClient = http4s("ember-client")
+    val http4sCirce  = http4s("circe")
   }
 
   val monocleCore         = "dev.optics"                   %% "monocle-core"                     % monocleVersion
@@ -64,10 +85,12 @@ object Dependencies {
   val tradeioDependencies: Seq[ModuleID] = 
     commonDependencies ++ Seq(kindProjector) ++ 
       Seq(Misc.newtype, Misc.squants) ++ 
-      Seq(Derevo.derevoCore, Derevo.derevoCats, Derevo.derevoCirce) ++
+      Seq(Derevo.derevoCore, Derevo.derevoCats, Derevo.derevoCiris, Derevo.derevoCirceMagnolia) ++
       Seq(monocleCore) ++
       Seq(Refined.refinedCore, Refined.refinedCats, Refined.refinedShapeless) ++ 
-      Seq(Ciris.cirisCore, Ciris.cirisEnum, Ciris.cirisRefined) ++ 
+      Seq(Ciris.cirisCore, Ciris.cirisEnum, Ciris.cirisRefined, Ciris.cirisCirce, Ciris.cirisSquants) ++ 
       Seq(Cormorant.core, Cormorant.generic, Cormorant.parser, Cormorant.refined) ++
-      Seq(Skunk.skunkCore, Skunk.skunkCirce) ++ Seq(log4cats, logback)
+      Seq(Skunk.skunkCore, Skunk.skunkCirce) ++ Seq(log4cats, logback) ++
+      Seq(Http4s.http4sServer, Http4s.http4sClient, Http4s.http4sDsl, Http4s.http4sCirce) ++
+      Seq(Circe.circeCore, Circe.circeGeneric, Circe.circeParser, Circe.circeRefined)
 }

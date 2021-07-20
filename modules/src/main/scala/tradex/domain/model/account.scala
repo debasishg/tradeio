@@ -14,11 +14,18 @@ import enumeratum._
 
 import io.estatico.newtype.macros.newtype
 
+import derevo.cats._
+import derevo.circe.magnolia._
+import derevo.derive
 import eu.timepit.refined._
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection._
 import eu.timepit.refined.boolean.AllOf
 import eu.timepit.refined.types.string.NonEmptyString
+import eu.timepit.refined.auto._
+import eu.timepit.refined.cats._
+
+import io.circe.refined._
 
 import _root_.shapeless.::
 import _root_.shapeless.HNil
@@ -30,9 +37,13 @@ object account {
       HNil
   ]
 
+  @derive(decoder, encoder, eqv, show)
   @newtype case class AccountNo(value: AccountNoString)
+
+  @derive(decoder, encoder, eqv, show)
   @newtype case class AccountName(value: NonEmptyString)
 
+  @derive(decoder, encoder, eqv, show)
   sealed trait AccountType extends EnumEntry
 
   object AccountType extends Enum[AccountType] {
@@ -43,6 +54,7 @@ object account {
     val values = findValues
   }
 
+  @derive(decoder, encoder, eqv, show)
   private[domain] final case class Account private (
       no: AccountNo,
       name: AccountName,
