@@ -15,12 +15,19 @@ import skunk.implicits._
 
 import squants.market._
 
+import model.market._
 import model.trade._
 import model.order.BuySell
 
 trait TradeRepository[F[_]] {
   /** query by account number and trade date (compares using the date part only) */
   def query(accountNo: String, date: LocalDate): F[List[Trade]]
+
+  /** query by market */
+  def queryByMarket(market: Market): F[List[Trade]]
+
+  /** query all trades */
+  def all: F[List[Trade]]
 
   /** store */
   def store(trd: Trade): F[Trade]
@@ -103,6 +110,9 @@ object TradeRepository {
               .fold(errs => throw new Exception(errs.toString), identity)
         }
       }
+
+      def queryByMarket(market: Market): F[List[Trade]] = ???
+      def all: F[List[Trade]] = ???
 
       def store(exe: Trade): F[Trade] =
         postgres.use { session =>

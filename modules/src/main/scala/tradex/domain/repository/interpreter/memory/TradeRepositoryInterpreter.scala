@@ -14,6 +14,7 @@ import cats.effect.Sync
 
 import model.instrument.ISINCode
 import model.trade._
+import model.market._
 
 // Constructor private for the interpreter to prevent the Ref from leaking
 // access through smart constructor below
@@ -41,6 +42,9 @@ final class TradeRepositoryInterpreter[M[_]: Monad] private (
           .map(trd => (((trd.accountNo.value.value, trd.isin, trd.refNo), trd)))
       )
       .map(_ => ())
+
+  def queryByMarket(market: Market): M[List[Trade]] = ???
+  def all: M[List[Trade]] = ???
 }
 
 // Smart constructor
