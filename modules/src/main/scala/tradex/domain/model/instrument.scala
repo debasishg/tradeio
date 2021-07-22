@@ -49,12 +49,14 @@ object instrument {
   @newtype case class LotSize(value: Short Refined Positive)
 
   @derive(decoder, encoder, eqv, show)
-  sealed trait InstrumentType extends EnumEntry
+  sealed abstract class InstrumentType(override val entryName: String)
+      extends EnumEntry
 
+  @derive(decoder, encoder, eqv, show)
   object InstrumentType extends Enum[InstrumentType] {
-    case object CCY extends InstrumentType
-    case object Equity extends InstrumentType
-    case object FixedIncome extends InstrumentType
+    case object CCY extends InstrumentType("ccy")
+    case object Equity extends InstrumentType("equity")
+    case object FixedIncome extends InstrumentType("fixedincome")
 
     val values = findValues
   }

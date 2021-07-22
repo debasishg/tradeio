@@ -44,12 +44,14 @@ object account {
   @newtype case class AccountName(value: NonEmptyString)
 
   @derive(decoder, encoder, eqv, show)
-  sealed trait AccountType extends EnumEntry
+  sealed abstract class AccountType(override val entryName: String)
+      extends EnumEntry
 
+  @derive(decoder, encoder, eqv, show)
   object AccountType extends Enum[AccountType] {
-    case object Trading extends AccountType
-    case object Settlement extends AccountType
-    case object Both extends AccountType
+    case object Trading extends AccountType("trading")
+    case object Settlement extends AccountType("settlement")
+    case object Both extends AccountType("both")
 
     val values = findValues
   }

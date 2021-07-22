@@ -1,5 +1,5 @@
 package tradex.domain
-package services.trading
+package resources
 
 import cats.effect._
 import cats.effect.std.Console
@@ -13,16 +13,19 @@ import skunk.util.Typer
 import skunk.codec.text._
 import skunk.implicits._
 
+import org.http4s.client.Client
+
 import natchez.Trace.Implicits.noop // needed for skunk
 
 import config.config._
 
-final case class AppResources[F[_]] private (
-    psql: Resource[F, Session[F]]
+sealed abstract class AppResources[F[_]] private (
+    val client: Client[F],
+    val postgres: Resource[F, Session[F]]
 )
 
 object AppResources {
-  def make[F[_]: Concurrent: Network: Console: Logger](
+  def make[F[_]: Concurrent: Network: Console: MkHttpClient: Logger](
       cfg: AppConfig
   ): Resource[F, AppResources[F]] = {
     def checkPostgresConnection(
@@ -46,6 +49,9 @@ object AppResources {
         )
         .evalTap(checkPostgresConnection)
 
-    mkPostgreSqlResource(cfg.postgreSQL).map(AppResources.apply[F])
+    (
+      MkHttpClient[F].newEmber(cfg.httpClientConfig),
+      mkPostgreSqlResource(cfg.postgreSQL)
+    ).parMapN(new AppResources[F](_, _) {})
   }
 }

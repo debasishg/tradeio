@@ -1,6 +1,7 @@
 package tradex.domain
 package config
 
+import scala.concurrent.duration._
 import cats.effect.Async
 import cats.syntax.all._
 import ciris._
@@ -9,6 +10,7 @@ import environments._
 import environments.AppEnvironment._
 import eu.timepit.refined.auto._
 import eu.timepit.refined.types.string.NonEmptyString
+import com.comcast.ip4s._
 import config._
 
 object load {
@@ -34,6 +36,14 @@ object load {
           user = dbuser,
           database = dbname,
           max = 10
+        ),
+        HttpServerConfig(
+          host = host"0.0.0.0",
+          port = port"8080"
+        ),
+        HttpClientConfig(
+          timeout = 60.seconds,
+          idleTimeInPool = 30.seconds
         )
       )
     }

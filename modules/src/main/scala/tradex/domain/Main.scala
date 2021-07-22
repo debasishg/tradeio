@@ -6,6 +6,7 @@ import cats.effect.unsafe.implicits.global
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
+import resources.AppResources
 import repository._
 import services.trading._
 import services.accounting._
@@ -26,12 +27,13 @@ object Main extends IOApp.Simple {
                 .flatMap { // make the program that will give me the generators
                   _.generateTrade(
                     Trading.make[IO](
-                      AccountRepository.make[IO](res.psql),
-                      ExecutionRepository.make[IO](res.psql),
-                      OrderRepository.make[IO](res.psql),
-                      TradeRepository.make[IO](res.psql)
+                      AccountRepository.make[IO](res.postgres),
+                      ExecutionRepository.make[IO](res.postgres),
+                      OrderRepository.make[IO](res.postgres),
+                      TradeRepository.make[IO](res.postgres)
                     ),
-                    Accounting.make[IO](BalanceRepository.make[IO](res.psql))
+                    Accounting
+                      .make[IO](BalanceRepository.make[IO](res.postgres))
                   )
                 }
             }
