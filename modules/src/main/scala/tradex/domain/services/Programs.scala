@@ -1,5 +1,5 @@
 package tradex.domain
-package trading
+package services
 
 import java.time.Instant
 
@@ -18,7 +18,8 @@ import model.order._
 import model.trade._
 import model.balance._
 
-import accounting._
+import services.trading._
+import services.accounting._
 
 import AppData._
 
@@ -52,7 +53,7 @@ final class Programs[F[_]: Logger: MonadThrowable] private (
 }
 
 // generate order from front office
-private[trading] object orderGenerator {
+private[services] object orderGenerator {
   def generateOrders(): String = {
     val o1 =
       FrontOfficeOrder(

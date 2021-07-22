@@ -5,11 +5,12 @@ import cats.effect._
 import org.typelevel.log4cats.Logger
 import skunk.Session
 import repository._
-import trading._
-import accounting._
+import services.trading._
+import services.accounting._
+import services.healthcheck._
 
 object Services {
-  def make[F[+_]: Concurrent: Logger](
+  def make[F[+_]: Temporal: Logger](
       postgres: Resource[F, Session[F]]
   ): Services[F] = {
     val _accountRepository = AccountRepository.make(postgres)
@@ -32,7 +33,8 @@ object Services {
         _orderRepository,
         _tradeRepository
       ),
-      Accounting.make(_balanceRepository)
+      Accounting.make(_balanceRepository),
+      HealthCheck.make(postgres)
     ) {}
   }
 }
@@ -45,5 +47,6 @@ sealed abstract class Services[F[+_]] private (
     val tradeRepository: TradeRepository[F],
     val balanceRepository: BalanceRepository[F],
     val trading: Trading[F],
-    val accounting: Accounting[F]
+    val accounting: Accounting[F],
+    val healthCheck: HealthCheck[F]
 )

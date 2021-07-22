@@ -1,5 +1,5 @@
 package tradex.domain
-package trading
+package services.trading
 
 import java.io.InputStream
 

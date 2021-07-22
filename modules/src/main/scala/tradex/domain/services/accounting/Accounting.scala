@@ -1,5 +1,5 @@
 package tradex.domain
-package accounting
+package services.accounting
 
 import scala.util.control.NoStackTrace
 

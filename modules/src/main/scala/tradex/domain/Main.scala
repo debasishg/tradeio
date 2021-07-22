@@ -7,8 +7,9 @@ import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import repository._
-import trading._
-import accounting._
+import services.trading._
+import services.accounting._
+import services.Programs
 
 object Main extends IOApp.Simple {
   override def run: IO[Unit] = {
