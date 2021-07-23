@@ -30,6 +30,10 @@ final case class GenerateTradeRoutes[F[_]: MonadThrow: JsonDecoder: Logger](
           case OrderingError(cause) => BadRequest(cause)
           case ExecutionError(cause) => BadRequest(cause)
           case AllocationError(cause) => BadRequest(cause)
+          case th: Throwable => {
+            th.printStackTrace()
+            BadRequest(th.getMessage())
+          }
         }
     }
   }

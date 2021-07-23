@@ -23,8 +23,7 @@ final case class AccountRoutes[F[_]: MonadThrow: JsonDecoder](
         .flatMap(Ok(_))
         .recoverWith {
           case th: Throwable => {
-            th.printStackTrace
-            BadRequest(th.getMessage())
+            InternalServerError(th.getMessage())
           }
         }
   }

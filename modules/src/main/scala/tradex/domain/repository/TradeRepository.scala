@@ -14,6 +14,7 @@ import skunk.codec.all._
 import skunk.implicits._
 
 import squants.market._
+import org.typelevel.log4cats.Logger
 
 import model.market._
 import model.trade._
@@ -37,7 +38,7 @@ trait TradeRepository[F[_]] {
 }
 
 object TradeRepository {
-  def make[F[_]: Concurrent](
+  def make[F[_]: Concurrent: Logger](
       postgres: Resource[F, Session[F]]
   ): TradeRepository[F] =
     new TradeRepository[F] {
@@ -86,7 +87,7 @@ object TradeRepository {
               LocalDateTime ~
               Option[LocalDateTime] ~
               Option[BigDecimal] ~
-              TaxFeeId ~
+              String ~
               BigDecimal ~
               String
           ]
@@ -104,43 +105,65 @@ object TradeRepository {
                 qty,
                 td,
                 vd,
-                List(TradeTaxFee(tfid, Money(amt))),
+                List(TradeTaxFee(TaxFeeId.withName(tfid), Money(amt))),
                 na.map(Money(_))
               )
               .fold(errs => throw new Exception(errs.toString), identity)
         }
       }
 
-      def queryByMarket(market: Market): F[List[Trade]] = ???
-      def all: F[List[Trade]] = ???
-
-      def store(exe: Trade): F[Trade] =
+      def queryByMarket(market: Market): F[List[Trade]] =
         postgres.use { session =>
-          session.prepare(insertTrade).use {
-            _.execute(exe).void.map(_ => exe)
+          session.prepare(selectByMarket).use { ps =>
+            ps.stream(market.entryName, 1024)
+              .compile
+              .toList
+              .map(_.groupBy(_._2))
+              .map { m =>
+                m.map {
+                  case (refNo, lis) =>
+                    val singleTradeTaxFeeLine =
+                      makeSingleTradeTaxFees(refNo, lis)
+                    singleTradeTaxFeeLine.tail
+                      .foldLeft(singleTradeTaxFeeLine.head)(
+                        Semigroup[Trade].combine
+                      )
+                }.toList
+              }
           }
         }
 
-      // FIXME: Need to make transactional: Refer to Page 177 of pfp-scala
+      def all: F[List[Trade]] = ???
+
+      def store(trade: Trade): F[Trade] =
+        postgres.use { session =>
+          storeTradeAndTaxFees(trade, session)
+        }
+
       private def storeTradeAndTaxFees(
           t: Trade,
           session: Session[F]
-      ): F[Trade] = {
-        val taxFees = t.taxFees
-        session.prepare(insertTrade).use(_.execute(t)) *>
-          session
-            .prepare(insertTaxFees(t.refNo, taxFees))
-            .use { cmd =>
-              cmd.execute(taxFees)
-            }
-            .void
-            .map(_ => t)
+      ) = {
+        val r = for {
+          p1 <- session.prepare(insertTrade)
+          p2 <- session.prepare(insertTaxFees(t.refNo, t.taxFees))
+        } yield (p1, p2)
+        r.use {
+            case (p1, p2) =>
+              session.transaction.use { xa =>
+                for {
+                  _ <- p1.execute(t)
+                  _ <- p2.execute(t.taxFees)
+                } yield ()
+              }
+          }
+          .map(_ => t)
       }
 
       def store(trades: NonEmptyList[Trade]): F[Unit] =
         postgres.use { session =>
-          val ts = trades.toList
-          session.prepare(insertTrades(ts)).use(_.execute(ts)).void.map(_ => ())
+          trades.toList
+            .traverse_(trade => storeTradeAndTaxFees(trade, session))
         }
     }
 }
@@ -150,25 +173,26 @@ private object TradeRepositorySQL {
   val taxFeeId = enum(TaxFeeId, Type("taxfeeid"))
 
   val tradeTaxFeeDecoder =
-    varchar ~ varchar ~ varchar ~ buySell ~ numeric ~ numeric ~ timestamp ~ timestamp.opt ~ numeric.opt ~ taxFeeId ~ numeric ~ varchar
+    varchar ~ varchar ~ varchar ~ buySell ~ numeric ~ numeric ~ timestamp ~ timestamp.opt ~ numeric.opt ~ varchar ~ numeric ~ varchar
 
   val taxFeeDecoder: Decoder[TradeTaxFee] =
-    (varchar ~ taxFeeId ~ numeric).map {
-      case rno ~ tid ~ amt => TradeTaxFee(tid, Money(amt))
+    (varchar ~ varchar ~ numeric).map {
+      case rno ~ tid ~ amt => TradeTaxFee(TaxFeeId.withName(tid), Money(amt))
     }
 
   val tradeEncoder: Encoder[Trade] =
     (varchar ~ varchar ~ varchar ~ varchar ~ buySell ~ numeric ~ numeric ~ timestamp ~ timestamp.opt ~ numeric.opt).values
       .contramap(
         (t: Trade) =>
-          t.refNo.value.value ~ t.accountNo.value.value ~ t.isin.value.value ~ t.market.toString ~ t.buySell ~ t.unitPrice.value.value ~ t.quantity.value.value ~ t.tradeDate ~ t.valueDate ~ t.netAmount
+          t.refNo.value.value ~ t.accountNo.value.value ~ t.isin.value.value ~ t.market.entryName ~ t.buySell ~ t.unitPrice.value.value ~ t.quantity.value.value ~ t.tradeDate ~ t.valueDate ~ t.netAmount
             .map(_.value)
       )
 
   def taxFeeEncoder(refNo: TradeReferenceNo): Encoder[TradeTaxFee] =
-    (varchar ~ taxFeeId ~ numeric).values
+    (varchar ~ varchar ~ numeric).values
       .contramap(
-        (t: TradeTaxFee) => refNo.value.value ~ t.taxFeeId ~ t.amount.value
+        (t: TradeTaxFee) =>
+          refNo.value.value ~ t.taxFeeId.entryName ~ t.amount.value
       )
 
   val insertTrade: Command[Trade] =
@@ -196,7 +220,7 @@ private object TradeRepositorySQL {
       tradeRefNo: TradeReferenceNo,
       taxFees: List[TradeTaxFee]
   ): Command[taxFees.type] = {
-    val es = taxFeeEncoder(tradeRefNo).values.list(taxFees)
+    val es = taxFeeEncoder(tradeRefNo).list(taxFees)
     sql"INSERT INTO tradeTaxFees (tradeRefNo, taxFeeId, amount) VALUES $es".command
   }
 
@@ -241,6 +265,25 @@ private object TradeRepositorySQL {
         FROM trades t, tradeTaxFees f
         WHERE t.accountNo = $varchar
           AND DATE(t.tradeDate) = $date
+          AND t.tradeRefNo = f.tradeRefNo
+    """.query(tradeTaxFeeDecoder)
+
+  val selectByMarket =
+    sql"""
+        SELECT t.accountNo, 
+               t.isinCode, 
+               t.market, 
+               t.buySellFlag, 
+               t.unitPrice, 
+               t.quantity, 
+               t.tradeDate, 
+               t.valueDate, 
+               t.netAmount,
+               f.taxFeeId,
+               f.amount,
+               t.tradeRefNo
+        FROM trades t, tradeTaxFees f
+        WHERE t.market = $varchar
           AND t.tradeRefNo = f.tradeRefNo
     """.query(tradeTaxFeeDecoder)
 }

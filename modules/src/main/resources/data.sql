@@ -59,3 +59,10 @@ values (
   null,
   null
 );
+
+insert into taxFees (taxFeeId, description)
+values 
+  ('TradeTax', 'Trade Tax'),
+  ('Commission', 'Commission'),
+  ('VAT', 'VAT'),
+  ('Surcharge', 'Surcharge');

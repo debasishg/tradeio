@@ -177,10 +177,11 @@ object Trading {
                 Trade.withTaxFee(trd)
               }
           }
-        val action = persistTrades(trades) *> ev.pure(trades)
+        val action =
+          persistTrades(trades)
+            .flatMap(_ => ev.pure(trades))
         action.adaptError {
           case e =>
-            e.printStackTrace()
             AllocationError(Option(e.getMessage()).getOrElse("Unknown error"))
         }
       }
