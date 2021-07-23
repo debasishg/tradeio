@@ -139,7 +139,6 @@ object OrderRepository {
           }
         }
 
-      // prepareAndExecute is an extension method defined in skunkx
       private def storeOrderAndLineItems(
           ord: Order,
           session: Session[F]

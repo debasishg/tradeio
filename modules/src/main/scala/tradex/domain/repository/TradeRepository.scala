@@ -133,7 +133,26 @@ object TradeRepository {
           }
         }
 
-      def all: F[List[Trade]] = ???
+      def all: F[List[Trade]] =
+        postgres.use { session =>
+          session.prepare(selectAll).use { ps =>
+            ps.stream(skunk.Void, 1024)
+              .compile
+              .toList
+              .map(_.groupBy(_._2))
+              .map { m =>
+                m.map {
+                  case (refNo, lis) =>
+                    val singleTradeTaxFeeLine =
+                      makeSingleTradeTaxFees(refNo, lis)
+                    singleTradeTaxFeeLine.tail
+                      .foldLeft(singleTradeTaxFeeLine.head)(
+                        Semigroup[Trade].combine
+                      )
+                }.toList
+              }
+          }
+        }
 
       def store(trade: Trade): F[Trade] =
         postgres.use { session =>
@@ -224,11 +243,6 @@ private object TradeRepositorySQL {
     sql"INSERT INTO tradeTaxFees (tradeRefNo, taxFeeId, amount) VALUES $es".command
   }
 
-//   def insertTrades(n: Int): Command[List[Trade]] = {
-//     val enc = tradeEncoder.list(n)
-//     sql"INSERT INTO trades VALUES $enc".command
-//   }
-
   def insertTrades(trades: List[Trade]): Command[trades.type] = {
     val enc = tradeEncoder.list(trades)
     sql"""
@@ -285,5 +299,23 @@ private object TradeRepositorySQL {
         FROM trades t, tradeTaxFees f
         WHERE t.market = $varchar
           AND t.tradeRefNo = f.tradeRefNo
+    """.query(tradeTaxFeeDecoder)
+
+  val selectAll =
+    sql"""
+        SELECT t.accountNo, 
+               t.isinCode, 
+               t.market, 
+               t.buySellFlag, 
+               t.unitPrice, 
+               t.quantity, 
+               t.tradeDate, 
+               t.valueDate, 
+               t.netAmount,
+               f.taxFeeId,
+               f.amount,
+               t.tradeRefNo
+        FROM trades t, tradeTaxFees f
+        WHERE t.tradeRefNo = f.tradeRefNo
     """.query(tradeTaxFeeDecoder)
 }
