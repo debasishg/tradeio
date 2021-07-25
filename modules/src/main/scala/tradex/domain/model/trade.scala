@@ -4,6 +4,7 @@ package model
 import java.time.LocalDateTime
 
 import cats.data.EitherNec
+import cats.data.NonEmptyList
 import cats.syntax.all._
 
 import enumeratum._
@@ -43,6 +44,14 @@ object trade {
 
     val values = findValues
   }
+
+  @derive(decoder, encoder, eqv, show)
+  final case class GenerateTradeFrontOfficeInput(
+      frontOfficeOrders: NonEmptyList[FrontOfficeOrder],
+      market: Market,
+      brokerAccountNo: AccountNo,
+      clientAccountNos: NonEmptyList[AccountNo]
+  )
 
   import TaxFeeId._
 

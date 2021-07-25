@@ -49,6 +49,7 @@ object order {
   }
 
   // domain entity
+  @derive(decoder, encoder, eqv, show)
   private[domain] final case class LineItem private (
       instrument: ISINCode,
       quantity: Quantity,
@@ -56,6 +57,7 @@ object order {
       buySell: BuySell
   )
 
+  @derive(decoder, encoder, eqv, show)
   private[domain] final case class Order private (
       no: OrderNo,
       date: LocalDateTime,
@@ -63,6 +65,7 @@ object order {
       items: NonEmptyList[LineItem]
   )
 
+  @derive(decoder, encoder, eqv, show)
   private[domain] final case class FrontOfficeOrder private (
       accountNo: String,
       date: Instant,

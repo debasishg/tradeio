@@ -1,8 +1,6 @@
 package tradex.domain
 package programs
 
-import java.time.Instant
-
 import cats.data._
 import cats.syntax.all._
 
@@ -12,32 +10,35 @@ import io.chrisdavenport.cormorant._
 import io.chrisdavenport.cormorant.generic.semiauto._
 import io.chrisdavenport.cormorant.implicits._
 
-import model.market._
 import model.order._
 import model.trade._
 import model.balance._
 
 import services.trading._
 import services.accounting._
-
-import AppData._
+import io.circe.generic.auto._, io.circe.syntax._
 
 final case class GenerateTrade[F[_]: Logger: MonadThrowable] private (
     trading: Trading[F],
     accounting: Accounting[F]
 ) {
-  def generate: F[(NonEmptyList[Trade], NonEmptyList[Balance])] = {
+  def generate(
+      frontOfficeInput: GenerateTradeFrontOfficeInput
+  ): F[(NonEmptyList[Trade], NonEmptyList[Balance])] = {
     import trading._
     import accounting._
 
-    val csvOrder = orderGenerator.generateOrders()
-    val brokerAccountNo = ano3
-    val clientAccountNos = NonEmptyList.of(ano1, ano2)
-
+    val csvOrder =
+      orderGenerator.generateOrders(frontOfficeInput.frontOfficeOrders)
+    println(frontOfficeInput.asJson.noSpaces)
     for {
       orders <- orders(csvOrder)
-      executions <- execute(orders, Market.NewYork, brokerAccountNo)
-      trades <- allocate(executions, clientAccountNos)
+      executions <- execute(
+        orders,
+        frontOfficeInput.market,
+        frontOfficeInput.brokerAccountNo
+      )
+      trades <- allocate(executions, frontOfficeInput.clientAccountNos)
       balances <- postBalance(trades)
     } yield (trades, balances)
   }
@@ -45,37 +46,10 @@ final case class GenerateTrade[F[_]: Logger: MonadThrowable] private (
 
 // generate order from front office
 private[programs] object orderGenerator {
-  def generateOrders(): String = {
-    val o1 =
-      FrontOfficeOrder(
-        ano1String,
-        Instant.now(),
-        "US0378331005",
-        100.00,
-        1200.50,
-        "buy"
-      )
-    val o2 =
-      FrontOfficeOrder(
-        ano1String,
-        Instant.now(),
-        "GB0002634946",
-        200.00,
-        230.00,
-        "sell"
-      )
-    val o3 =
-      FrontOfficeOrder(
-        ano2String,
-        Instant.now(),
-        "US0378331005",
-        100.00,
-        1200.50,
-        "buy"
-      )
-
-    val orders = List(o1, o2, o3)
+  def generateOrders(
+      foOrders: NonEmptyList[FrontOfficeOrder]
+  ): String = {
     implicit val lw: LabelledWrite[FrontOfficeOrder] = deriveLabelledWrite
-    orders.writeComplete.print(Printer.default)
+    foOrders.toList.writeComplete.print(Printer.default)
   }
 }

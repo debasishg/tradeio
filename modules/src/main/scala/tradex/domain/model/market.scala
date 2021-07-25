@@ -3,7 +3,6 @@ package model
 
 import enumeratum._
 import derevo.cats._
-import derevo.circe.magnolia._
 import derevo.derive
 import eu.timepit.refined.types.string.NonEmptyString
 import eu.timepit.refined.auto._
@@ -15,9 +14,10 @@ import io.circe.refined._
 import io.circe.{Decoder, Encoder}
 
 object market {
-  @derive(decoder, encoder, eqv, show)
+  @derive(eqv, show)
   sealed abstract class Market(override val entryName: String) extends EnumEntry
 
+  @derive(eqv, show)
   object Market extends Enum[Market] {
     case object NewYork extends Market("New York")
     case object Tokyo extends Market("Tokyo")
@@ -26,6 +26,11 @@ object market {
     case object Other extends Market("Other")
 
     val values = findValues
+    implicit val marketEncoder: Encoder[Market] =
+      Encoder[String].contramap(_.entryName)
+
+    implicit val marketDecoder: Decoder[Market] =
+      Decoder[String].map(Market.withName(_))
   }
 
   @derive(queryParam, show)

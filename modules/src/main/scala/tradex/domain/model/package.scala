@@ -1,7 +1,6 @@
 package tradex.domain
 
-import java.time.LocalDateTime
-import java.time.ZoneId
+import java.time.{LocalDateTime, Instant, ZoneId}
 import java.time.format.DateTimeFormatter
 import cats.{Eq, Monoid, Show}
 import cats.syntax.all._
@@ -50,4 +49,10 @@ trait OrphanInstances {
 
   implicit val showMoney: Show[Money] =
     Show[String].contramap[Money](_.toString)
+
+  implicit val instantEq: Eq[Instant] =
+    Eq.by(LocalDateTime.ofInstant(_, ZoneId.systemDefault()))
+
+  implicit val showInstant: Show[Instant] =
+    LocalDateTime.ofInstant(_, ZoneId.systemDefault()).show
 }

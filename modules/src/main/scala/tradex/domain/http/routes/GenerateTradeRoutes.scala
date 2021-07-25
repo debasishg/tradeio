@@ -9,11 +9,13 @@ import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.circe.JsonDecoder
 import org.http4s.dsl.Http4sDsl
 import org.http4s.server.Router
+import ext.http4s.refined._
 
 import programs.GenerateTrade
 import services.trading.Trading
 import Trading._
 import services.accounting.Accounting
+import tradex.domain.model.trade
 
 final case class GenerateTradeRoutes[F[_]: MonadThrow: JsonDecoder: Logger](
     generateTrade: GenerateTrade[F],
@@ -23,17 +25,21 @@ final case class GenerateTradeRoutes[F[_]: MonadThrow: JsonDecoder: Logger](
   private[routes] val prefixPath = "/generatetrade"
 
   private val httpRoutes: HttpRoutes[F] = HttpRoutes.of[F] {
-    case ar @ POST -> Root => {
-      GenerateTrade(trading, accounting).generate
-        .flatMap(Created(_))
-        .recoverWith {
-          case OrderingError(cause) => BadRequest(cause)
-          case ExecutionError(cause) => BadRequest(cause)
-          case AllocationError(cause) => BadRequest(cause)
-          case th: Throwable => {
-            th.printStackTrace()
-            BadRequest(th.getMessage())
-          }
+    case req @ POST -> Root => {
+      req
+        .decodeR[trade.GenerateTradeFrontOfficeInput] { tradeParam =>
+          GenerateTrade(trading, accounting)
+            .generate(tradeParam)
+            .flatMap(Created(_))
+            .recoverWith {
+              case OrderingError(cause) => BadRequest(cause)
+              case ExecutionError(cause) => BadRequest(cause)
+              case AllocationError(cause) => BadRequest(cause)
+              case th: Throwable => {
+                th.printStackTrace()
+                BadRequest(th.getMessage())
+              }
+            }
         }
     }
   }
