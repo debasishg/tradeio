@@ -16,7 +16,6 @@ import model.balance._
 
 import services.trading._
 import services.accounting._
-import io.circe.generic.auto._, io.circe.syntax._
 
 final case class GenerateTrade[F[_]: Logger: MonadThrowable] private (
     trading: Trading[F],
@@ -28,11 +27,8 @@ final case class GenerateTrade[F[_]: Logger: MonadThrowable] private (
     import trading._
     import accounting._
 
-    val csvOrder =
-      orderGenerator.generateOrders(frontOfficeInput.frontOfficeOrders)
-    println(frontOfficeInput.asJson.noSpaces)
     for {
-      orders <- orders(csvOrder)
+      orders <- orders(frontOfficeInput.frontOfficeOrders)
       executions <- execute(
         orders,
         frontOfficeInput.market,

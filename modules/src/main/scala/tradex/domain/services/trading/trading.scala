@@ -10,7 +10,7 @@ import NewtypeRefinedOps._
 import org.typelevel.log4cats.Logger
 import model.account._
 import model.execution.Execution
-import model.order.{Order, Quantity}
+import model.order.{Order, Quantity, FrontOfficeOrder}
 import model.trade.Trade
 import model.market.Market
 import scala.util.control.NoStackTrace
@@ -46,6 +46,17 @@ trait Trading[F[_]] {
     * @return a List of `Order` under the effect `F`
     */
   def orders(csvOrder: String): F[NonEmptyList[Order]]
+
+  /**
+    * Create a list of `Order` from client orders that come from
+    * the front office.
+    *
+    * @param frontOfficeOrders client order
+    * @return a NonEmptyList of `Order` under the effect `F`
+    */
+  def orders(
+      frontOfficeOrders: NonEmptyList[FrontOfficeOrder]
+  ): F[NonEmptyList[Order]]
 
   /**
     * Execute an `Order` in the `Market` and book the execution in the
@@ -105,6 +116,33 @@ object Trading {
       def orders(csvOrder: String): F[NonEmptyList[Order]] = {
         val action = ordering
           .createOrders(csvOrder)
+          .fold(
+            nec =>
+              ev.raiseError(
+                new Throwable(nec.toNonEmptyList.toList.mkString("/"))
+              ),
+            os => {
+              if (os isEmpty)
+                ev.raiseError(
+                  new Throwable("Empty order list received from csv")
+                )
+              else {
+                val nlos = NonEmptyList.fromList(os).get
+                persistOrders(nlos) *> ev.pure(nlos)
+              }
+            }
+          )
+        action.adaptError {
+          case e =>
+            OrderingError(Option(e.getMessage()).getOrElse("Unknown error"))
+        }
+      }
+
+      def orders(
+          frontOfficeOrders: NonEmptyList[FrontOfficeOrder]
+      ): F[NonEmptyList[Order]] = {
+        val action = Order
+          .create(frontOfficeOrders)
           .fold(
             nec =>
               ev.raiseError(
