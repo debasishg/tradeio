@@ -162,7 +162,7 @@ object TradeRepository {
       private def storeTradeAndTaxFees(
           t: Trade,
           session: Session[F]
-      ) = {
+      ): F[Trade] = {
         val r = for {
           p1 <- session.prepare(insertTrade)
           p2 <- session.prepare(insertTaxFees(t.refNo, t.taxFees))

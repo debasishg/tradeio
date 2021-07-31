@@ -88,9 +88,12 @@ trait Trading[F[_]] {
 }
 
 object Trading {
-  case class OrderingError(cause: String) extends NoStackTrace
-  case class ExecutionError(cause: String) extends NoStackTrace
-  case class AllocationError(cause: String) extends NoStackTrace
+  sealed trait TradingError extends NoStackTrace {
+    def cause: String
+  }
+  case class OrderingError(cause: String) extends TradingError
+  case class ExecutionError(cause: String) extends TradingError
+  case class AllocationError(cause: String) extends TradingError
 
   def make[F[+_]: MonadThrowable: Logger](
       accountRepository: AccountRepository[F],
