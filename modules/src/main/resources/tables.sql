@@ -86,3 +86,9 @@ CREATE TABLE IF NOT EXISTS balance (
     asOf timestamp NOT NULL,
     currency varchar NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS users (
+    id uuid PRIMARY KEY,
+    name varchar UNIQUE NOT NULL,
+    password varchar NOT NULL
+);

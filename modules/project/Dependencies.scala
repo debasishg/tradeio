@@ -71,6 +71,9 @@ object Dependencies {
     val http4sCirce  = http4s("circe")
   }
 
+  val http4sJwtAuth       = "dev.profunktor"               %% "http4s-jwt-auth"                  % http4sJwtAuthVersion
+
+
   val monocleCore         = "dev.optics"                   %% "monocle-core"                     % monocleVersion
 
   val flywayDb            = "org.flywaydb"                  % "flyway-core"                      % "5.2.4"
@@ -93,5 +96,6 @@ object Dependencies {
       Seq(Cormorant.core, Cormorant.generic, Cormorant.parser, Cormorant.refined) ++
       Seq(Skunk.skunkCore, Skunk.skunkCirce) ++ Seq(log4cats, logback) ++
       Seq(Http4s.http4sServer, Http4s.http4sClient, Http4s.http4sDsl, Http4s.http4sCirce) ++
+      Seq(http4sJwtAuth) ++
       Seq(Circe.circeCore, Circe.circeGeneric, Circe.circeParser, Circe.circeRefined)
 }
