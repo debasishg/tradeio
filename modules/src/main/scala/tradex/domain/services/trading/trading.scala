@@ -34,7 +34,7 @@ trait Trading[F[_]] {
     * @return a list of `Trade` under the effect `F`
     */
   def getTrades(
-      forAccountNo: String,
+      forAccountNo: AccountNo,
       forDate: Option[LocalDate] = None
   ): F[List[Trade]]
 
@@ -108,7 +108,7 @@ object Trading {
         accountRepository.query(openDate)
 
       def getTrades(
-          forAccountNo: String,
+          forAccountNo: AccountNo,
           forDate: Option[LocalDate] = None
       ): F[List[Trade]] =
         tradeRepository.query(

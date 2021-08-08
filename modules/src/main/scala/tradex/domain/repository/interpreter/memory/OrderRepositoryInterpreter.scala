@@ -11,14 +11,15 @@ import cats.data.NonEmptyList
 import cats.syntax.all._
 import cats.effect.Ref
 import cats.effect.Sync
+import model.order.OrderNo
 
 // Constructor private for the interpreter to prevent the Ref from leaking
 // access through smart constructor below
 final class OrderRepositoryInterpreter[M[_]: Monad] private (
     repo: Ref[M, Map[String, model.order.Order]]
 ) extends OrderRepository[M] {
-  def query(no: String): M[Option[model.order.Order]] =
-    repo.get.map(_.get(no))
+  def query(no: OrderNo): M[Option[model.order.Order]] =
+    repo.get.map(_.get(no.value.value))
 
   def queryByOrderDate(date: LocalDate): M[List[model.order.Order]] =
     repo.get.map(_.values.filter(_.date.toLocalDate == date).toList)

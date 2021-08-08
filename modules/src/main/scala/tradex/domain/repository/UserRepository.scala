@@ -5,12 +5,12 @@ import cats.syntax.all._
 import cats.effect._
 
 import skunk._
-import skunk.codec.all._
 import skunk.implicits._
 
 import effects.GenUUID
 import model.user._
 import model.ID
+import codecs._
 
 trait UserRepository[F[_]] {
   /** query by username */
@@ -30,7 +30,7 @@ object UserRepository {
       def query(userName: UserName): F[Option[User]] =
         postgres.use { session =>
           session.prepare(selectByUserName).use { ps =>
-            ps.option(userName.value.value)
+            ps.option(userName)
           }
         }
 
@@ -40,8 +40,11 @@ object UserRepository {
             ID.make[F, UserId].flatMap { id =>
               cmd
                 .execute(User(id, username, password))
-                .void
-                .map(_ => id)
+                .as(id)
+                .recoverWith {
+                  case SqlState.UniqueViolation(_) =>
+                    UserNameInUse(username).raiseError[F, UserId]
+                }
             }
           }
         }
@@ -50,43 +53,21 @@ object UserRepository {
 
 private object UserRepositorySQL {
   val decoder: Decoder[User] =
-    (uuid ~ varchar ~ varchar)
-      .map {
-        case id ~ nm ~ pd =>
-          User
-            .user(id, nm, pd)
-            .fold(
-              exs => throw new Exception(exs.toList.mkString("/")),
-              identity
-            )
-      }
+    (userId ~ userName ~ encPassword)
+      .gmap[User]
 
-  // val userCodec = uuid ~ varchar ~ varchar
-  val encoder: Encoder[User] =
-    (uuid ~ varchar ~ varchar).values
-      .contramap(
-        (u: User) =>
-          u.userId.value ~ u.userName.value.value ~ u.password.value.value
-      )
-
-  val selectByUserName: Query[String, User] =
+  val selectByUserName: Query[UserName, User] =
     sql"""
         SELECT u.id, u.name, u.password
         FROM users AS u
-        WHERE u.name = $varchar
+        WHERE u.name = $userName
        """.query(decoder)
 
   val upsertUser: Command[User] =
     sql"""
         INSERT INTO users (id, name, password)
-        VALUES ($uuid, $varchar, $varchar)
+        VALUES ($userId, $userName, $encPassword)
         ON CONFLICT(name) DO UPDATE SET
-          password    = EXCLUDED.password
-       """.command.contramap {
-      case u =>
-        u match {
-          case User(id, name, passwd) =>
-            id.value ~ name.value.value ~ passwd.value.value
-        }
-    }
+          password = EXCLUDED.password
+       """.command.gcontramap[User]
 }

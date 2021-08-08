@@ -15,10 +15,11 @@ import squants.market._
 
 import model.account._
 import Account._
+import codecs._
 
 trait AccountRepository[F[_]] {
   /** query by account number */
-  def query(no: String): F[Option[Account]]
+  def query(no: AccountNo): F[Option[Account]]
 
   /** store */
   def store(a: Account): F[Account]
@@ -43,7 +44,7 @@ object AccountRepository {
     new AccountRepository[F] {
       import AccountRepositorySQL._
 
-      def query(no: String): F[Option[Account]] =
+      def query(no: AccountNo): F[Option[Account]] =
         postgres.use { session =>
           session.prepare(selectByAccountNo).use { ps =>
             ps.option(no)
@@ -137,11 +138,11 @@ private object AccountRepositorySQL {
           }
       }
 
-  val selectByAccountNo: Query[String, Account] =
+  val selectByAccountNo: Query[AccountNo, Account] =
     sql"""
         SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
         FROM accounts AS a
-        WHERE a.no = $varchar
+        WHERE a.no = $accountNo
        """.query(decoder)
 
   val selectByOpenedDate: Query[LocalDate, Account] =

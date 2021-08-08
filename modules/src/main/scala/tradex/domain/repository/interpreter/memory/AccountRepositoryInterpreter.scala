@@ -18,7 +18,8 @@ import model.account._
 final class AccountRepositoryInterpreter[M[_]: Monad] private (
     repo: Ref[M, Map[String, Account]]
 ) extends AccountRepository[M] {
-  def query(no: String): M[Option[Account]] = repo.get.map(_.get(no))
+  def query(no: AccountNo): M[Option[Account]] =
+    repo.get.map(_.get(no.value.value))
 
   def store(a: Account): M[Account] =
     repo.update(_ + ((a.no.value.value, a))).map(_ => a)

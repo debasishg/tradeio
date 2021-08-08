@@ -17,7 +17,8 @@ import model.instrument._
 final class InstrumentRepositoryInterpreter[M[_]: Monad] private (
     repo: Ref[M, Map[String, Instrument]]
 ) extends InstrumentRepository[M] {
-  def query(isin: String): M[Option[Instrument]] = repo.get.map(_.get(isin))
+  def query(isin: ISINCode): M[Option[Instrument]] =
+    repo.get.map(_.get(isin.value.value))
 
   def queryByInstrumentType(
       instrumentType: InstrumentType

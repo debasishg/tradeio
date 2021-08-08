@@ -12,10 +12,11 @@ import skunk.implicits._
 import squants.market._
 
 import model.instrument._
+import codecs._
 
 trait InstrumentRepository[F[_]] {
   /** query by account number */
-  def query(isin: String): F[Option[Instrument]]
+  def query(isin: ISINCode): F[Option[Instrument]]
 
   /** query by instrument type Equity / FI / CCY */
   def queryByInstrumentType(instrumentType: InstrumentType): F[List[Instrument]]
@@ -31,7 +32,7 @@ object InstrumentRepository {
     new InstrumentRepository[F] {
       import InstrumentRepositorySQL._
 
-      def query(isin: String): F[Option[Instrument]] =
+      def query(isin: ISINCode): F[Option[Instrument]] =
         postgres.use { session =>
           session.prepare(selectByISINCode).use { ps =>
             ps.option(isin)
@@ -78,11 +79,11 @@ private object InstrumentRepositorySQL {
             .fold(errs => throw new Exception(errs.toString), identity)
       }
 
-  val selectByISINCode: Query[String, Instrument] =
+  val selectByISINCode: Query[ISINCode, Instrument] =
     sql"""
         SELECT i.isinCode, i.name, i.type, i.dateOfIssue, i.dateOfMaturity, i.lotSize, i.unitPrice, i.couponRate, i.couponFrequency
         FROM instruments AS i
-        WHERE i.isinCode = $varchar
+        WHERE i.isinCode = $isinCode
        """.query(decoder)
 
   val selectByInstrumentType: Query[InstrumentType, Instrument] =

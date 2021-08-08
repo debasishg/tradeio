@@ -12,13 +12,15 @@ import cats.effect.Ref
 import cats.effect.Sync
 
 import model.balance._
+import model.account.AccountNo
 
 // Constructor private for the interpreter to prevent the Ref from leaking
 // access through smart constructor below
 final class BalanceRepositoryInterpreter[M[_]: Monad] private (
     repo: Ref[M, Map[String, Balance]]
 ) extends BalanceRepository[M] {
-  def query(no: String): M[Option[Balance]] = repo.get.map(_.get(no))
+  def query(no: AccountNo): M[Option[Balance]] =
+    repo.get.map(_.get(no.value.value))
 
   def store(b: Balance): M[Balance] =
     repo.update(_ + ((b.accountNo.value.value, b))).map(_ => b)

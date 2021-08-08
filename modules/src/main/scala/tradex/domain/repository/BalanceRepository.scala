@@ -14,10 +14,12 @@ import skunk.implicits._
 import squants.market._
 
 import model.balance._
+import model.account.AccountNo
+import codecs._
 
 trait BalanceRepository[F[_]] {
   /** query by account number */
-  def query(no: String): F[Option[Balance]]
+  def query(no: AccountNo): F[Option[Balance]]
 
   /** store */
   def store(a: Balance): F[Balance]
@@ -40,7 +42,7 @@ object BalanceRepository {
     new BalanceRepository[F] {
       import BalanceRepositorySQL._
 
-      def query(no: String): F[Option[Balance]] =
+      def query(no: AccountNo): F[Option[Balance]] =
         postgres.use { session =>
           session.prepare(selectByAccountNo).use { ps =>
             ps.option(no)
@@ -92,11 +94,11 @@ private object BalanceRepositorySQL {
           b.accountNo.value.value ~ BigDecimal(b.amount.value) ~ b.asOf ~ b.currency.toString
       )
 
-  val selectByAccountNo: Query[String, Balance] =
+  val selectByAccountNo: Query[AccountNo, Balance] =
     sql"""
         SELECT b.accountNo, b.amount, b.asOf, b.currency
         FROM balance AS b
-        WHERE b.accountNo = $varchar
+        WHERE b.accountNo = $accountNo
        """.query(decoder)
 
   val selectByDate: Query[LocalDate, Balance] =

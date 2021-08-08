@@ -15,13 +15,14 @@ import cats.effect.Sync
 import model.instrument.ISINCode
 import model.trade._
 import model.market._
+import model.account._
 
 // Constructor private for the interpreter to prevent the Ref from leaking
 // access through smart constructor below
 final class TradeRepositoryInterpreter[M[_]: Monad] private (
     repo: Ref[M, Map[(String, ISINCode, TradeReferenceNo), Trade]]
 ) extends TradeRepository[M] {
-  def query(accountNo: String, date: LocalDate): M[List[Trade]] =
+  def query(accountNo: AccountNo, date: LocalDate): M[List[Trade]] =
     repo.get.map(
       _.values
         .filter(

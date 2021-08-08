@@ -10,13 +10,14 @@ import cats.syntax.all._
 
 import model.trade.Trade
 import model.balance.Balance
+import model.account.AccountNo
 
 import repository._
 
 trait Accounting[F[_]] {
   def postBalance(trade: Trade): F[Balance]
   def postBalance(trades: NonEmptyList[Trade]): F[NonEmptyList[Balance]]
-  def getBalance(accountNo: String): F[Option[Balance]]
+  def getBalance(accountNo: AccountNo): F[Option[Balance]]
   def getBalanceByDate(date: LocalDate): F[List[Balance]]
 }
 
@@ -55,7 +56,7 @@ object Accounting {
       def postBalance(trades: NonEmptyList[Trade]): F[NonEmptyList[Balance]] =
         trades.map(postBalance).sequence
 
-      def getBalance(accountNo: String): F[Option[Balance]] = {
+      def getBalance(accountNo: AccountNo): F[Option[Balance]] = {
         balanceRepository.query(accountNo).adaptError {
           case e =>
             Accounting.AccountingError(

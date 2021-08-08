@@ -14,10 +14,11 @@ import skunk.codec.all._
 import skunk.implicits._
 
 import model.order._
+import codecs._
 
 trait OrderRepository[F[_]] {
   /** query by unique key order no, account number and date */
-  def query(no: String): F[Option[Order]]
+  def query(no: OrderNo): F[Option[Order]]
 
   /** query by order date */
   def queryByOrderDate(date: LocalDate): F[List[Order]]
@@ -46,7 +47,7 @@ object OrderRepository {
             Order(x.no, x.date, x.accountNo, x.items ++ y.items.toList)
         }
 
-      def query(no: String): F[Option[Order]] =
+      def query(no: OrderNo): F[Option[Order]] =
         postgres.use { session =>
           session.prepare(selectByOrderNo).use { ps =>
             ps.stream(no, 1024)
@@ -67,16 +68,16 @@ object OrderRepository {
         * and returns an `Order` with a single `LineItem` in it.
         */
       private def makeSingleLineItemOrders(
-          ono: String,
+          ono: OrderNo,
           lis: List[
-            LocalDateTime ~ String ~ String ~ BigDecimal ~ BigDecimal ~ BuySell ~ String
+            LocalDateTime ~ String ~ String ~ BigDecimal ~ BigDecimal ~ BuySell ~ OrderNo
           ]
       ): List[Order] = {
         lis.map {
           case odt ~ ano ~ isin ~ qty ~ up ~ bs ~ ono =>
             Order
               .makeOrder(
-                ono,
+                ono.value.value,
                 odt,
                 ano,
                 NonEmptyList.one(
@@ -178,25 +179,26 @@ object OrderRepository {
 private object OrderRepositorySQL {
   val buySell = enum(BuySell, Type("buysell"))
 
-  val orderLineItemDecoder = timestamp ~ varchar ~ varchar ~ numeric ~ numeric ~ buySell ~ varchar
+  val orderLineItemDecoder = timestamp ~ varchar ~ varchar ~ numeric ~ numeric ~ buySell ~ orderNo
 
   val orderEncoder: Encoder[Order] =
-    (varchar ~ varchar ~ timestamp).values
+    (orderNo ~ accountNo ~ timestamp).values
       .contramap(
-        (o: Order) => o.no.value.value ~ o.accountNo.value.value ~ o.date
+        (o: Order) => o.no ~ o.accountNo ~ o.date
       )
 
-  def lineItemEncoder(orderNo: OrderNo) =
-    (varchar ~ varchar ~ numeric ~ numeric ~ buySell).values.contramap(
-      (li: LineItem) =>
-        orderNo.value.value ~ li.instrument.value.value ~ li.quantity.value.value ~ li.unitPrice.value.value ~ li.buySell
-    )
+  def lineItemEncoder(ordNo: OrderNo) =
+    (orderNo ~ isinCode ~ quantity ~ unitPrice ~ buySell).values
+      .contramap(
+        (li: LineItem) =>
+          ordNo ~ li.instrument ~ li.quantity ~ li.unitPrice ~ li.buySell
+      )
 
   val selectByOrderNo =
     sql"""
         SELECT o.dateOfOrder, o.accountNo, l.isinCode, l.quantity, l.unitPrice, l.buySellFlag, o.no
         FROM orders o, lineItems l
-        WHERE o.no = $varchar
+        WHERE o.no = $orderNo
         AND   o.no = l.orderNo
        """.query(orderLineItemDecoder)
 

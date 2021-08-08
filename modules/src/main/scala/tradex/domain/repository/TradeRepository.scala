@@ -19,10 +19,12 @@ import org.typelevel.log4cats.Logger
 import model.market._
 import model.trade._
 import model.order.BuySell
+import model.account.AccountNo
+import codecs._
 
 trait TradeRepository[F[_]] {
   /** query by account number and trade date (compares using the date part only) */
-  def query(accountNo: String, date: LocalDate): F[List[Trade]]
+  def query(accountNo: AccountNo, date: LocalDate): F[List[Trade]]
 
   /** query by market */
   def queryByMarket(market: Market): F[List[Trade]]
@@ -54,7 +56,7 @@ object TradeRepository {
             x.copy(taxFees = x.taxFees ++ y.taxFees)
         }
 
-      def query(accountNo: String, date: LocalDate): F[List[Trade]] =
+      def query(accountNo: AccountNo, date: LocalDate): F[List[Trade]] =
         postgres.use { session =>
           session.prepare(selectByAccountNoAndDate).use { ps =>
             ps.stream(accountNo ~ date, 1024)
@@ -115,7 +117,7 @@ object TradeRepository {
       def queryByMarket(market: Market): F[List[Trade]] =
         postgres.use { session =>
           session.prepare(selectByMarket).use { ps =>
-            ps.stream(market.entryName, 1024)
+            ps.stream(market, 1024)
               .compile
               .toList
               .map(_.groupBy(_._2))
@@ -200,11 +202,10 @@ private object TradeRepositorySQL {
     }
 
   val tradeEncoder: Encoder[Trade] =
-    (varchar ~ varchar ~ varchar ~ varchar ~ buySell ~ numeric ~ numeric ~ timestamp ~ timestamp.opt ~ numeric.opt).values
+    (tradeRefNo ~ accountNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp ~ timestamp.opt ~ money.opt).values
       .contramap(
         (t: Trade) =>
-          t.refNo.value.value ~ t.accountNo.value.value ~ t.isin.value.value ~ t.market.entryName ~ t.buySell ~ t.unitPrice.value.value ~ t.quantity.value.value ~ t.tradeDate ~ t.valueDate ~ t.netAmount
-            .map(_.value)
+          t.refNo ~ t.accountNo ~ t.isin ~ t.market ~ t.buySell ~ t.unitPrice ~ t.quantity ~ t.tradeDate ~ t.valueDate ~ t.netAmount
       )
 
   def taxFeeEncoder(refNo: TradeReferenceNo): Encoder[TradeTaxFee] =
@@ -277,7 +278,7 @@ private object TradeRepositorySQL {
                f.amount,
                t.tradeRefNo
         FROM trades t, tradeTaxFees f
-        WHERE t.accountNo = $varchar
+        WHERE t.accountNo = $accountNo
           AND DATE(t.tradeDate) = $date
           AND t.tradeRefNo = f.tradeRefNo
     """.query(tradeTaxFeeDecoder)
@@ -297,7 +298,7 @@ private object TradeRepositorySQL {
                f.amount,
                t.tradeRefNo
         FROM trades t, tradeTaxFees f
-        WHERE t.market = $varchar
+        WHERE t.market = $market
           AND t.tradeRefNo = f.tradeRefNo
     """.query(tradeTaxFeeDecoder)
 

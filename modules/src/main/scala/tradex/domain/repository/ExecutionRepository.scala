@@ -12,6 +12,7 @@ import skunk.implicits._
 
 import model.execution._
 import model.order.BuySell
+import codecs._
 
 trait ExecutionRepository[F[_]] {
   /** store */
@@ -48,11 +49,8 @@ private object ExecutionRepositorySQL {
   val buySell = enum(BuySell, Type("buysell"))
 
   val executionEncoder: Encoder[Execution] =
-    (varchar ~ varchar ~ varchar ~ varchar ~ varchar ~ buySell ~ numeric ~ numeric ~ timestamp).values
-      .contramap(
-        (e: Execution) =>
-          e.executionRefNo.value.value ~ e.accountNo.value.value ~ e.orderNo.value.value ~ e.isin.value.value ~ e.market.entryName ~ e.buySell ~ e.unitPrice.value.value ~ e.quantity.value.value ~ e.dateOfExecution
-      )
+    (executionRefNo ~ accountNo ~ orderNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp).values
+      .gcontramap[Execution]
 
   val insertExecution: Command[Execution] =
     sql"""
