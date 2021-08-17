@@ -75,6 +75,8 @@ object Dependencies {
 
 
   val monocleCore         = "dev.optics"                   %% "monocle-core"                     % monocleVersion
+  val javaxCrypto         = "javax.xml.crypto"              % "jsr105-api"                       % javaxCryptoVersion
+
 
   val flywayDb            = "org.flywaydb"                  % "flyway-core"                      % "5.2.4"
   val log4cats            = "org.typelevel"                %% "log4cats-slf4j"                   % log4catsVersion
