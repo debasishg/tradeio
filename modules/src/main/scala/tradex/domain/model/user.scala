@@ -13,6 +13,7 @@ import derevo.derive
 import eu.timepit.refined.auto._
 import eu.timepit.refined.cats._
 import eu.timepit.refined.types.string.NonEmptyString
+import io.circe._
 import io.circe.refined._
 import io.estatico.newtype.macros.newtype
 import optics.uuid
@@ -80,5 +81,43 @@ object user {
     ): EitherNec[String, EncryptedPassword] =
       validate[EncryptedPassword](name)
         .leftMap(_ :+ s"User Password cannot be blank")
+  }
+
+  // --------- user registration -----------
+
+  @derive(decoder, encoder)
+  @newtype
+  case class UserNameParam(value: NonEmptyString) {
+    def toDomain: UserName = UserName(value)
+  }
+
+  @derive(decoder, encoder)
+  @newtype
+  case class PasswordParam(value: NonEmptyString) {
+    def toDomain: Password = Password(value)
+  }
+
+  @derive(decoder, encoder)
+  case class CreateUser(
+      username: UserNameParam,
+      password: PasswordParam
+  )
+
+  // --------- user login -----------
+
+  @derive(decoder, encoder)
+  case class LoginUser(
+      username: UserName,
+      password: Password
+  )
+
+  // --------- admin auth -----------
+
+  @newtype
+  case class ClaimContent(uuid: UUID)
+
+  object ClaimContent {
+    implicit val jsonDecoder: Decoder[ClaimContent] =
+      Decoder.forProduct1("uuid")(ClaimContent.apply)
   }
 }

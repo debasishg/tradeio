@@ -73,11 +73,15 @@ object Dependencies {
 
   val http4sJwtAuth       = "dev.profunktor"               %% "http4s-jwt-auth"                  % http4sJwtAuthVersion
 
-
   val monocleCore         = "dev.optics"                   %% "monocle-core"                     % monocleVersion
+  val javaxCrypto         = "javax.xml.crypto"              % "jsr105-api"                       % javaxCryptoVersion
 
   val flywayDb            = "org.flywaydb"                  % "flyway-core"                      % "5.2.4"
   val log4cats            = "org.typelevel"                %% "log4cats-slf4j"                   % log4catsVersion
+
+  val redis4catsEffects   = "dev.profunktor"               %% "redis4cats-effects"               % redis4catsVersion
+  val redis4catsLog4cats  = "dev.profunktor"               %% "redis4cats-log4cats"              % redis4catsVersion
+
 
   // Runtime
   val logback             = "ch.qos.logback"                % "logback-classic"                  % logbackVersion % Runtime
@@ -97,5 +101,6 @@ object Dependencies {
       Seq(Skunk.skunkCore, Skunk.skunkCirce) ++ Seq(log4cats, logback) ++
       Seq(Http4s.http4sServer, Http4s.http4sClient, Http4s.http4sDsl, Http4s.http4sCirce) ++
       Seq(http4sJwtAuth) ++
+      Seq(redis4catsEffects, redis4catsLog4cats) ++
       Seq(Circe.circeCore, Circe.circeGeneric, Circe.circeParser, Circe.circeRefined)
 }

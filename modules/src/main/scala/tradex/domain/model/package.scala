@@ -6,6 +6,7 @@ import cats.{Eq, Monoid, Show}
 import cats.syntax.all._
 import io.circe.{Decoder, Encoder}
 import squants.market.{Currency, Money, USD}
+import dev.profunktor.auth.jwt.JwtToken
 
 package object model extends OrphanInstances
 
@@ -55,4 +56,12 @@ trait OrphanInstances {
 
   implicit val showInstant: Show[Instant] =
     LocalDateTime.ofInstant(_, ZoneId.systemDefault()).show
+
+  implicit val tokenEq: Eq[JwtToken] = Eq.by(_.value)
+
+  implicit val tokenShow: Show[JwtToken] =
+    Show[String].contramap[JwtToken](_.value)
+
+  implicit val tokenEncoder: Encoder[JwtToken] =
+    Encoder.forProduct1("access_token")(_.value)
 }
