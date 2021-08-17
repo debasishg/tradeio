@@ -26,4 +26,5 @@ object Versions {
   val http4sVersion = "1.0.0-M23"
   val http4sJwtAuthVersion = "1.0.0"
   val javaxCryptoVersion = "1.0.1"
+  val redis4catsVersion = "1.0.0"
 }

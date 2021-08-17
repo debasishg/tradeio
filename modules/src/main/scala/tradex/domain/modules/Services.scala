@@ -3,6 +3,7 @@ package modules
 
 import cats.effect._
 import org.typelevel.log4cats.Logger
+import dev.profunktor.redis4cats.RedisCommands
 import skunk.Session
 import repository._
 import services.trading._
@@ -11,7 +12,8 @@ import services.healthcheck._
 
 object Services {
   def make[F[+_]: Temporal: Logger](
-      postgres: Resource[F, Session[F]]
+      postgres: Resource[F, Session[F]],
+      redis: RedisCommands[F, String, String]
   ): Services[F] = {
     val _accountRepository = AccountRepository.make(postgres)
     val _instrumentRepository = InstrumentRepository.make(postgres)

@@ -1,16 +1,18 @@
 package tradex.domain
-package http.routes
+package http.routes.secured
 
 import org.typelevel.log4cats.Logger
 import cats.MonadThrow
 import cats.syntax.all._
+
 import org.http4s._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.circe.JsonDecoder
 import org.http4s.dsl.Http4sDsl
-import org.http4s.server.Router
+import org.http4s.server._
 import ext.http4s.refined._
 
+import http.auth.users.CommonUser
 import programs.GenerateTrade
 import services.trading.Trading
 import Trading._
@@ -24,9 +26,9 @@ final case class GenerateTradeRoutes[F[_]: MonadThrow: JsonDecoder: Logger](
 ) extends Http4sDsl[F] {
   private[routes] val prefixPath = "/generatetrade"
 
-  private val httpRoutes: HttpRoutes[F] = HttpRoutes.of[F] {
-    case req @ POST -> Root => {
-      req
+  private val httpRoutes: AuthedRoutes[CommonUser, F] = AuthedRoutes.of {
+    case ar @ POST -> Root as user => {
+      ar.req
         .decodeR[trade.GenerateTradeFrontOfficeInput] { tradeParam =>
           GenerateTrade(trading, accounting)
             .generate(tradeParam)
@@ -42,7 +44,8 @@ final case class GenerateTradeRoutes[F[_]: MonadThrow: JsonDecoder: Logger](
     }
   }
 
-  val routes: HttpRoutes[F] = Router(
-    prefixPath -> httpRoutes
-  )
+  def routes(authMiddleware: AuthMiddleware[F, CommonUser]): HttpRoutes[F] =
+    Router(
+      prefixPath -> authMiddleware(httpRoutes)
+    )
 }

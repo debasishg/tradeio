@@ -21,7 +21,7 @@ trait UserRepository[F[_]] {
 }
 
 object UserRepository {
-  def make[F[_]: Concurrent: GenUUID](
+  def make[F[_]: MonadCancelThrow: GenUUID](
       postgres: Resource[F, Session[F]]
   ): UserRepository[F] =
     new UserRepository[F] {

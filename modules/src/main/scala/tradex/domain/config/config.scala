@@ -3,6 +3,7 @@ package config
 
 import ext.ciris._
 
+import ciris._
 import ciris.refined._
 
 import scala.concurrent.duration._
@@ -28,19 +29,46 @@ object config {
   @newtype
   case class JwtAccessTokenKeyConfig(secret: NonEmptyString)
 
+  @derive(configDecoder, show)
+  @newtype
+  case class JwtSecretKeyConfig(secret: NonEmptyString)
+
+  @derive(configDecoder, show)
+  @newtype
+  case class JwtClaimConfig(secret: NonEmptyString)
+
+  @derive(configDecoder, show)
+  @newtype
+  case class AdminUserTokenConfig(secret: NonEmptyString)
+
   case class AppConfig(
+      adminJwtConfig: AdminJwtConfig,
+      tokenConfig: Secret[JwtAccessTokenKeyConfig],
+      passwordSalt: Secret[PasswordSalt],
+      tokenExpiration: TokenExpiration,
       postgreSQL: PostgreSQLConfig,
       httpServerConfig: HttpServerConfig,
-      httpClientConfig: HttpClientConfig
+      httpClientConfig: HttpClientConfig,
+      redis: RedisConfig
+  )
+
+  case class AdminJwtConfig(
+      secretKey: Secret[JwtSecretKeyConfig],
+      claimStr: Secret[JwtClaimConfig],
+      adminToken: Secret[AdminUserTokenConfig]
   )
 
   case class PostgreSQLConfig(
       host: NonEmptyString,
       port: UserPortNumber,
       user: NonEmptyString,
+      password: Secret[NonEmptyString],
       database: NonEmptyString,
       max: PosInt
   )
+
+  @newtype case class RedisURI(value: NonEmptyString)
+  @newtype case class RedisConfig(uri: RedisURI)
 
   case class HttpServerConfig(
       host: Host,

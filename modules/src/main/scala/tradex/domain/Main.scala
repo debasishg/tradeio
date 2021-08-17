@@ -5,6 +5,7 @@ import cats.effect.unsafe.implicits.global
 
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
+import dev.profunktor.redis4cats.log4cats._
 
 import resources.AppResources
 import repository._

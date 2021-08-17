@@ -6,22 +6,33 @@ import scala.concurrent.duration._
 import cats.effect.Async
 import cats.syntax.all._
 import http.routes._
+import http.routes.secured._
 import org.http4s._
 import org.http4s.implicits._
 import org.http4s.server.middleware._
+import dev.profunktor.auth.JwtAuthMiddleware
+import http.auth.users.CommonUser
 
 object HttpApi {
   def make[F[+_]: Async: Logger](
       services: Services[F],
-      programs: Programs[F]
+      programs: Programs[F],
+      security: Security[F]
   ): HttpApi[F] =
-    new HttpApi[F](services, programs) {}
+    new HttpApi[F](services, programs, security) {}
 }
 
 sealed abstract class HttpApi[F[+_]: Async: Logger] private (
     services: Services[F],
-    programs: Programs[F]
+    programs: Programs[F],
+    security: Security[F]
 ) {
+  private val usersMiddleware =
+    JwtAuthMiddleware[F, CommonUser](
+      security.userJwtAuth.value,
+      security.usersAuth.findUser
+    )
+
   private val accountRoutes =
     AccountRoutes[F](services.accountRepository).routes
   private val balanceRoutes =
@@ -35,7 +46,7 @@ sealed abstract class HttpApi[F[+_]: Async: Logger] private (
       programs.generateTrade,
       services.trading,
       services.accounting
-    ).routes
+    ).routes(usersMiddleware)
 
   private val openRoutes: HttpRoutes[F] =
     accountRoutes <+> balanceRoutes <+> tradeRoutes <+> healthRoutes <+> generateTradeRoutes

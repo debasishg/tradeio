@@ -13,6 +13,9 @@ import skunk.util.Typer
 import skunk.codec.text._
 import skunk.implicits._
 
+import dev.profunktor.redis4cats.{Redis, RedisCommands}
+import dev.profunktor.redis4cats.effect.MkRedis
+
 import org.http4s.client.Client
 
 import natchez.Trace.Implicits.noop // needed for skunk
@@ -21,11 +24,12 @@ import config.config._
 
 sealed abstract class AppResources[F[_]] private (
     val client: Client[F],
-    val postgres: Resource[F, Session[F]]
+    val postgres: Resource[F, Session[F]],
+    val redis: RedisCommands[F, String, String]
 )
 
 object AppResources {
-  def make[F[_]: Concurrent: Network: Console: MkHttpClient: Logger](
+  def make[F[_]: Concurrent: Network: Console: MkHttpClient: MkRedis: Logger](
       cfg: AppConfig
   ): Resource[F, AppResources[F]] = {
     def checkPostgresConnection(
@@ -37,21 +41,37 @@ object AppResources {
         }
       }
 
+    def checkRedisConnection(
+        redis: RedisCommands[F, String, String]
+    ): F[Unit] =
+      redis.info.flatMap {
+        _.get("redis_version").traverse_ { v =>
+          Logger[F].info(s"Connected to Redis $v")
+        }
+      }
+
     def mkPostgreSqlResource(c: PostgreSQLConfig): SessionPool[F] =
       Session
         .pooled[F](
           host = c.host.value,
           port = c.port.value,
           user = c.user.value,
+          password = Some(c.password.value.value),
           database = c.database.value,
           max = c.max.value,
           strategy = Typer.Strategy.SearchPath
         )
         .evalTap(checkPostgresConnection)
 
+    def mkRedisResource(
+        c: RedisConfig
+    ): Resource[F, RedisCommands[F, String, String]] =
+      Redis[F].utf8(c.uri.value.value).evalTap(checkRedisConnection)
+
     (
       MkHttpClient[F].newEmber(cfg.httpClientConfig),
-      mkPostgreSqlResource(cfg.postgreSQL)
-    ).parMapN(new AppResources[F](_, _) {})
+      mkPostgreSqlResource(cfg.postgreSQL),
+      mkRedisResource(cfg.redis)
+    ).parMapN(new AppResources[F](_, _, _) {})
   }
 }
