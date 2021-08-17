@@ -85,23 +85,23 @@ object user {
 
   // --------- user registration -----------
 
-//   @derive(decoder, encoder)
-//   @newtype
-//   case class UserNameParam(value: NonEmptyString) {
-//     def toDomain: UserName = UserName(value)
-//   }
-//
-//   @derive(decoder, encoder)
-//   @newtype
-//   case class PasswordParam(value: NonEmptyString) {
-//     def toDomain: Password = Password(value)
-//   }
-//
-//   @derive(decoder, encoder)
-//   case class CreateUser(
-//       username: UserNameParam,
-//       password: PasswordParam
-//   )
+  @derive(decoder, encoder)
+  @newtype
+  case class UserNameParam(value: NonEmptyString) {
+    def toDomain: UserName = UserName(value)
+  }
+
+  @derive(decoder, encoder)
+  @newtype
+  case class PasswordParam(value: NonEmptyString) {
+    def toDomain: Password = Password(value)
+  }
+
+  @derive(decoder, encoder)
+  case class CreateUser(
+      username: UserNameParam,
+      password: PasswordParam
+  )
 
   // --------- user login -----------
 
