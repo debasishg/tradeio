@@ -27,12 +27,18 @@ final case class AdminAccountRoutes[F[_]: JsonDecoder: MonadThrow](
       case ar @ POST -> Root as _ =>
         ar.req.decodeR[CreateAccount] { account =>
           account.toDomain.fold(
+            // domain validation failed
             exs => BadRequest(exs.toList.mkString("/")),
             tac =>
               accountRepository
                 .store(tac)
                 .flatMap { acc =>
                   Created(JsonObject.singleton("account", acc.asJson))
+                }
+                .recoverWith {
+                  case th: Throwable => {
+                    InternalServerError(th.getMessage())
+                  }
                 }
           )
         }
