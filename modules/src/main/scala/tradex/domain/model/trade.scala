@@ -143,9 +143,13 @@ object trade {
         Execution.validateMarket(market)
       ).mapN { (ref, a, i, q, u, bs, m) =>
         val trd = Trade(a, i, ref, m, BuySell.withName(bs), u, q, td, vd)
+        println(
+          s"taxFees = $taxFees netAmount = $netAmt isdefined = ${netAmt.isDefined}"
+        )
         if (taxFees.isEmpty && !netAmt.isDefined) {
           val taxFees =
             forTrade(trd).map(taxFeeCalculate(trd, _)).getOrElse(List.empty)
+          println(s"taxFees 1 = $taxFees")
           val netAmt = netAmount(trd, taxFees)
           trd.copy(taxFees = taxFees, netAmount = Option(netAmt))
         } else trd

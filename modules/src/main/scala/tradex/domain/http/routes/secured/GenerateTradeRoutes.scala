@@ -36,7 +36,6 @@ final case class GenerateTradeRoutes[F[_]: MonadThrow: JsonDecoder: Logger](
             .recoverWith {
               case e: TradingError => BadRequest(e.cause)
               case th: Throwable => {
-                th.printStackTrace()
                 BadRequest(th.getMessage())
               }
             }

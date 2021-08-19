@@ -7,7 +7,7 @@ values(
   null,
   'USD',
   'USD',
-  'USD'
+  null
 );
 
 insert into accounts
@@ -19,7 +19,7 @@ values(
   null,
   'USD',
   'USD',
-  'USD'
+  null
 );
 
 insert into accounts
@@ -31,7 +31,7 @@ values(
   null,
   'USD',
   'USD',
-  'USD'
+  null
 );
 
 insert into instruments

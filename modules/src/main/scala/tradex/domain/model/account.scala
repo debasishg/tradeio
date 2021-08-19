@@ -68,6 +68,51 @@ object account {
       settlementCurrency: Option[Currency]
   )
 
+  @derive(decoder, encoder, show)
+  case class CreateAccount(
+      no: String,
+      name: String,
+      openDate: Option[LocalDateTime],
+      closeDate: Option[LocalDateTime],
+      baseCcy: Currency,
+      tradingCcy: Option[Currency],
+      settlementCcy: Option[Currency],
+      accountType: AccountType
+  ) {
+    def toDomain = {
+      accountType match {
+        case AccountType.Trading =>
+          Account.tradingAccount(
+            no,
+            name,
+            openDate,
+            closeDate,
+            baseCcy,
+            tradingCcy.getOrElse(USD)
+          )
+        case AccountType.Settlement =>
+          Account.settlementAccount(
+            no,
+            name,
+            openDate,
+            closeDate,
+            baseCcy,
+            settlementCcy.getOrElse(USD)
+          )
+        case AccountType.Both =>
+          Account.tradingAndSettlementAccount(
+            no,
+            name,
+            openDate,
+            closeDate,
+            baseCcy,
+            tradingCcy.getOrElse(USD),
+            settlementCcy.getOrElse(USD)
+          )
+      }
+    }
+  }
+
   object Account {
     def tradingAccount(
         no: String,
