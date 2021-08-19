@@ -18,7 +18,7 @@ object load {
   def apply[F[_]: Async]: F[AppConfig] =
     env("TRADING_APP_ENV")
       .as[AppEnvironment]
-      .default(Prod)
+      .default(Test)
       .flatMap {
         case Test => default(RedisURI("redis://localhost"))
         case Prod => default(RedisURI("redis://10.123.154.176"))

@@ -1,7 +1,7 @@
 package tradex.domain
 package repository
 
-import java.time.{LocalDate, LocalDateTime}
+import java.time.LocalDate
 
 import cats.Semigroup
 import cats.data.NonEmptyList
@@ -13,7 +13,6 @@ import skunk.data.Type
 import skunk.codec.all._
 import skunk.implicits._
 
-import squants.market._
 import org.typelevel.log4cats.Logger
 
 import model.market._
@@ -62,57 +61,15 @@ object TradeRepository {
             ps.stream(accountNo ~ date, 1024)
               .compile
               .toList
-              .map(_.groupBy(_._2))
-              .map { m =>
-                m.map {
-                  case (refNo, lis) =>
-                    val singleTradeTaxFeeLine =
-                      makeSingleTradeTaxFees(refNo, lis)
-                    singleTradeTaxFeeLine.tail
-                      .foldLeft(singleTradeTaxFeeLine.head)(
-                        Semigroup[Trade].combine
-                      )
+              .map(_.groupBy(_.refNo))
+              .map {
+                _.map {
+                  case (refNo, trades) =>
+                    trades.reduce(Semigroup[Trade].combine)
                 }.toList
               }
           }
         }
-
-      private def makeSingleTradeTaxFees(
-          trdRefNo: String,
-          trdTxs: List[
-            String ~
-              String ~
-              String ~
-              BuySell ~
-              BigDecimal ~
-              BigDecimal ~
-              LocalDateTime ~
-              Option[LocalDateTime] ~
-              Option[BigDecimal] ~
-              String ~
-              BigDecimal ~
-              String
-          ]
-      ): List[Trade] = {
-        trdTxs.map {
-          case ano ~ isin ~ mkt ~ bs ~ up ~ qty ~ td ~ vd ~ na ~ tfid ~ amt ~ rno =>
-            Trade
-              .trade(
-                ano,
-                isin,
-                rno,
-                mkt,
-                bs.entryName,
-                up,
-                qty,
-                td,
-                vd,
-                List(TradeTaxFee(TaxFeeId.withName(tfid), Money(amt))),
-                na.map(Money(_))
-              )
-              .fold(errs => throw new Exception(errs.toString), identity)
-        }
-      }
 
       def queryByMarket(market: Market): F[List[Trade]] =
         postgres.use { session =>
@@ -120,16 +77,11 @@ object TradeRepository {
             ps.stream(market, 1024)
               .compile
               .toList
-              .map(_.groupBy(_._2))
-              .map { m =>
-                m.map {
-                  case (refNo, lis) =>
-                    val singleTradeTaxFeeLine =
-                      makeSingleTradeTaxFees(refNo, lis)
-                    singleTradeTaxFeeLine.tail
-                      .foldLeft(singleTradeTaxFeeLine.head)(
-                        Semigroup[Trade].combine
-                      )
+              .map(_.groupBy(_.refNo))
+              .map {
+                _.map {
+                  case (refNo, trades) =>
+                    trades.reduce(Semigroup[Trade].combine)
                 }.toList
               }
           }
@@ -141,16 +93,11 @@ object TradeRepository {
             ps.stream(skunk.Void, 1024)
               .compile
               .toList
-              .map(_.groupBy(_._2))
-              .map { m =>
-                m.map {
-                  case (refNo, lis) =>
-                    val singleTradeTaxFeeLine =
-                      makeSingleTradeTaxFees(refNo, lis)
-                    singleTradeTaxFeeLine.tail
-                      .foldLeft(singleTradeTaxFeeLine.head)(
-                        Semigroup[Trade].combine
-                      )
+              .map(_.groupBy(_.refNo))
+              .map {
+                _.map {
+                  case (refNo, trades) =>
+                    trades.reduce(Semigroup[Trade].combine)
                 }.toList
               }
           }
@@ -193,13 +140,26 @@ private object TradeRepositorySQL {
   val buySell = enum(BuySell, Type("buysell"))
   val taxFeeId = enum(TaxFeeId, Type("taxfeeid"))
 
-  val tradeTaxFeeDecoder =
-    varchar ~ varchar ~ varchar ~ buySell ~ numeric ~ numeric ~ timestamp ~ timestamp.opt ~ numeric.opt ~ varchar ~ numeric ~ varchar
-
-  val taxFeeDecoder: Decoder[TradeTaxFee] =
-    (varchar ~ varchar ~ numeric).map {
-      case rno ~ tid ~ amt => TradeTaxFee(TaxFeeId.withName(tid), Money(amt))
-    }
+  val tradeTaxFeeDecoder: Decoder[Trade] =
+    (accountNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp ~ timestamp.opt ~ money.opt ~ varchar ~ money ~ tradeRefNo)
+      .map {
+        case ano ~ isin ~ mkt ~ bs ~ up ~ qty ~ td ~ vdOpt ~ naOpt ~ tx ~ amt ~ ref =>
+          (
+            Trade(
+              ano,
+              isin,
+              ref,
+              mkt,
+              bs,
+              up,
+              qty,
+              td,
+              vdOpt,
+              List(TradeTaxFee(TaxFeeId.withName(tx), amt)),
+              naOpt
+            )
+          )
+      }
 
   val tradeEncoder: Encoder[Trade] =
     (tradeRefNo ~ accountNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp ~ timestamp.opt ~ money.opt).values
