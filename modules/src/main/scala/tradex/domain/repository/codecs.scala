@@ -11,7 +11,7 @@ import model.account.{AccountNo, AccountName}
 import model.instrument.ISINCode
 import model.order.{OrderNo, UnitPrice, Quantity}
 import model.execution.ExecutionReferenceNo
-import model.trade.TradeReferenceNo
+import model.trade.{TradeReferenceNo, TaxFeeId}
 import model.market.Market
 import NewtypeRefinedOps._
 
@@ -58,6 +58,9 @@ object codecs {
 
   val market: Codec[Market] =
     varchar.imap[Market](Market.withName(_))(_.entryName)
+
+  val taxFeeId: Codec[TaxFeeId] =
+    varchar.imap[TaxFeeId](TaxFeeId.withName(_))(_.entryName)
 
   val userId: Codec[UserId] = uuid.imap[UserId](UserId(_))(_.value)
 

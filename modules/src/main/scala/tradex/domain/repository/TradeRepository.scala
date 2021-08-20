@@ -138,10 +138,9 @@ object TradeRepository {
 
 private object TradeRepositorySQL {
   val buySell = enum(BuySell, Type("buysell"))
-  val taxFeeId = enum(TaxFeeId, Type("taxfeeid"))
 
   val tradeTaxFeeDecoder: Decoder[Trade] =
-    (accountNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp ~ timestamp.opt ~ money.opt ~ varchar ~ money ~ tradeRefNo)
+    (accountNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp ~ timestamp.opt ~ money.opt ~ taxFeeId ~ money ~ tradeRefNo)
       .map {
         case ano ~ isin ~ mkt ~ bs ~ up ~ qty ~ td ~ vdOpt ~ naOpt ~ tx ~ amt ~ ref =>
           (
@@ -155,7 +154,7 @@ private object TradeRepositorySQL {
               qty,
               td,
               vdOpt,
-              List(TradeTaxFee(TaxFeeId.withName(tx), amt)),
+              List(TradeTaxFee(tx, amt)),
               naOpt
             )
           )
@@ -169,9 +168,9 @@ private object TradeRepositorySQL {
       )
 
   def taxFeeEncoder(refNo: TradeReferenceNo): Encoder[TradeTaxFee] =
-    (tradeRefNo ~ varchar ~ money).values
+    (tradeRefNo ~ taxFeeId ~ money).values
       .contramap(
-        (t: TradeTaxFee) => refNo ~ t.taxFeeId.entryName ~ t.amount
+        (t: TradeTaxFee) => refNo ~ t.taxFeeId ~ t.amount
       )
 
   val insertTrade: Command[Trade] =
