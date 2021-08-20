@@ -7,7 +7,7 @@ import skunk.codec.all._
 import squants.market._
 
 import model.user._
-import model.account.AccountNo
+import model.account.{AccountNo, AccountName}
 import model.instrument.ISINCode
 import model.order.{OrderNo, UnitPrice, Quantity}
 import model.execution.ExecutionReferenceNo
@@ -19,6 +19,11 @@ object codecs {
   val accountNo: Codec[AccountNo] =
     varchar.eimap[AccountNo] { s =>
       validate[AccountNo](s).leftMap(_.fold)
+    }(_.value.value)
+
+  val accountName: Codec[AccountName] =
+    varchar.eimap[AccountName] { s =>
+      validate[AccountName](s).leftMap(_.fold)
     }(_.value.value)
 
   val isinCode: Codec[ISINCode] =
@@ -67,4 +72,9 @@ object codecs {
     }(_.value.value)
 
   val money: Codec[Money] = numeric.imap[Money](USD(_))(_.amount)
+
+  val currency: Codec[Currency] =
+    varchar.eimap[Currency](Currency(_).toEither.leftMap(_.getMessage()))(
+      _.code
+    )
 }

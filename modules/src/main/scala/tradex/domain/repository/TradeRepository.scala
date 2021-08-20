@@ -169,10 +169,9 @@ private object TradeRepositorySQL {
       )
 
   def taxFeeEncoder(refNo: TradeReferenceNo): Encoder[TradeTaxFee] =
-    (varchar ~ varchar ~ numeric).values
+    (tradeRefNo ~ varchar ~ money).values
       .contramap(
-        (t: TradeTaxFee) =>
-          refNo.value.value ~ t.taxFeeId.entryName ~ t.amount.value
+        (t: TradeTaxFee) => refNo ~ t.taxFeeId.entryName ~ t.amount
       )
 
   val insertTrade: Command[Trade] =
