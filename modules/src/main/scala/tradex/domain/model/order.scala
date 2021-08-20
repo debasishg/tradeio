@@ -51,6 +51,7 @@ object order {
   // domain entity
   @derive(decoder, encoder, eqv, show)
   private[domain] final case class LineItem private (
+      orderNo: OrderNo,
       instrument: ISINCode,
       quantity: Quantity,
       unitPrice: UnitPrice,
@@ -101,7 +102,7 @@ object order {
     ): EitherNec[String, Order] = {
       forders
         .map { fo =>
-          makeLineItem(fo.isin, fo.qty, fo.unitPrice, fo.buySell)
+          makeLineItem(ono, fo.isin, fo.qty, fo.unitPrice, fo.buySell)
         }
         .sequence
         .map { items =>
@@ -111,29 +112,31 @@ object order {
     }
 
     private[domain] def makeLineItem(
+        ono: String,
         isin: String,
         quantity: BigDecimal,
         unitPrice: BigDecimal,
         buySell: String
     ): EitherNec[String, LineItem] = {
       (
+        validateOrderNo(ono),
         Instrument.validateISINCode(isin),
         validateQuantity(quantity),
         validateUnitPrice(unitPrice),
         validateBuySell(buySell)
-      ).mapN { (isin, qty, price, bs) =>
-        LineItem(isin, qty, price, BuySell.withName(bs))
+      ).mapN { (orderNo, isin, qty, price, bs) =>
+        LineItem(orderNo, isin, qty, price, BuySell.withName(bs))
       }
     }
 
     private[domain] def makeOrder(
-        orderNo: String,
+        ono: String,
         orderDate: LocalDateTime,
         accountNo: String,
         lineItems: NonEmptyList[LineItem]
     ): EitherNec[String, Order] = {
       (
-        validateOrderNo(orderNo),
+        validateOrderNo(ono),
         Account.validateAccountNo(accountNo)
       ).mapN { (orderNo, accountNo) =>
         Order(
@@ -174,27 +177,5 @@ object order {
         .map(_.entryName)
         .leftMap(_.map(_.toString))
     }
-
-//     def main(): Unit = {
-//       val o1 =
-//         FrontOfficeOrder("a-1", Instant.now(), "isin-12345", 100.00, "B")
-//       val o2 =
-//         FrontOfficeOrder("a-1", Instant.now(), "isin-12346", 200.00, "S")
-//       val o3 =
-//         FrontOfficeOrder("a-2", Instant.now(), "isin-12345", 100.00, "B")
-//       val orders = List(o1, o2, o3)
-//
-//       val csv = orders.writeComplete.print(Printer.default)
-//       println(csv)
-//       // accountNo,date,isin,qty,buySell
-//       // a-1,2020-07-02T05:05:13.619Z,isin-12345,100.0,B
-//       // a-1,2020-07-02T05:05:13.619Z,isin-12346,200.0,S
-//       // a-2,2020-07-02T05:05:13.619Z,isin-12345,100.0,B
-//
-//       fromFrontOffice(csv) match {
-//         case Left(e) => println(e)
-//         case Right(v) => v.foreach(println)
-//       }
-//     }
   }
 }

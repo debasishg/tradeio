@@ -51,8 +51,6 @@ object codecs {
       validate[Quantity](s).leftMap(_.fold)
     }(_.value.value)
 
-  // val lotSize: Codec[LotSize] =
-
   val lotSize: Codec[LotSize] =
     int4.eimap[LotSize] { s =>
       validate[LotSize](s).leftMap(_.fold)
