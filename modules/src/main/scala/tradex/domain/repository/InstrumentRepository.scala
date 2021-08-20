@@ -4,12 +4,14 @@ package repository
 import cats.syntax.all._
 import cats.effect._
 
+import eu.timepit.refined.api.Refined
+import eu.timepit.refined.auto._
+import eu.timepit.refined.numeric._
+
 import skunk._
 import skunk.data.Type
 import skunk.codec.all._
 import skunk.implicits._
-
-import squants.market._
 
 import model.instrument._
 import codecs._
@@ -58,25 +60,33 @@ object InstrumentRepository {
 }
 
 private object InstrumentRepositorySQL {
+  val zeroLotSize: Int Refined Positive = 1
   val instrumentType = enum(InstrumentType, Type("instrumenttype"))
 
+  val instrumentEncoder: Encoder[Instrument] =
+    (
+      isinCode ~ instrumentName ~ instrumentType ~ timestamp.opt ~ timestamp.opt ~ lotSize ~ unitPrice.opt ~ money.opt ~ numeric.opt
+    ).values
+      .contramap {
+        case Instrument(isin, name, tp, di, dm, ls, up, cr, cf) =>
+          isin ~ name ~ tp ~ di ~ dm ~ ls ~ up ~ cr ~ cf
+      }
+
   val decoder: Decoder[Instrument] =
-    (varchar ~ varchar ~ instrumentType ~ timestamp.opt ~ timestamp.opt ~ int2.opt ~ numeric.opt ~ numeric.opt ~ numeric.opt)
+    (isinCode ~ instrumentName ~ instrumentType ~ timestamp.opt ~ timestamp.opt ~ lotSize.opt ~ unitPrice.opt ~ money.opt ~ numeric.opt)
       .map {
         case isin ~ nm ~ tp ~ di ~ dm ~ ls ~ up ~ cr ~ cf =>
-          Instrument
-            .instrument(
-              isin,
-              nm,
-              tp,
-              di,
-              dm,
-              ls,
-              up.map(Money(_)),
-              cr.map(Money(_)),
-              cf
-            )
-            .fold(errs => throw new Exception(errs.toString), identity)
+          Instrument(
+            isin,
+            nm,
+            tp,
+            di,
+            dm,
+            ls.getOrElse(LotSize(zeroLotSize)),
+            up,
+            cr,
+            cf
+          )
       }
 
   val selectByISINCode: Query[ISINCode, Instrument] =
@@ -96,7 +106,7 @@ private object InstrumentRepositorySQL {
   val upsertInstrument: Command[Instrument] =
     sql"""
         INSERT INTO instruments
-        VALUES ($varchar, $varchar, $instrumentType, ${timestamp.opt}, ${timestamp.opt}, ${int2.opt}, ${numeric.opt}, ${numeric.opt}, ${numeric.opt})
+        VALUES $instrumentEncoder
         ON CONFLICT(isinCode) DO UPDATE SET
           name                 = EXCLUDED.name,
           type                 = EXCLUDED.type,
@@ -106,24 +116,5 @@ private object InstrumentRepositorySQL {
           unitPrice            = EXCLUDED.unitPrice,
           couponRate           = EXCLUDED.couponRate,
           couponFrequency      = EXCLUDED.couponFrequency
-       """.command.contramap {
-      case i =>
-        i match {
-          case Instrument(
-              isinCode,
-              name,
-              typ,
-              dateOfIssue,
-              dateOfMaturity,
-              lotSize,
-              unitPrice,
-              couponRate,
-              couponFrequency
-              ) =>
-            isinCode.value.value ~ name.value.value ~ typ ~ dateOfIssue ~ dateOfMaturity ~ Option(
-              lotSize.value.value
-            ) ~ unitPrice.map(u => BigDecimal.decimal(u.value)) ~ couponRate
-              .map(c => BigDecimal.decimal(c.value)) ~ couponFrequency
-        }
-    }
+       """.command
 }

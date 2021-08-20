@@ -26,6 +26,7 @@ import derevo.cats._
 import derevo.circe.magnolia._
 import derevo.derive
 import io.circe.refined._
+import model.order.UnitPrice
 
 import _root_.shapeless.::
 import _root_.shapeless.HNil
@@ -46,7 +47,7 @@ object instrument {
   @newtype case class InstrumentName(value: NonEmptyString)
 
   @derive(decoder, encoder, eqv, show)
-  @newtype case class LotSize(value: Short Refined Positive)
+  @newtype case class LotSize(value: Int Refined Positive)
 
   @derive(decoder, encoder, eqv, show)
   sealed abstract class InstrumentType(override val entryName: String)
@@ -69,7 +70,7 @@ object instrument {
       dateOfIssue: Option[LocalDateTime], // for non CCY
       dateOfMaturity: Option[LocalDateTime], // for Fixed Income
       lotSize: LotSize,
-      unitPrice: Option[Money], // for Equity
+      unitPrice: Option[UnitPrice], // for Equity
       couponRate: Option[Money], // for Fixed Income
       couponFrequency: Option[BigDecimal] // for Fixed Income
   )
@@ -85,7 +86,7 @@ object instrument {
       validate[InstrumentName](name)
 
     private[model] def validateLotSize(
-        size: Short
+        size: Int
     ): EitherNec[String, LotSize] = validate[LotSize](size)
 
     private[domain] def instrument(
@@ -94,8 +95,8 @@ object instrument {
         instrumentType: InstrumentType,
         dateOfIssue: Option[LocalDateTime], // for non CCY
         dateOfMaturity: Option[LocalDateTime], // for Fixed Income
-        lotSize: Option[Short],
-        unitPrice: Option[Money], // for Equity
+        lotSize: Option[Int],
+        unitPrice: Option[UnitPrice], // for Equity
         couponRate: Option[Money], // for Fixed Income
         couponFrequency: Option[BigDecimal] // for Fixed Income
     ): EitherNec[String, Instrument] = {

@@ -8,7 +8,7 @@ import squants.market._
 
 import model.user._
 import model.account.{AccountNo, AccountName}
-import model.instrument.ISINCode
+import model.instrument.{ISINCode, InstrumentName, LotSize}
 import model.order.{OrderNo, UnitPrice, Quantity}
 import model.execution.ExecutionReferenceNo
 import model.trade.{TradeReferenceNo, TaxFeeId}
@@ -24,6 +24,11 @@ object codecs {
   val accountName: Codec[AccountName] =
     varchar.eimap[AccountName] { s =>
       validate[AccountName](s).leftMap(_.fold)
+    }(_.value.value)
+
+  val instrumentName: Codec[InstrumentName] =
+    varchar.eimap[InstrumentName] { s =>
+      validate[InstrumentName](s).leftMap(_.fold)
     }(_.value.value)
 
   val isinCode: Codec[ISINCode] =
@@ -44,6 +49,13 @@ object codecs {
   val quantity: Codec[Quantity] =
     numeric.eimap[Quantity] { s =>
       validate[Quantity](s).leftMap(_.fold)
+    }(_.value.value)
+
+  // val lotSize: Codec[LotSize] =
+
+  val lotSize: Codec[LotSize] =
+    int4.eimap[LotSize] { s =>
+      validate[LotSize](s).leftMap(_.fold)
     }(_.value.value)
 
   val executionRefNo: Codec[ExecutionReferenceNo] =
