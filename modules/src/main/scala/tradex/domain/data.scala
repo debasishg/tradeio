@@ -26,9 +26,9 @@ object AppData {
 
   val lis = NonEmptyList
     .of(
-      Order.makeLineItem(appleISIN, 100, 12.25, "buy"),
-      Order.makeLineItem(baeISIN, 200, 52.25, "sell"),
-      Order.makeLineItem(appleISIN, 100, 32.25, "buy")
+      Order.makeLineItem("o1", appleISIN, 100, 12.25, "buy"),
+      Order.makeLineItem("o1", baeISIN, 200, 52.25, "sell"),
+      Order.makeLineItem("o1", appleISIN, 100, 32.25, "buy")
     )
     .toList
     .sequence

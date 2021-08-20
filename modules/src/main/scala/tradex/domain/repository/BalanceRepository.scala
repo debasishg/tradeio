@@ -11,8 +11,6 @@ import skunk._
 import skunk.codec.all._
 import skunk.implicits._
 
-import squants.market._
-
 import model.balance._
 import model.account.AccountNo
 import codecs._
@@ -71,27 +69,16 @@ object BalanceRepository {
 
 private object BalanceRepositorySQL {
   val decoder: Decoder[Balance] =
-    (varchar ~ numeric ~ timestamp ~ varchar)
+    (accountNo ~ money ~ timestamp ~ currency)
       .map {
         case ano ~ amt ~ asOf ~ ccy =>
-          Balance
-            .balance(
-              ano,
-              Money(amt),
-              Currency(ccy).get,
-              asOf
-            )
-            .fold(
-              exs => throw new Exception(exs.toList.mkString("/")),
-              identity
-            )
+          Balance(ano, amt, ccy, asOf)
       }
 
   val encoder: Encoder[Balance] =
-    (varchar ~ numeric ~ timestamp ~ varchar).values
+    (accountNo ~ money ~ timestamp ~ currency).values
       .contramap(
-        (b: Balance) =>
-          b.accountNo.value.value ~ BigDecimal(b.amount.value) ~ b.asOf ~ b.currency.toString
+        (b: Balance) => b.accountNo ~ b.amount ~ b.asOf ~ b.currency
       )
 
   val selectByAccountNo: Query[AccountNo, Balance] =
@@ -123,16 +110,10 @@ private object BalanceRepositorySQL {
   val upsertBalance: Command[Balance] =
     sql"""
         INSERT INTO balance (accountNo, amount, asOf, currency)
-        VALUES ($varchar, $numeric, $timestamp, $varchar)
+        VALUES $encoder
         ON CONFLICT(accountNo) DO UPDATE SET
           amount    = EXCLUDED.amount,
           asOf      = EXCLUDED.asOf,
           currency  = EXCLUDED.currency
-       """.command.contramap {
-      case b =>
-        b match {
-          case Balance(accountNo, amount, ccy, asOf) =>
-            accountNo.value.value ~ BigDecimal(amount.value) ~ asOf ~ ccy.toString
-        }
-    }
+       """.command
 }
