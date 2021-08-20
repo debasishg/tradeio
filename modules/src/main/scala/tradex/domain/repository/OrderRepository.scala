@@ -1,7 +1,7 @@
 package tradex.domain
 package repository
 
-import java.time.{LocalDateTime, LocalDate}
+import java.time.LocalDate
 
 import cats.Semigroup
 import cats.data.NonEmptyList
@@ -53,53 +53,15 @@ object OrderRepository {
             ps.stream(no, 1024)
               .compile
               .toList
-              .map(_.groupBy(_._2))
-              .map { m =>
-                val lines: List[Order] = m.map {
-                  case (ono, lis) => makeSingleLineItemOrders(no, lis)
-                }.head
-                combineSingleLineItemOrders(lines)
+              .map(_.groupBy(_.no))
+              .map {
+                _.map {
+                  case (ono, lis) =>
+                    lis.reduce(Semigroup[Order].combine)
+                }.headOption
               }
           }
         }
-
-      /**
-        * Takes one joined record which has the `Order` and one `LineItem`
-        * and returns an `Order` with a single `LineItem` in it.
-        */
-      private def makeSingleLineItemOrders(
-          ono: OrderNo,
-          lis: List[
-            LocalDateTime ~ String ~ String ~ BigDecimal ~ BigDecimal ~ BuySell ~ OrderNo
-          ]
-      ): List[Order] = {
-        lis.map {
-          case odt ~ ano ~ isin ~ qty ~ up ~ bs ~ ono =>
-            Order
-              .makeOrder(
-                ono.value.value,
-                odt,
-                ano,
-                NonEmptyList.one(
-                  Order
-                    .makeLineItem(
-                      isin,
-                      qty,
-                      up,
-                      bs.entryName
-                    )
-                    .fold(errs => throw new Exception(errs.toString), identity)
-                )
-              )
-              .fold(errs => throw new Exception(errs.toString), identity)
-        }
-      }
-
-      private def combineSingleLineItemOrders(
-          orders: List[Order]
-      ): Option[Order] =
-        if (orders.isEmpty) None
-        else orders.tail.foldLeft(orders.head)(Semigroup[Order].combine).some
 
       def queryByOrderDate(date: LocalDate): F[List[Order]] =
         postgres.use { session =>
@@ -107,17 +69,11 @@ object OrderRepository {
             ps.stream(date, 1024)
               .compile
               .toList
-              .map(_.groupBy(_._2))
+              .map(_.groupBy(_.no))
               .map { m =>
                 m.map {
                   case (ono, lis) =>
-                    val singleOrders =
-                      makeSingleLineItemOrders(
-                        ono,
-                        lis
-                      )
-                    singleOrders.tail
-                      .foldLeft(singleOrders.head)(Semigroup[Order].combine)
+                    lis.reduce(Semigroup[Order].combine)
                 }.toList
               }
           }
@@ -179,7 +135,12 @@ object OrderRepository {
 private object OrderRepositorySQL {
   val buySell = enum(BuySell, Type("buysell"))
 
-  val orderLineItemDecoder = timestamp ~ varchar ~ varchar ~ numeric ~ numeric ~ buySell ~ orderNo
+  val orderLineItemDecoder: Decoder[Order] =
+    (timestamp ~ accountNo ~ isinCode ~ quantity ~ unitPrice ~ buySell ~ orderNo)
+      .map {
+        case od ~ ano ~ isin ~ qty ~ up ~ bs ~ ono =>
+          Order(ono, od, ano, NonEmptyList.of(LineItem(ono, isin, qty, up, bs)))
+      }
 
   val orderEncoder: Encoder[Order] =
     (orderNo ~ accountNo ~ timestamp).values

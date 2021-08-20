@@ -7,11 +7,11 @@ import skunk.codec.all._
 import squants.market._
 
 import model.user._
-import model.account.AccountNo
-import model.instrument.ISINCode
+import model.account.{AccountNo, AccountName}
+import model.instrument.{ISINCode, InstrumentName, LotSize}
 import model.order.{OrderNo, UnitPrice, Quantity}
 import model.execution.ExecutionReferenceNo
-import model.trade.TradeReferenceNo
+import model.trade.{TradeReferenceNo, TaxFeeId}
 import model.market.Market
 import NewtypeRefinedOps._
 
@@ -19,6 +19,16 @@ object codecs {
   val accountNo: Codec[AccountNo] =
     varchar.eimap[AccountNo] { s =>
       validate[AccountNo](s).leftMap(_.fold)
+    }(_.value.value)
+
+  val accountName: Codec[AccountName] =
+    varchar.eimap[AccountName] { s =>
+      validate[AccountName](s).leftMap(_.fold)
+    }(_.value.value)
+
+  val instrumentName: Codec[InstrumentName] =
+    varchar.eimap[InstrumentName] { s =>
+      validate[InstrumentName](s).leftMap(_.fold)
     }(_.value.value)
 
   val isinCode: Codec[ISINCode] =
@@ -41,6 +51,11 @@ object codecs {
       validate[Quantity](s).leftMap(_.fold)
     }(_.value.value)
 
+  val lotSize: Codec[LotSize] =
+    int4.eimap[LotSize] { s =>
+      validate[LotSize](s).leftMap(_.fold)
+    }(_.value.value)
+
   val executionRefNo: Codec[ExecutionReferenceNo] =
     varchar.eimap[ExecutionReferenceNo] { u =>
       validate[ExecutionReferenceNo](u).leftMap(_.fold)
@@ -53,6 +68,9 @@ object codecs {
 
   val market: Codec[Market] =
     varchar.imap[Market](Market.withName(_))(_.entryName)
+
+  val taxFeeId: Codec[TaxFeeId] =
+    varchar.imap[TaxFeeId](TaxFeeId.withName(_))(_.entryName)
 
   val userId: Codec[UserId] = uuid.imap[UserId](UserId(_))(_.value)
 
@@ -67,4 +85,9 @@ object codecs {
     }(_.value.value)
 
   val money: Codec[Money] = numeric.imap[Money](USD(_))(_.amount)
+
+  val currency: Codec[Currency] =
+    varchar.eimap[Currency](Currency(_).toEither.leftMap(_.getMessage()))(
+      _.code
+    )
 }

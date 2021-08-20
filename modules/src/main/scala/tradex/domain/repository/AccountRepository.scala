@@ -11,10 +11,7 @@ import skunk.data.Type
 import skunk.codec.all._
 import skunk.implicits._
 
-import squants.market._
-
 import model.account._
-import Account._
 import codecs._
 
 trait AccountRepository[F[_]] {
@@ -93,47 +90,61 @@ private object AccountRepositorySQL {
   // A codec that maps Postgres type `accountType` to Scala type `AccountType`
   val accountType = enum(AccountType, Type("accounttype"))
 
-  val decoder: Decoder[Account] =
-    (varchar ~ varchar ~ accountType ~ timestamp ~ timestamp.opt ~ varchar ~ varchar.opt ~ varchar.opt)
+  val accountEncoder: Encoder[Account] =
+    (
+      accountNo ~ accountName ~ accountType ~ timestamp ~ timestamp.opt ~ currency ~ currency.opt ~ currency.opt
+    ).values
+      .contramap {
+        case a =>
+          a match {
+            case Account(no, nm, dop, doc, AccountType.Both, bc, tc, sc) =>
+              no ~ nm ~ AccountType.Both ~ dop ~ doc ~ bc ~ tc ~ sc
+
+            case Account(no, nm, dop, doc, AccountType.Trading, bc, tc, _) =>
+              no ~ nm ~ AccountType.Trading ~ dop ~ doc ~ bc ~ tc ~ None
+
+            case Account(no, nm, dop, doc, AccountType.Settlement, bc, _, sc) =>
+              no ~ nm ~ AccountType.Settlement ~ dop ~ doc ~ bc ~ None ~ sc
+          }
+      }
+
+  val accountDecoder: Decoder[Account] =
+    (accountNo ~ accountName ~ accountType ~ timestamp ~ timestamp.opt ~ currency ~ currency.opt ~ currency.opt)
       .map {
         case no ~ nm ~ tp ~ dp ~ dc ~ bc ~ tc ~ sc =>
           tp match {
             case AccountType.Trading =>
-              tradingAccount(
+              Account(
                 no,
                 nm,
-                Option(dp),
+                dp,
                 dc,
-                Currency(bc).get,
-                Currency(tc.get).get
-              ).fold(
-                exs => throw new Exception(exs.toList.mkString("/")),
-                tac => tac
+                AccountType.Trading,
+                bc,
+                tc,
+                None
               )
             case AccountType.Settlement =>
-              settlementAccount(
+              Account(
                 no,
                 nm,
-                Option(dp),
+                dp,
                 dc,
-                Currency(bc).get,
-                Currency(sc.get).get
-              ).fold(
-                exs => throw new Exception(exs.toList.mkString("/")),
-                sac => sac
+                AccountType.Settlement,
+                bc,
+                None,
+                sc
               )
             case AccountType.Both =>
-              tradingAndSettlementAccount(
+              Account(
                 no,
                 nm,
-                Option(dp),
+                dp,
                 dc,
-                Currency(bc).get,
-                Currency(tc.get).get,
-                Currency(sc.get).get
-              ).fold(
-                exs => throw new Exception(exs.toList.mkString("/")),
-                sac => sac
+                AccountType.Both,
+                bc,
+                tc,
+                sc
               )
           }
       }
@@ -143,101 +154,77 @@ private object AccountRepositorySQL {
         SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
         FROM accounts AS a
         WHERE a.no = $accountNo
-       """.query(decoder)
+       """.query(accountDecoder)
 
   val selectByOpenedDate: Query[LocalDate, Account] =
     sql"""
         SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
         FROM accounts AS a
         WHERE DATE(a.dateOfOpen) = $date
-       """.query(decoder)
+       """.query(accountDecoder)
 
   val selectByAccountType: Query[AccountType, Account] =
     sql"""
         SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
         FROM accounts AS a
         WHERE a.type = $accountType
-       """.query(decoder)
+       """.query(accountDecoder)
 
   val selectAll: Query[Void, Account] =
     sql"""
         SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
         FROM accounts AS a
-       """.query(decoder)
+       """.query(accountDecoder)
 
   val selectClosedAfter: Query[LocalDate, Account] =
     sql"""
         SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
         FROM accounts AS a
         WHERE a.dateOfClose >= $date
-       """.query(decoder)
+       """.query(accountDecoder)
 
   val selectAllClosed: Query[Void, Account] =
     sql"""
         SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
         FROM accounts AS a
         WHERE a.dateOfClose IS NOT NULL
-       """.query(decoder)
+       """.query(accountDecoder)
 
   val insertAccount: Command[Account] =
     sql"""
         INSERT INTO accounts
-        VALUES ($varchar, $varchar, $accountType, $timestamp, ${timestamp.opt}, $varchar, ${varchar.opt}, ${varchar.opt})
-       """.command.contramap {
-      case a =>
-        a match {
-          case Account(no, nm, dop, doc, AccountType.Both, bc, tc, sc) =>
-            no.value.value ~ nm.value.value ~ AccountType.Both ~ dop ~ doc ~ bc.toString ~ Option(
-              tc.toString
-            ) ~ Option(sc.toString)
-
-          case Account(no, nm, dop, doc, AccountType.Trading, bc, tc, _) =>
-            no.value.value ~ nm.value.value ~ AccountType.Trading ~ dop ~ doc ~ bc.toString ~ Option(
-              tc.toString
-            ) ~ None
-
-          case Account(no, nm, dop, doc, AccountType.Settlement, bc, _, sc) =>
-            no.value.value ~ nm.value.value ~ AccountType.Settlement ~ dop ~ doc ~ bc.toString ~ None ~ Option(
-              sc.toString
-            )
-        }
-    }
+        VALUES $accountEncoder
+       """.command
 
   val updateAccount: Command[Account] =
     sql"""
         UPDATE accounts SET
-          name                = $varchar,
+          name                = $accountName,
           type                = $accountType,
           dateOfOpen          = $timestamp,
           dateOfClose         = ${timestamp.opt},
-          baseCurrency        = $varchar,
-          tradingCurrency     = ${varchar.opt},
-          settlementCurrency  = ${varchar.opt}
-        WHERE no = $varchar
+          baseCurrency        = $currency,
+          tradingCurrency     = ${currency.opt},
+          settlementCurrency  = ${currency.opt}
+        WHERE no = $accountNo
        """.command.contramap {
       case a =>
         a match {
           case Account(no, nm, dop, doc, AccountType.Trading, bc, tc, _) =>
-            nm.value.value ~ AccountType.Trading ~ dop ~ doc ~ bc.toString ~ Option(
-              tc.toString
-            ) ~ None ~ no.value.value
+            nm ~ AccountType.Trading ~ dop ~ doc ~ bc ~ tc ~ None ~ no
 
           case Account(no, nm, dop, doc, AccountType.Settlement, bc, _, sc) =>
-            nm.value.value ~ AccountType.Settlement ~ dop ~ doc ~ bc.toString ~ None ~ Option(
-              sc.toString
-            ) ~ no.value.value
+            nm ~ AccountType.Settlement ~ dop ~ doc ~ bc ~ None ~ sc ~ no
 
           case Account(no, nm, dop, doc, AccountType.Both, bc, tc, sc) =>
-            nm.value.value ~ AccountType.Settlement ~ dop ~ doc ~ bc.toString ~ Option(
-              tc.toString
-            ) ~ Option(sc.toString) ~ no.value.value
+            nm ~ AccountType.Both ~ dop ~ doc ~ bc ~ tc ~ sc ~ no
         }
     }
 
   val upsertAccount: Command[Account] =
     sql"""
         INSERT INTO accounts
-        VALUES ($varchar, $varchar, $accountType, $timestamp, ${timestamp.opt}, $varchar, ${varchar.opt}, ${varchar.opt})
+        VALUES $accountEncoder
         ON CONFLICT(no) DO UPDATE SET
           name                 = EXCLUDED.name,
           type                 = EXCLUDED.type,
@@ -246,23 +233,5 @@ private object AccountRepositorySQL {
           baseCurrency         = EXCLUDED.baseCurrency,
           tradingCurrency      = EXCLUDED.tradingCurrency,
           settlementCurrency   = EXCLUDED.settlementCurrency
-       """.command.contramap {
-      case a =>
-        a match {
-          case Account(no, nm, dop, doc, AccountType.Trading, bc, tc, _) =>
-            no.value.value ~ nm.value.value ~ AccountType.Trading ~ dop ~ doc ~ bc.toString ~ Option(
-              tc.toString
-            ) ~ None
-
-          case Account(no, nm, dop, doc, AccountType.Settlement, bc, _, sc) =>
-            no.value.value ~ nm.value.value ~ AccountType.Settlement ~ dop ~ doc ~ bc.toString ~ None ~ Option(
-              sc.toString
-            )
-
-          case Account(no, nm, dop, doc, AccountType.Both, bc, tc, sc) =>
-            no.value.value ~ nm.value.value ~ AccountType.Settlement ~ dop ~ doc ~ bc.toString ~ Option(
-              tc.toString
-            ) ~ Option(sc.toString)
-        }
-    }
+       """.command
 }
