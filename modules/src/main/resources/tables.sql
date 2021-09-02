@@ -92,3 +92,5 @@ CREATE TABLE IF NOT EXISTS users (
     name varchar UNIQUE NOT NULL,
     password varchar NOT NULL
 );
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

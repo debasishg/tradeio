@@ -66,3 +66,6 @@ values
   ('Commission', 'Commission'),
   ('VAT', 'VAT'),
   ('Surcharge', 'Surcharge');
+
+insert into users 
+values (uuid_generate_v4(), 'debasish', 'toughgraff');

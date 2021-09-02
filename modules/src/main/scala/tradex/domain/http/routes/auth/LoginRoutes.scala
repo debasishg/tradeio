@@ -26,7 +26,15 @@ final case class LoginRoutes[F[_]: JsonDecoder: MonadThrow](
           .login(user.username, user.password)
           .flatMap(Ok(_))
           .recoverWith {
-            case UserNotFound(_) | InvalidPassword(_) => Forbidden()
+            // case UserNotFound(_) | InvalidPassword(_) => Forbidden()
+            case UserNotFound(_) => {
+              println("user not found")
+              Forbidden()
+            }
+            case InvalidPassword(_) => {
+              println("invalid password")
+              Forbidden()
+            }
           }
       }
   }

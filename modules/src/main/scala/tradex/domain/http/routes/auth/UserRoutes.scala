@@ -1,6 +1,5 @@
 package tradex.domain
 package http.routes
-package shop.http.routes
 
 import model._
 import model.user._
@@ -22,6 +21,7 @@ final case class UserRoutes[F[_]: JsonDecoder: MonadThrow](
 
   private val httpRoutes: HttpRoutes[F] = HttpRoutes.of[F] {
     case req @ POST -> Root / "users" =>
+      println(s"In userroutes")
       req
         .decodeR[CreateUser] { user =>
           auth

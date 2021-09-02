@@ -36,7 +36,7 @@ object Services {
         _tradeRepository
       ),
       Accounting.make(_balanceRepository),
-      HealthCheck.make(postgres)
+      HealthCheck.make(postgres, redis)
     ) {}
   }
 }
