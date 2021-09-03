@@ -57,7 +57,7 @@ object OrderRepository {
               .map(_.groupBy(_.no))
               .map {
                 _.map {
-                  case (ono, lis) =>
+                  case (_, lis) =>
                     lis.reduce(Semigroup[Order].combine)
                 }.headOption
               }
@@ -73,7 +73,7 @@ object OrderRepository {
               .map(_.groupBy(_.no))
               .map { m =>
                 m.map {
-                  case (ono, lis) =>
+                  case (_, lis) =>
                     lis.reduce(Semigroup[Order].combine)
                 }.toList
               }
@@ -121,7 +121,7 @@ object OrderRepository {
 
       def store(orders: NonEmptyList[Order]): F[Unit] =
         postgres.use { session =>
-          session.transaction.use { xa =>
+          session.transaction.use { _ =>
             orders.toList
               .map { ord =>
                 storeOrderAndLineItems(ord, session)

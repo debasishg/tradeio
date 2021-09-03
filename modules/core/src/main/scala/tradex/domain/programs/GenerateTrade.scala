@@ -4,8 +4,6 @@ package programs
 import cats.data._
 import cats.syntax.all._
 
-import org.typelevel.log4cats.Logger
-
 import io.chrisdavenport.cormorant._
 import io.chrisdavenport.cormorant.generic.semiauto._
 import io.chrisdavenport.cormorant.implicits._
@@ -17,7 +15,7 @@ import model.balance._
 import services.trading._
 import services.accounting._
 
-final case class GenerateTrade[F[_]: Logger: MonadThrowable] private (
+final case class GenerateTrade[F[_]: MonadThrowable] private (
     trading: Trading[F],
     accounting: Accounting[F]
 ) {

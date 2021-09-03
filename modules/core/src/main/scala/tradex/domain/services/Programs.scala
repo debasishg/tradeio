@@ -7,8 +7,6 @@ import cats.data._
 import cats.syntax.all._
 import cats.effect.Sync
 
-import org.typelevel.log4cats.Logger
-
 import io.chrisdavenport.cormorant._
 import io.chrisdavenport.cormorant.generic.semiauto._
 import io.chrisdavenport.cormorant.implicits._
@@ -24,13 +22,13 @@ import services.accounting._
 import AppData._
 
 object Programs {
-  def make[F[_]: Logger: MonadThrowable: Sync](
+  def make[F[_]: Sync](
       ): F[Programs[F]] = {
     Sync[F].delay(new Programs[F]())
   }
 }
 
-final class Programs[F[_]: Logger: MonadThrowable] private (
+final class Programs[F[_]: MonadThrowable] private (
     ) {
   def generateTrade(
       trading: Trading[F],

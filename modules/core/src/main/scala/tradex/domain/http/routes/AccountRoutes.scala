@@ -6,13 +6,12 @@ import cats.syntax.all._
 import org.http4s._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.dsl.Http4sDsl
-import org.http4s.circe.JsonDecoder
 
 import org.http4s.server.Router
 
 import repository.AccountRepository
 
-final case class AccountRoutes[F[_]: MonadThrow: JsonDecoder](
+final case class AccountRoutes[F[_]: MonadThrow](
     accountRepository: AccountRepository[F]
 ) extends Http4sDsl[F] {
   private[routes] val prefixPath = "/accounts"

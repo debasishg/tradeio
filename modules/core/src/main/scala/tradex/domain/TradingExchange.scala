@@ -133,7 +133,7 @@ object Exchange {
                   Updating(newV) -> addOrder(newV, ord, ApplicationState()).rethrow
                 case Value(s) =>
                   Updating(newV) -> addOrder(newV, ord, s).rethrow
-                case st @ Updating(inFlight) =>
+                case Updating(inFlight) =>
                   Updating(newV) ->
                     (for {
                       currAppState <- inFlight.get.rethrow
@@ -196,7 +196,7 @@ object Exchange {
 
                 // we are in Updating - hence need to wait for completion (`get` will wait)
                 // once complete, update with execution info
-                case st @ Updating(inFlight) =>
+                case Updating(inFlight) =>
                   Updating(newV) ->
                     (for {
                       currAppState <- inFlight.get.rethrow
@@ -274,7 +274,6 @@ object Exchange {
                 case NoValue =>
                   Updating(newV) -> updateStateAndGenerateTrades(
                     newV,
-                    orderNo,
                     clientAccountNos,
                     ApplicationState()
                   ).rethrow
@@ -285,20 +284,18 @@ object Exchange {
                 case Value(s) =>
                   Updating(newV) -> updateStateAndGenerateTrades(
                     newV,
-                    orderNo,
                     clientAccountNos,
                     s
                   ).rethrow
 
                 // we are in Updating and hence need to wait till completion. Then follow the
                 // usual trade generation process
-                case st @ Updating(inFlight) =>
+                case Updating(inFlight) =>
                   Updating(newV) ->
                     (for {
                       currAppState <- inFlight.get.rethrow
                       r <- updateStateAndGenerateTrades(
                         newV,
-                        orderNo,
                         clientAccountNos,
                         currAppState
                       )
@@ -310,13 +307,12 @@ object Exchange {
 
         private def updateStateAndGenerateTrades(
             d: Deferred[F, Either[Throwable, ApplicationState]],
-            orderNo: OrderNo,
             accountNos: NonEmptyList[AccountNo],
             currentState: ApplicationState
         ) = {
           if (currentState.order.isDefined && currentState.orderFulfilled)
             // generate trade only if order has been received and fulfilled by executions
-            generateTrades(d, orderNo, accountNos, currentState)
+            generateTrades(d, accountNos, currentState)
           else
             // else just update the client accounts list
             updateStateWithClientAccounts(d, accountNos, currentState)
@@ -346,7 +342,6 @@ object Exchange {
 
         private def generateTrades(
             d: Deferred[F, Either[Throwable, ApplicationState]],
-            orderNo: OrderNo,
             accountNos: NonEmptyList[AccountNo],
             currentState: ApplicationState
         ): F[Either[Throwable, ApplicationState]] =

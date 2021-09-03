@@ -3,7 +3,6 @@ package repository
 
 import java.time.LocalDate
 
-import cats.data.NonEmptyList
 import cats.syntax.all._
 import cats.effect._
 
@@ -54,8 +53,6 @@ object BalanceRepository {
             cmd.execute(b).void.map(_ => b)
           }
         }
-
-      def store(balances: NonEmptyList[Balance]): F[Unit] = ???
 
       def query(date: LocalDate): F[List[Balance]] =
         postgres.use { session =>

@@ -7,7 +7,6 @@ import cats.data.NonEmptyList
 import cats.syntax.all._
 
 import NewtypeRefinedOps._
-import org.typelevel.log4cats.Logger
 import model.account._
 import model.execution.Execution
 import model.order.{ FrontOfficeOrder, Order, Quantity }
@@ -96,7 +95,7 @@ object Trading {
   case class ExecutionError(cause: String)  extends TradingError
   case class AllocationError(cause: String) extends TradingError
 
-  def make[F[+_]: MonadThrowable: Logger](
+  def make[F[+_]: MonadThrowable](
       accountRepository: AccountRepository[F],
       executionRepository: ExecutionRepository[F],
       orderRepository: OrderRepository[F],

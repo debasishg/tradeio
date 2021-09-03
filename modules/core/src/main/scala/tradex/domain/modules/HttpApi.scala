@@ -1,7 +1,6 @@
 package tradex.domain
 package modules
 
-import org.typelevel.log4cats.Logger
 import scala.concurrent.duration._
 import cats.effect.Async
 import cats.syntax.all._
@@ -16,7 +15,7 @@ import dev.profunktor.auth.JwtAuthMiddleware
 import http.auth.users.{ AdminUser, CommonUser }
 
 object HttpApi {
-  def make[F[+_]: Async: Logger](
+  def make[F[+_]: Async](
       services: Services[F],
       programs: Programs[F],
       security: Security[F]
@@ -24,7 +23,7 @@ object HttpApi {
     new HttpApi[F](services, programs, security) {}
 }
 
-sealed abstract class HttpApi[F[+_]: Async: Logger] private (
+sealed abstract class HttpApi[F[+_]: Async] private (
     services: Services[F],
     programs: Programs[F],
     security: Security[F]
@@ -96,5 +95,5 @@ sealed abstract class HttpApi[F[+_]: Async: Logger] private (
     }
   }
 
-  val httpApp: HttpApp[F] = loggers(middleware(openRoutes).orNotFound)
+  val httpApp: HttpApp[F] = loggers(middleware(routes).orNotFound)
 }

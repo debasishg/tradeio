@@ -1,7 +1,6 @@
 package tradex.domain
 package http.routes.secured
 
-import org.typelevel.log4cats.Logger
 import cats.MonadThrow
 import cats.syntax.all._
 
@@ -19,7 +18,7 @@ import Trading._
 import services.accounting.Accounting
 import tradex.domain.model.trade
 
-final case class GenerateTradeRoutes[F[_]: MonadThrow: JsonDecoder: Logger](
+final case class GenerateTradeRoutes[F[_]: MonadThrow: JsonDecoder](
     generateTrade: GenerateTrade[F],
     trading: Trading[F],
     accounting: Accounting[F]

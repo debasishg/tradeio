@@ -13,8 +13,6 @@ import skunk.data.Type
 import skunk.codec.all._
 import skunk.implicits._
 
-import org.typelevel.log4cats.Logger
-
 import model.market._
 import model.trade._
 import model.order.BuySell
@@ -40,7 +38,7 @@ trait TradeRepository[F[_]] {
 }
 
 object TradeRepository {
-  def make[F[_]: Concurrent: Logger](
+  def make[F[_]: Concurrent](
       postgres: Resource[F, Session[F]]
   ): TradeRepository[F] =
     new TradeRepository[F] {
@@ -65,7 +63,7 @@ object TradeRepository {
               .map(_.groupBy(_.refNo))
               .map {
                 _.map {
-                  case (refNo, trades) =>
+                  case (_, trades) =>
                     trades.reduce(Semigroup[Trade].combine)
                 }.toList
               }
@@ -81,7 +79,7 @@ object TradeRepository {
               .map(_.groupBy(_.refNo))
               .map {
                 _.map {
-                  case (refNo, trades) =>
+                  case (_, trades) =>
                     trades.reduce(Semigroup[Trade].combine)
                 }.toList
               }
@@ -97,7 +95,7 @@ object TradeRepository {
               .map(_.groupBy(_.refNo))
               .map {
                 _.map {
-                  case (refNo, trades) =>
+                  case (_, trades) =>
                     trades.reduce(Semigroup[Trade].combine)
                 }.toList
               }
@@ -119,7 +117,7 @@ object TradeRepository {
         } yield (p1, p2)
         r.use {
             case (p1, p2) =>
-              session.transaction.use { xa =>
+              session.transaction.use { _ =>
                 for {
                   _ <- p1.execute(t)
                   _ <- p2.execute(t.taxFees)
