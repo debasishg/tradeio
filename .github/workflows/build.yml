@@ -1,0 +1,25 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - master
+    tags: ["*"]
+
+jobs:
+  sbt:
+    name: sbt compile
+    runs-on: ubuntu-20.04
+    if: github.repository == 'debasishg/tradeio'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 11
+        uses: olafurpg/setup-scala@v10
+      - name: Compile
+        run: |-
+          cd modules
+          sbt clean compile
+
