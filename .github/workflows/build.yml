@@ -20,6 +20,5 @@ jobs:
         uses: olafurpg/setup-scala@v10
       - name: Compile
         run: |-
-          cd modules
           sbt clean compile
 
