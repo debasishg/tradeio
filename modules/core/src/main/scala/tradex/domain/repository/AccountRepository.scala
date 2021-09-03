@@ -95,59 +95,57 @@ private object AccountRepositorySQL {
     (
       accountNo ~ accountName ~ accountType ~ timestamp ~ timestamp.opt ~ currency ~ currency.opt ~ currency.opt
     ).values
-      .contramap {
-        case a =>
-          a match {
-            case Account(no, nm, dop, doc, AccountType.Both, bc, tc, sc) =>
-              no ~ nm ~ AccountType.Both ~ dop ~ doc ~ bc ~ tc ~ sc
+      .contramap { case a =>
+        a match {
+          case Account(no, nm, dop, doc, AccountType.Both, bc, tc, sc) =>
+            no ~ nm ~ AccountType.Both ~ dop ~ doc ~ bc ~ tc ~ sc
 
-            case Account(no, nm, dop, doc, AccountType.Trading, bc, tc, _) =>
-              no ~ nm ~ AccountType.Trading ~ dop ~ doc ~ bc ~ tc ~ None
+          case Account(no, nm, dop, doc, AccountType.Trading, bc, tc, _) =>
+            no ~ nm ~ AccountType.Trading ~ dop ~ doc ~ bc ~ tc ~ None
 
-            case Account(no, nm, dop, doc, AccountType.Settlement, bc, _, sc) =>
-              no ~ nm ~ AccountType.Settlement ~ dop ~ doc ~ bc ~ None ~ sc
-          }
+          case Account(no, nm, dop, doc, AccountType.Settlement, bc, _, sc) =>
+            no ~ nm ~ AccountType.Settlement ~ dop ~ doc ~ bc ~ None ~ sc
+        }
       }
 
   val accountDecoder: Decoder[Account] =
     (accountNo ~ accountName ~ accountType ~ timestamp ~ timestamp.opt ~ currency ~ currency.opt ~ currency.opt)
-      .map {
-        case no ~ nm ~ tp ~ dp ~ dc ~ bc ~ tc ~ sc =>
-          tp match {
-            case AccountType.Trading =>
-              Account(
-                no,
-                nm,
-                dp,
-                dc,
-                AccountType.Trading,
-                bc,
-                tc,
-                None
-              )
-            case AccountType.Settlement =>
-              Account(
-                no,
-                nm,
-                dp,
-                dc,
-                AccountType.Settlement,
-                bc,
-                None,
-                sc
-              )
-            case AccountType.Both =>
-              Account(
-                no,
-                nm,
-                dp,
-                dc,
-                AccountType.Both,
-                bc,
-                tc,
-                sc
-              )
-          }
+      .map { case no ~ nm ~ tp ~ dp ~ dc ~ bc ~ tc ~ sc =>
+        tp match {
+          case AccountType.Trading =>
+            Account(
+              no,
+              nm,
+              dp,
+              dc,
+              AccountType.Trading,
+              bc,
+              tc,
+              None
+            )
+          case AccountType.Settlement =>
+            Account(
+              no,
+              nm,
+              dp,
+              dc,
+              AccountType.Settlement,
+              bc,
+              None,
+              sc
+            )
+          case AccountType.Both =>
+            Account(
+              no,
+              nm,
+              dp,
+              dc,
+              AccountType.Both,
+              bc,
+              tc,
+              sc
+            )
+        }
       }
 
   val selectByAccountNo: Query[AccountNo, Account] =
@@ -208,18 +206,17 @@ private object AccountRepositorySQL {
           tradingCurrency     = ${currency.opt},
           settlementCurrency  = ${currency.opt}
         WHERE no = $accountNo
-       """.command.contramap {
-      case a =>
-        a match {
-          case Account(no, nm, dop, doc, AccountType.Trading, bc, tc, _) =>
-            nm ~ AccountType.Trading ~ dop ~ doc ~ bc ~ tc ~ None ~ no
+       """.command.contramap { case a =>
+      a match {
+        case Account(no, nm, dop, doc, AccountType.Trading, bc, tc, _) =>
+          nm ~ AccountType.Trading ~ dop ~ doc ~ bc ~ tc ~ None ~ no
 
-          case Account(no, nm, dop, doc, AccountType.Settlement, bc, _, sc) =>
-            nm ~ AccountType.Settlement ~ dop ~ doc ~ bc ~ None ~ sc ~ no
+        case Account(no, nm, dop, doc, AccountType.Settlement, bc, _, sc) =>
+          nm ~ AccountType.Settlement ~ dop ~ doc ~ bc ~ None ~ sc ~ no
 
-          case Account(no, nm, dop, doc, AccountType.Both, bc, tc, sc) =>
-            nm ~ AccountType.Both ~ dop ~ doc ~ bc ~ tc ~ sc ~ no
-        }
+        case Account(no, nm, dop, doc, AccountType.Both, bc, tc, sc) =>
+          nm ~ AccountType.Both ~ dop ~ doc ~ bc ~ tc ~ sc ~ no
+      }
     }
 
   val upsertAccount: Command[Account] =

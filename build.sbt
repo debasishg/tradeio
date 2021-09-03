@@ -49,14 +49,13 @@ lazy val compilerOptions = {
     "-Ywarn-unused:imports"
   )
 
-  scalacOptions ++= commonOptions 
+  scalacOptions ++= commonOptions
 }
 
-lazy val typeSystemEnhancements = 
+lazy val typeSystemEnhancements =
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)
 
 lazy val dependencies =
   libraryDependencies ++= Dependencies.tradeioDependencies
 
 addCommandAlias("runLinter", ";scalafixAll --rules OrganizeImports")
-

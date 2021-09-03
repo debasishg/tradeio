@@ -32,9 +32,8 @@ object MainS extends IOApp.Simple {
                   cfg.httpServerConfig -> api.httpApp
                 }
             }
-            .flatMap {
-              case (cfg, httpApp) =>
-                MkHttpServer[IO].newEmber(cfg, httpApp)
+            .flatMap { case (cfg, httpApp) =>
+              MkHttpServer[IO].newEmber(cfg, httpApp)
             }
             .useForever
         }

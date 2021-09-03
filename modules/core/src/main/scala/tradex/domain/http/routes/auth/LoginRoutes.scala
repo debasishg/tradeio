@@ -19,24 +19,23 @@ final case class LoginRoutes[F[_]: JsonDecoder: MonadThrow](
 ) extends Http4sDsl[F] {
   private[routes] val prefixPath = "/auth"
 
-  private val httpRoutes: HttpRoutes[F] = HttpRoutes.of[F] {
-    case req @ POST -> Root / "login" =>
-      req.decodeR[LoginUser] { user =>
-        auth
-          .login(user.username, user.password)
-          .flatMap(Ok(_))
-          .recoverWith {
-            // case UserNotFound(_) | InvalidPassword(_) => Forbidden()
-            case UserNotFound(_) => {
-              println("user not found")
-              Forbidden()
-            }
-            case InvalidPassword(_) => {
-              println("invalid password")
-              Forbidden()
-            }
+  private val httpRoutes: HttpRoutes[F] = HttpRoutes.of[F] { case req @ POST -> Root / "login" =>
+    req.decodeR[LoginUser] { user =>
+      auth
+        .login(user.username, user.password)
+        .flatMap(Ok(_))
+        .recoverWith {
+          // case UserNotFound(_) | InvalidPassword(_) => Forbidden()
+          case UserNotFound(_) => {
+            println("user not found")
+            Forbidden()
           }
-      }
+          case InvalidPassword(_) => {
+            println("invalid password")
+            Forbidden()
+          }
+        }
+    }
   }
 
   val routes: HttpRoutes[F] = Router(

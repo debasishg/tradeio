@@ -18,19 +18,16 @@ final case class TradeRoutes[F[_]: MonadThrow](
 
   object MarketQueryParam extends OptionalQueryParamDecoderMatcher[MarketParam]("market")
 
-  private val httpRoutes: HttpRoutes[F] = HttpRoutes.of[F] {
-    case GET -> Root :? MarketQueryParam(market) =>
-      market
-        .fold(tradeRepository.all)(
-          m => tradeRepository.queryByMarket(m.toDomain)
-        )
-        .flatMap(Ok(_))
-        .recoverWith {
-          case th: Throwable => {
-            th.printStackTrace
-            InternalServerError(th.getMessage())
-          }
+  private val httpRoutes: HttpRoutes[F] = HttpRoutes.of[F] { case GET -> Root :? MarketQueryParam(market) =>
+    market
+      .fold(tradeRepository.all)(m => tradeRepository.queryByMarket(m.toDomain))
+      .flatMap(Ok(_))
+      .recoverWith {
+        case th: Throwable => {
+          th.printStackTrace
+          InternalServerError(th.getMessage())
         }
+      }
   }
 
   val routes: HttpRoutes[F] = Router(

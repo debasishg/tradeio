@@ -23,13 +23,13 @@ import AppData._
 
 object Programs {
   def make[F[_]: Sync](
-      ): F[Programs[F]] = {
+  ): F[Programs[F]] = {
     Sync[F].delay(new Programs[F]())
   }
 }
 
 final class Programs[F[_]: MonadThrowable] private (
-    ) {
+) {
   def generateTrade(
       trading: Trading[F],
       accounting: Accounting[F]

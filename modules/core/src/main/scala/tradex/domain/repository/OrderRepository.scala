@@ -56,9 +56,8 @@ object OrderRepository {
               .toList
               .map(_.groupBy(_.no))
               .map {
-                _.map {
-                  case (_, lis) =>
-                    lis.reduce(Semigroup[Order].combine)
+                _.map { case (_, lis) =>
+                  lis.reduce(Semigroup[Order].combine)
                 }.headOption
               }
           }
@@ -72,16 +71,14 @@ object OrderRepository {
               .toList
               .map(_.groupBy(_.no))
               .map { m =>
-                m.map {
-                  case (_, lis) =>
-                    lis.reduce(Semigroup[Order].combine)
+                m.map { case (_, lis) =>
+                  lis.reduce(Semigroup[Order].combine)
                 }.toList
               }
           }
         }
 
-      /**
-        * Generic store API that handles both inserts and updates. The steps to be followed are:
+      /** Generic store API that handles both inserts and updates. The steps to be followed are:
         *
         * 1. delete line-items (if any) corresponding to this order number
         * 2. upsert order record
@@ -138,22 +135,17 @@ private object OrderRepositorySQL {
 
   val orderLineItemDecoder: Decoder[Order] =
     (timestamp ~ accountNo ~ isinCode ~ quantity ~ unitPrice ~ buySell ~ orderNo)
-      .map {
-        case od ~ ano ~ isin ~ qty ~ up ~ bs ~ ono =>
-          Order(ono, od, ano, NonEmptyList.of(LineItem(ono, isin, qty, up, bs)))
+      .map { case od ~ ano ~ isin ~ qty ~ up ~ bs ~ ono =>
+        Order(ono, od, ano, NonEmptyList.of(LineItem(ono, isin, qty, up, bs)))
       }
 
   val orderEncoder: Encoder[Order] =
     (orderNo ~ accountNo ~ timestamp).values
-      .contramap(
-        (o: Order) => o.no ~ o.accountNo ~ o.date
-      )
+      .contramap((o: Order) => o.no ~ o.accountNo ~ o.date)
 
   def lineItemEncoder(ordNo: OrderNo) =
     (orderNo ~ isinCode ~ quantity ~ unitPrice ~ buySell).values
-      .contramap(
-        (li: LineItem) => ordNo ~ li.instrument ~ li.quantity ~ li.unitPrice ~ li.buySell
-      )
+      .contramap((li: LineItem) => ordNo ~ li.instrument ~ li.quantity ~ li.unitPrice ~ li.buySell)
 
   val selectByOrderNo =
     sql"""

@@ -16,15 +16,14 @@ final case class AccountRoutes[F[_]: MonadThrow](
 ) extends Http4sDsl[F] {
   private[routes] val prefixPath = "/accounts"
 
-  private val httpRoutes: HttpRoutes[F] = HttpRoutes.of[F] {
-    case GET -> Root =>
-      accountRepository.all
-        .flatMap(Ok(_))
-        .recoverWith {
-          case th: Throwable => {
-            InternalServerError(th.getMessage())
-          }
+  private val httpRoutes: HttpRoutes[F] = HttpRoutes.of[F] { case GET -> Root =>
+    accountRepository.all
+      .flatMap(Ok(_))
+      .recoverWith {
+        case th: Throwable => {
+          InternalServerError(th.getMessage())
         }
+      }
   }
 
   val routes: HttpRoutes[F] = Router(

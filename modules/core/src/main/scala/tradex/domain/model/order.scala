@@ -77,8 +77,7 @@ object order {
 
   object Order {
 
-    /**
-      * Domain validation for `FrontOfficeOrder` is done here. Creates
+    /** Domain validation for `FrontOfficeOrder` is done here. Creates
       * records after validation
       */
     private[domain] def create(
@@ -86,9 +85,8 @@ object order {
     ): EitherNec[String, List[Order]] = {
       frontOfficeOrders.toList
         .groupBy(_.accountNo)
-        .map {
-          case (ano, forders) =>
-            makeOrder(UUID.randomUUID.toString, today, ano, forders)
+        .map { case (ano, forders) =>
+          makeOrder(UUID.randomUUID.toString, today, ano, forders)
         }
         .toList
         .sequence

@@ -210,14 +210,13 @@ object account {
         cd: Option[LocalDateTime]
     ): EitherNec[String, (LocalDateTime, Option[LocalDateTime])] =
       cd.map { c =>
-          if (c isBefore od)
-            Left(
-              NonEmptyChain
-                .one(s"Close date [$c] cannot be earlier than open date [$od]")
-            )
-          else Right((od, cd))
-        }
-        .getOrElse { Right((od, cd)) }
+        if (c isBefore od)
+          Left(
+            NonEmptyChain
+              .one(s"Close date [$c] cannot be earlier than open date [$od]")
+          )
+        else Right((od, cd))
+      }.getOrElse { Right((od, cd)) }
 
     private def validateAccountAlreadyClosed(
         a: Account

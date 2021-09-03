@@ -68,26 +68,24 @@ private object InstrumentRepositorySQL {
     (
       isinCode ~ instrumentName ~ instrumentType ~ timestamp.opt ~ timestamp.opt ~ lotSize ~ unitPrice.opt ~ money.opt ~ numeric.opt
     ).values
-      .contramap {
-        case Instrument(isin, name, tp, di, dm, ls, up, cr, cf) =>
-          isin ~ name ~ tp ~ di ~ dm ~ ls ~ up ~ cr ~ cf
+      .contramap { case Instrument(isin, name, tp, di, dm, ls, up, cr, cf) =>
+        isin ~ name ~ tp ~ di ~ dm ~ ls ~ up ~ cr ~ cf
       }
 
   val decoder: Decoder[Instrument] =
     (isinCode ~ instrumentName ~ instrumentType ~ timestamp.opt ~ timestamp.opt ~ lotSize.opt ~ unitPrice.opt ~ money.opt ~ numeric.opt)
-      .map {
-        case isin ~ nm ~ tp ~ di ~ dm ~ ls ~ up ~ cr ~ cf =>
-          Instrument(
-            isin,
-            nm,
-            tp,
-            di,
-            dm,
-            ls.getOrElse(LotSize(zeroLotSize)),
-            up,
-            cr,
-            cf
-          )
+      .map { case isin ~ nm ~ tp ~ di ~ dm ~ ls ~ up ~ cr ~ cf =>
+        Instrument(
+          isin,
+          nm,
+          tp,
+          di,
+          dm,
+          ls.getOrElse(LotSize(zeroLotSize)),
+          up,
+          cr,
+          cf
+        )
       }
 
   val selectByISINCode: Query[ISINCode, Instrument] =

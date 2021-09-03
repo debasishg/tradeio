@@ -14,9 +14,8 @@ final case class BalanceRoutes[F[_]: Monad](
 ) extends Http4sDsl[F] {
   private[routes] val prefixPath = "/balances"
 
-  private val httpRoutes: HttpRoutes[F] = HttpRoutes.of[F] {
-    case GET -> Root =>
-      Ok(balanceRepository.all)
+  private val httpRoutes: HttpRoutes[F] = HttpRoutes.of[F] { case GET -> Root =>
+    Ok(balanceRepository.all)
   }
 
   val routes: HttpRoutes[F] = Router(
