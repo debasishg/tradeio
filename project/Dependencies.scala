@@ -86,7 +86,7 @@ object Dependencies {
   // Runtime
   val logback             = "ch.qos.logback"                % "logback-classic"                  % logbackVersion % Runtime
 
-  val kindProjector = compilerPlugin("org.typelevel" %% "kind-projector" % "0.12.0" cross CrossVersion.full)
+  val kindProjector = compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.1" cross CrossVersion.full)
 
   // Scalafix rules
   val organizeImports = "com.github.liancheng" %% "organize-imports" % organizeImportsVersion
@@ -94,7 +94,7 @@ object Dependencies {
   val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect)
 
   val tradeioDependencies: Seq[ModuleID] = 
-    commonDependencies ++ Seq(kindProjector) ++ 
+    commonDependencies ++ Seq(kindProjector) ++
       Seq(Misc.newtype, Misc.squants) ++ 
       Seq(Derevo.derevoCore, Derevo.derevoCats, Derevo.derevoCiris, Derevo.derevoCirceMagnolia) ++
       Seq(monocleCore) ++
