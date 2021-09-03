@@ -86,7 +86,8 @@ object Auth {
               case Some(t) => JwtToken(t).pure[F]
               case None =>
                 tokens.create.flatTap { t =>
-                  redis.setEx(t.value, user.asJson.noSpaces, TokenExpiration) *>
+                  redis
+                    .setEx(t.value, user.asJson.noSpaces, TokenExpiration) *>
                     redis.setEx(username.show, t.value, TokenExpiration)
                 }
             }
