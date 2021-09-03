@@ -1,3 +1,11 @@
 *.class
 *.log
-modules/.metals/readonly/scala/Predef.scala
+.metals/readonly/scala/Predef.scala
+.bloop
+.metals
+project/.bloop
+target/
+core/target/
+project/metals.sbt
+project/project/metals.sbt
+project/project/project/metals.sbt
