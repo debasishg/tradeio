@@ -22,5 +22,6 @@ jobs:
           java-version: adopt@1.11.0-9
       - name: Compile
         run: |-
-          sbt compile
+          cd modules
+          sbt clean compile
 
