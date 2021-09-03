@@ -1,4 +1,4 @@
-ThisBuild / scalaVersion := "2.13.5"
+ThisBuild / scalaVersion := "2.13.6"
 ThisBuild / version := "0.0.1"
 ThisBuild / organization := "dev.tradex"
 ThisBuild / organizationName := "tradex"
@@ -18,7 +18,7 @@ lazy val core = (project in file("modules/core")).settings(
   commonSettings,
   // compilerOptions,
   consoleSettings,
-  typeSystemEnhancements,
+  // typeSystemEnhancements,
   dependencies
 )
 
@@ -52,8 +52,8 @@ lazy val compilerOptions = {
   scalacOptions ++= commonOptions
 }
 
-lazy val typeSystemEnhancements =
-  addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)
+// lazy val typeSystemEnhancements = 
+  // addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)
 
 lazy val dependencies =
   libraryDependencies ++= Dependencies.tradeioDependencies
