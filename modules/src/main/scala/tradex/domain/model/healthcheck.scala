@@ -27,10 +27,15 @@ object healthcheck {
 
   @derive(encoder)
   @newtype
+  case class RedisStatus(value: Status)
+
+  @derive(encoder)
+  @newtype
   case class PostgresStatus(value: Status)
 
   @derive(encoder)
   case class AppStatus(
-      postgres: PostgresStatus
+      postgres: PostgresStatus,
+      redis: RedisStatus
   )
 }

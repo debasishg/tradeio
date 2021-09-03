@@ -70,6 +70,9 @@ object Auth {
             for {
               i <- users.store(username, crypto.encrypt(password))
               t <- tokens.create
+              u = AUser(i, username).asJson.noSpaces
+              _ <- redis.setEx(t.value, u, TokenExpiration)
+              _ <- redis.setEx(username.show, t.value, TokenExpiration)
             } yield t
         }
 
@@ -83,7 +86,8 @@ object Auth {
               case Some(t) => JwtToken(t).pure[F]
               case None =>
                 tokens.create.flatTap { t =>
-                  redis.setEx(t.value, user.asJson.noSpaces, TokenExpiration) *>
+                  redis
+                    .setEx(t.value, user.asJson.noSpaces, TokenExpiration) *>
                     redis.setEx(username.show, t.value, TokenExpiration)
                 }
             }
