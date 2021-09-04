@@ -3,6 +3,7 @@ ThisBuild / version := "0.0.1"
 ThisBuild / organization := "dev.tradex"
 ThisBuild / organizationName := "tradex"
 
+ThisBuild / evictionErrorLevel := Level.Warn
 ThisBuild / scalafixDependencies += Dependencies.organizeImports
 
 resolvers += Resolver.sonatypeRepo("snapshots")
@@ -27,7 +28,7 @@ lazy val commonSettings = Seq(
 )
 
 lazy val consoleSettings = Seq(
-  scalacOptions in (Compile, console) -= "-Ywarn-unused-import"
+  Compile / console / scalacOptions --= Seq("-Ywarn-unused", "-Ywarn-unused-import"),
 )
 
 lazy val compilerOptions = {
