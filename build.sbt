@@ -16,9 +16,7 @@ lazy val root = (project in file("."))
 lazy val core = (project in file("modules/core")).settings(
   name := "tradeio-core",
   commonSettings,
-  // compilerOptions,
   consoleSettings,
-  // typeSystemEnhancements,
   dependencies
 )
 
@@ -51,9 +49,6 @@ lazy val compilerOptions = {
 
   scalacOptions ++= commonOptions 
 }
-
-// lazy val typeSystemEnhancements = 
-  // addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)
 
 lazy val dependencies =
   libraryDependencies ++= Dependencies.tradeioDependencies
