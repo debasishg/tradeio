@@ -45,11 +45,10 @@ object Accounting {
               )
             )
           )
-        action.adaptError {
-          case e =>
-            Accounting.AccountingError(
-              Option(e.getMessage()).getOrElse("Unknown error")
-            )
+        action.adaptError { case e =>
+          Accounting.AccountingError(
+            Option(e.getMessage()).getOrElse("Unknown error")
+          )
         }
       }
 
@@ -57,20 +56,18 @@ object Accounting {
         trades.map(postBalance).sequence
 
       def getBalance(accountNo: AccountNo): F[Option[Balance]] = {
-        balanceRepository.query(accountNo).adaptError {
-          case e =>
-            Accounting.AccountingError(
-              Option(e.getMessage()).getOrElse("Unknown error")
-            )
+        balanceRepository.query(accountNo).adaptError { case e =>
+          Accounting.AccountingError(
+            Option(e.getMessage()).getOrElse("Unknown error")
+          )
         }
       }
 
       def getBalanceByDate(date: LocalDate): F[List[Balance]] = {
-        balanceRepository.query(date).adaptError {
-          case e =>
-            Accounting.AccountingError(
-              Option(e.getMessage()).getOrElse("Unknown error")
-            )
+        balanceRepository.query(date).adaptError { case e =>
+          Accounting.AccountingError(
+            Option(e.getMessage()).getOrElse("Unknown error")
+          )
         }
       }
     }

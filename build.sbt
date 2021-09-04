@@ -47,11 +47,10 @@ lazy val compilerOptions = {
     "-Ywarn-unused:imports"
   )
 
-  scalacOptions ++= commonOptions 
+  scalacOptions ++= commonOptions
 }
 
 lazy val dependencies =
   libraryDependencies ++= Dependencies.tradeioDependencies
 
 addCommandAlias("runLinter", ";scalafixAll --rules OrganizeImports")
-

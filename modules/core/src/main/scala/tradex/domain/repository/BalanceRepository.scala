@@ -68,16 +68,13 @@ object BalanceRepository {
 private object BalanceRepositorySQL {
   val decoder: Decoder[Balance] =
     (accountNo ~ money ~ timestamp ~ currency)
-      .map {
-        case ano ~ amt ~ asOf ~ ccy =>
-          Balance(ano, amt, ccy, asOf)
+      .map { case ano ~ amt ~ asOf ~ ccy =>
+        Balance(ano, amt, ccy, asOf)
       }
 
   val encoder: Encoder[Balance] =
     (accountNo ~ money ~ timestamp ~ currency).values
-      .contramap(
-        (b: Balance) => b.accountNo ~ b.amount ~ b.asOf ~ b.currency
-      )
+      .contramap((b: Balance) => b.accountNo ~ b.amount ~ b.asOf ~ b.currency)
 
   val selectByAccountNo: Query[AccountNo, Balance] =
     sql"""

@@ -25,8 +25,8 @@ package object domain {
     import io.estatico.newtype.ops._
 
     final class NewtypeRefinedPartiallyApplied[A] {
-      def apply[T, P](raw: T)(
-          implicit c: Coercible[Refined[T, P], A],
+      def apply[T, P](raw: T)(implicit
+          c: Coercible[Refined[T, P], A],
           v: Validate[T, P]
       ): EitherNec[String, A] =
         refineV[P](raw).toEitherNec.map(_.coerce[A])

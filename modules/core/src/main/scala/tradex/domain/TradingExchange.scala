@@ -101,9 +101,11 @@ object Exchange {
           }
           val zero: BigDecimal Refined NonNegative = BigDecimal(0)
           liMap.foldLeft(true) { (a, e) =>
-            if (forder
-                  .get(e._1)
-                  .getOrElse(zero) == e._2) (a && true)
+            if (
+              forder
+                .get(e._1)
+                .getOrElse(zero) == e._2
+            ) (a && true)
             else (a && false)
           }
         }
@@ -237,15 +239,13 @@ object Exchange {
               val ins = e.isin
               val qty = e.quantity
               a.updatedWith(ins)(
-                _.map(
-                  q => {
-                    validate[Quantity](q.value.value + qty.value.value)
-                      .fold(
-                        errs => throw new Exception(errs.toString),
-                        identity
-                      )
-                  }
-                ).orElse(
+                _.map(q => {
+                  validate[Quantity](q.value.value + qty.value.value)
+                    .fold(
+                      errs => throw new Exception(errs.toString),
+                      identity
+                    )
+                }).orElse(
                   validate[Quantity](qty.value.value)
                     .fold(
                       errs => throw new Exception(errs.toString),

@@ -34,10 +34,9 @@ final class AccountRepositoryInterpreter[M[_]: Monad] private (
       .map { cd =>
         repo.get.map(
           _.values
-            .filter(
-              a =>
-                a.dateOfClose.isDefined && a.dateOfClose.get.toLocalDate
-                  .isAfter(cd)
+            .filter(a =>
+              a.dateOfClose.isDefined && a.dateOfClose.get.toLocalDate
+                .isAfter(cd)
             )
             .toList
         )

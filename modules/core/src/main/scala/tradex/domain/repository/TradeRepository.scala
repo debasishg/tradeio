@@ -62,9 +62,8 @@ object TradeRepository {
               .toList
               .map(_.groupBy(_.refNo))
               .map {
-                _.map {
-                  case (_, trades) =>
-                    trades.reduce(Semigroup[Trade].combine)
+                _.map { case (_, trades) =>
+                  trades.reduce(Semigroup[Trade].combine)
                 }.toList
               }
           }
@@ -78,9 +77,8 @@ object TradeRepository {
               .toList
               .map(_.groupBy(_.refNo))
               .map {
-                _.map {
-                  case (_, trades) =>
-                    trades.reduce(Semigroup[Trade].combine)
+                _.map { case (_, trades) =>
+                  trades.reduce(Semigroup[Trade].combine)
                 }.toList
               }
           }
@@ -94,9 +92,8 @@ object TradeRepository {
               .toList
               .map(_.groupBy(_.refNo))
               .map {
-                _.map {
-                  case (_, trades) =>
-                    trades.reduce(Semigroup[Trade].combine)
+                _.map { case (_, trades) =>
+                  trades.reduce(Semigroup[Trade].combine)
                 }.toList
               }
           }
@@ -115,16 +112,14 @@ object TradeRepository {
           p1 <- session.prepare(insertTrade)
           p2 <- session.prepare(insertTaxFees(t.refNo, t.taxFees))
         } yield (p1, p2)
-        r.use {
-            case (p1, p2) =>
-              session.transaction.use { _ =>
-                for {
-                  _ <- p1.execute(t)
-                  _ <- p2.execute(t.taxFees)
-                } yield ()
-              }
+        r.use { case (p1, p2) =>
+          session.transaction.use { _ =>
+            for {
+              _ <- p1.execute(t)
+              _ <- p2.execute(t.taxFees)
+            } yield ()
           }
-          .map(_ => t)
+        }.map(_ => t)
       }
 
       def store(trades: NonEmptyList[Trade]): F[Unit] =
@@ -140,37 +135,33 @@ private object TradeRepositorySQL {
 
   val tradeTaxFeeDecoder: Decoder[Trade] =
     (accountNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp ~ timestamp.opt ~ money.opt ~ taxFeeId ~ money ~ tradeRefNo)
-      .map {
-        case ano ~ isin ~ mkt ~ bs ~ up ~ qty ~ td ~ vdOpt ~ naOpt ~ tx ~ amt ~ ref =>
-          (
-            Trade(
-              ano,
-              isin,
-              ref,
-              mkt,
-              bs,
-              up,
-              qty,
-              td,
-              vdOpt,
-              List(TradeTaxFee(tx, amt)),
-              naOpt
-            )
+      .map { case ano ~ isin ~ mkt ~ bs ~ up ~ qty ~ td ~ vdOpt ~ naOpt ~ tx ~ amt ~ ref =>
+        (
+          Trade(
+            ano,
+            isin,
+            ref,
+            mkt,
+            bs,
+            up,
+            qty,
+            td,
+            vdOpt,
+            List(TradeTaxFee(tx, amt)),
+            naOpt
           )
+        )
       }
 
   val tradeEncoder: Encoder[Trade] =
     (tradeRefNo ~ accountNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp ~ timestamp.opt ~ money.opt).values
-      .contramap(
-        (t: Trade) =>
-          t.refNo ~ t.accountNo ~ t.isin ~ t.market ~ t.buySell ~ t.unitPrice ~ t.quantity ~ t.tradeDate ~ t.valueDate ~ t.netAmount
+      .contramap((t: Trade) =>
+        t.refNo ~ t.accountNo ~ t.isin ~ t.market ~ t.buySell ~ t.unitPrice ~ t.quantity ~ t.tradeDate ~ t.valueDate ~ t.netAmount
       )
 
   def taxFeeEncoder(refNo: TradeReferenceNo): Encoder[TradeTaxFee] =
     (tradeRefNo ~ taxFeeId ~ money).values
-      .contramap(
-        (t: TradeTaxFee) => refNo ~ t.taxFeeId ~ t.amount
-      )
+      .contramap((t: TradeTaxFee) => refNo ~ t.taxFeeId ~ t.amount)
 
   val insertTrade: Command[Trade] =
     sql"""

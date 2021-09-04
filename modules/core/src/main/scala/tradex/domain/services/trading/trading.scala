@@ -17,16 +17,14 @@ import repository._
 
 trait Trading[F[_]] {
 
-  /**
-    * Find accounts opened on the date specified
+  /** Find accounts opened on the date specified
     *
     * @param openDate the date when account was opened
     * @return a list of `Account` under the effect `F`
     */
   def getAccountsOpenedOn(openDate: LocalDate): F[List[Account]]
 
-  /**
-    * Find the list of trades for the supplied client account no and (optionally)
+  /** Find the list of trades for the supplied client account no and (optionally)
     * the trade date.
     *
     * @param forAccountNo the client accountNo
@@ -38,8 +36,7 @@ trait Trading[F[_]] {
       forDate: Option[LocalDate] = None
   ): F[List[Trade]]
 
-  /**
-    * Create a list of `Order` from client orders read from a stream
+  /** Create a list of `Order` from client orders read from a stream
     * as a csv file.
     *
     * @param csvOrder client order in csv format
@@ -47,8 +44,7 @@ trait Trading[F[_]] {
     */
   def orders(csvOrder: String): F[NonEmptyList[Order]]
 
-  /**
-    * Create a list of `Order` from client orders that come from
+  /** Create a list of `Order` from client orders that come from
     * the front office.
     *
     * @param frontOfficeOrders client order
@@ -58,8 +54,7 @@ trait Trading[F[_]] {
       frontOfficeOrders: NonEmptyList[FrontOfficeOrder]
   ): F[NonEmptyList[Order]]
 
-  /**
-    * Execute an `Order` in the `Market` and book the execution in the
+  /** Execute an `Order` in the `Market` and book the execution in the
     * broker account supplied.
     *
     * @param orders the orders to execute
@@ -73,8 +68,7 @@ trait Trading[F[_]] {
       brokerAccountNo: AccountNo
   ): F[NonEmptyList[Execution]]
 
-  /**
-    * Allocate the `Execution` equally between the client accounts generating
+  /** Allocate the `Execution` equally between the client accounts generating
     * a list of `Trade`s.
     *
     * @param executions the executions to allocate
@@ -135,9 +129,8 @@ object Trading {
               }
             }
           )
-        action.adaptError {
-          case e =>
-            OrderingError(Option(e.getMessage()).getOrElse("Unknown error"))
+        action.adaptError { case e =>
+          OrderingError(Option(e.getMessage()).getOrElse("Unknown error"))
         }
       }
 
@@ -162,9 +155,8 @@ object Trading {
               }
             }
           )
-        action.adaptError {
-          case e =>
-            OrderingError(Option(e.getMessage()).getOrElse("Unknown error"))
+        action.adaptError { case e =>
+          OrderingError(Option(e.getMessage()).getOrElse("Unknown error"))
         }
       }
 
@@ -189,9 +181,8 @@ object Trading {
           }
         }
         val action = persistExecutions(exes) *> ev.pure(exes)
-        action.adaptError {
-          case e =>
-            ExecutionError(Option(e.getMessage()).getOrElse("Unknown error"))
+        action.adaptError { case e =>
+          ExecutionError(Option(e.getMessage()).getOrElse("Unknown error"))
         }
       }
 
@@ -221,9 +212,8 @@ object Trading {
         val action =
           persistTrades(trades)
             .flatMap(_ => ev.pure(trades))
-        action.adaptError {
-          case e =>
-            AllocationError(Option(e.getMessage()).getOrElse("Unknown error"))
+        action.adaptError { case e =>
+          AllocationError(Option(e.getMessage()).getOrElse("Unknown error"))
         }
       }
 

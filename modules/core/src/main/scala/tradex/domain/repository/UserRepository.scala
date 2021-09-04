@@ -17,7 +17,7 @@ trait UserRepository[F[_]] {
   /** query by username */
   def query(username: UserName): F[Option[User]]
 
-  /** store a user **/
+  /** store a user * */
   def store(username: UserName, password: EncryptedPassword): F[UserId]
 }
 
@@ -42,9 +42,8 @@ object UserRepository {
               cmd
                 .execute(User(id, username, password))
                 .as(id)
-                .recoverWith {
-                  case SqlState.UniqueViolation(_) =>
-                    UserNameInUse(username).raiseError[F, UserId]
+                .recoverWith { case SqlState.UniqueViolation(_) =>
+                  UserNameInUse(username).raiseError[F, UserId]
                 }
             }
           }
