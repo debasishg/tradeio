@@ -85,7 +85,18 @@ object Dependencies {
   // Runtime
   val logback = "ch.qos.logback" % "logback-classic" % logbackVersion % Runtime
 
-  val kindProjector = compilerPlugin("org.typelevel" %% "kind-projector" % kindProjectorVersion cross CrossVersion.full)
+  object CompilerPlugin {
+    val betterMonadicFor = compilerPlugin(
+      "com.olegpy" %% "better-monadic-for" % betterMonadicForVersion
+    )
+    val kindProjector = compilerPlugin(
+      "org.typelevel" %% "kind-projector" % kindProjectorVersion cross CrossVersion.full
+    )
+    val semanticDB = compilerPlugin(
+      "org.scalameta" % "semanticdb-scalac" % semanticDBVersion cross CrossVersion.full
+    )
+  }
+  import CompilerPlugin._
 
   // Scalafix rules
   val organizeImports = "com.github.liancheng" %% "organize-imports" % organizeImportsVersion
@@ -93,7 +104,7 @@ object Dependencies {
   val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect)
 
   val tradeioDependencies: Seq[ModuleID] = 
-    commonDependencies ++ Seq(kindProjector) ++
+    commonDependencies ++ Seq(kindProjector, betterMonadicFor, semanticDB) ++
       Seq(Misc.newtype, Misc.squants) ++ 
       Seq(Derevo.derevoCore, Derevo.derevoCats, Derevo.derevoCiris, Derevo.derevoCirceMagnolia) ++
       Seq(monocleCore) ++
@@ -105,4 +116,27 @@ object Dependencies {
       Seq(http4sJwtAuth) ++
       Seq(redis4catsEffects, redis4catsLog4cats) ++
       Seq(Circe.circeCore, Circe.circeGeneric, Circe.circeParser, Circe.circeRefined)
+
+  // Test
+  val catsLaws          = "org.typelevel"       %% "cats-laws"          % catsVersion
+  val log4catsNoOp      = "org.typelevel"       %% "log4cats-noop"      % log4catsVersion
+  val monocleLaw        = "dev.optics"          %% "monocle-law"        % monocleVersion
+  val refinedScalacheck = "eu.timepit"          %% "refined-scalacheck" % refinedVersion
+  val weaverCats        = "com.disneystreaming" %% "weaver-cats"        % weaverVersion
+  val weaverDiscipline  = "com.disneystreaming" %% "weaver-discipline"  % weaverVersion
+  val weaverScalaCheck  = "com.disneystreaming" %% "weaver-scalacheck"  % weaverVersion
+
+  val testDependencies: Seq[ModuleID] = 
+    Seq(
+      CompilerPlugin.kindProjector,
+      CompilerPlugin.betterMonadicFor,
+      CompilerPlugin.semanticDB,
+      catsLaws,
+      log4catsNoOp,
+      monocleLaw,
+      refinedScalacheck,
+      weaverCats,
+      weaverDiscipline,
+      weaverScalaCheck
+    )
 }

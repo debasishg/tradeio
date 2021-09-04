@@ -7,12 +7,13 @@ ThisBuild / evictionErrorLevel := Level.Warn
 ThisBuild / scalafixDependencies += Dependencies.organizeImports
 
 resolvers += Resolver.sonatypeRepo("snapshots")
+val scalafixCommonSettings = inConfig(IntegrationTest)(scalafixConfigSettings(IntegrationTest))
 
 lazy val root = (project in file("."))
   .settings(
     name := "tradeio"
   )
-  .aggregate(core)
+  .aggregate(core, tests)
 
 lazy val core = (project in file("modules/core")).settings(
   name := "tradeio-core",
@@ -20,6 +21,19 @@ lazy val core = (project in file("modules/core")).settings(
   consoleSettings,
   dependencies
 )
+
+lazy val tests = (project in file("modules/tests"))
+  .configs(IntegrationTest)
+  .settings(
+    name := "tradeio-test-suite",
+    commonSettings,
+    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
+    Defaults.itSettings,
+    scalafixCommonSettings,
+    testDependencies
+  )
+  .dependsOn(core)
+
 
 lazy val commonSettings = Seq(
   scalafmtOnCompile := true,
@@ -53,5 +67,8 @@ lazy val compilerOptions = {
 
 lazy val dependencies =
   libraryDependencies ++= Dependencies.tradeioDependencies
+
+lazy val testDependencies =
+  libraryDependencies ++= Dependencies.testDependencies
 
 addCommandAlias("runLinter", ";scalafixAll --rules OrganizeImports")
