@@ -18,7 +18,7 @@ jobs:
           fetch-depth: 0
       - name: Set up JDK 11
         uses: olafurpg/setup-scala@v10
-      - name: Compile
+      - name: Compile and test
         run: |-
-          sbt clean compile
+          sbt clean scalafmtAll compile test
 
