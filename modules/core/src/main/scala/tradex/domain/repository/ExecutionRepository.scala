@@ -50,7 +50,7 @@ private object ExecutionRepositorySQL {
   val buySell = enum(BuySell, Type("buysell"))
 
   val executionEncoder: Encoder[Execution] =
-    (executionRefNo ~ accountNo ~ orderNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp).values
+    (executionRefNo ~ accountNo ~ orderNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp ~ varchar.opt).values
       .gcontramap[Execution]
 
   val insertExecution: Command[Execution] =
@@ -65,7 +65,8 @@ private object ExecutionRepositorySQL {
         buySellFlag,
         unitPrice,
         quantity,
-        dateOfExecution
+        dateOfExecution,
+        exchangeExecutionRefNo
       )
       VALUES $executionEncoder
     """.command

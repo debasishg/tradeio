@@ -8,9 +8,10 @@ import repository._
 import services.trading._
 import services.accounting._
 import services.healthcheck._
+import effects.GenUUID
 
 object Services {
-  def make[F[+_]: Temporal](
+  def make[F[+_]: Temporal: GenUUID](
       postgres: Resource[F, Session[F]],
       redis: RedisCommands[F, String, String]
   ): Services[F] = {

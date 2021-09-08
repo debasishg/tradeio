@@ -5,8 +5,8 @@ import java.util.UUID
 
 import cats.syntax.all._
 import cats.data.EitherNec
+import cats.Functor
 
-import NewtypeRefinedOps._
 import account._
 import instrument._
 import order._
@@ -16,14 +16,13 @@ import io.estatico.newtype.macros.newtype
 import derevo.cats._
 import derevo.circe.magnolia._
 import derevo.derive
-import io.circe.refined._
-import eu.timepit.refined.cats._
-
-import eu.timepit.refined.types.string.NonEmptyString
+import optics.uuid
+import effects.GenUUID
 
 object execution {
-  @derive(decoder, encoder, eqv, show)
-  @newtype case class ExecutionReferenceNo(value: NonEmptyString)
+  @derive(decoder, encoder, eqv, show, uuid)
+  @newtype
+  @newtype case class ExecutionReferenceNo(value: UUID)
 
   // primary domain entity for execution from exchange
   @derive(decoder, encoder, eqv, show)
@@ -36,7 +35,8 @@ object execution {
       buySell: BuySell,
       unitPrice: UnitPrice,
       quantity: Quantity,
-      dateOfExecution: LocalDateTime
+      dateOfExecution: LocalDateTime,
+      exchangeExecutionRefNo: Option[String] = None
   )
 
   // as per layout obtained from exchange
@@ -54,8 +54,34 @@ object execution {
 
   object Execution {
     // smart constructor : adds validation
-    def execution(
-        executionRefNo: String,
+    def execution[F[_]: Functor: GenUUID](
+        accountNo: AccountNo,
+        orderNo: OrderNo,
+        isin: ISINCode,
+        market: Market,
+        buySell: BuySell,
+        unitPrice: UnitPrice,
+        quantity: Quantity,
+        dateOfExecution: LocalDateTime
+    ): F[Execution] = {
+      ID.make[F, ExecutionReferenceNo]
+        .map { refNo =>
+          Execution(
+            refNo,
+            accountNo,
+            orderNo,
+            isin,
+            market,
+            buySell,
+            unitPrice,
+            quantity,
+            dateOfExecution,
+            None
+          )
+        }
+    }
+
+    def execution[F[_]: Functor: GenUUID](
         accountNo: String,
         orderNo: String,
         isin: String,
@@ -64,9 +90,8 @@ object execution {
         unitPrice: BigDecimal,
         quantity: BigDecimal,
         dateOfExecution: LocalDateTime
-    ): EitherNec[String, Execution] = {
+    ): EitherNec[String, F[Execution]] = {
       (
-        validateExecutionRefNo(executionRefNo),
         Account.validateAccountNo(accountNo),
         Order.validateOrderNo(orderNo),
         Instrument.validateISINCode(isin),
@@ -74,52 +99,53 @@ object execution {
         Order.validateBuySell(buySell),
         Order.validateUnitPrice(unitPrice),
         Order.validateQuantity(quantity)
-      ).parMapN { (ref, ano, ono, isin, m, bs, up, qty) =>
-        Execution(
-          ref,
-          ano,
-          ono,
-          isin,
-          m,
-          BuySell.withName(bs),
-          up,
-          qty,
-          dateOfExecution
-        )
+      ).parMapN { (ano, ono, isin, m, bs, up, qty) =>
+        ID.make[F, ExecutionReferenceNo]
+          .map { id =>
+            Execution(
+              id,
+              ano,
+              ono,
+              isin,
+              m,
+              BuySell.withName(bs),
+              up,
+              qty,
+              dateOfExecution
+            )
+          }
       }
     }
 
     // smart constructor from data received from exchange
-    private[domain] def createExecution(
+    private[domain] def createExecution[F[_]: Functor: GenUUID](
         eex: ExchangeExecution
-    ): EitherNec[String, Execution] = {
+    ): EitherNec[String, F[Execution]] = {
       (
-        validateExecutionRefNo(eex.executionRefNo),
         Account.validateAccountNo(eex.accountNo),
         Instrument.validateISINCode(eex.isin),
         Order.validateBuySell(eex.buySell),
         Order.validateUnitPrice(eex.unitPrice),
         Order.validateQuantity(eex.quantity),
         Order.validateOrderNo(eex.orderNo)
-      ).parMapN { (ref, ano, ins, bs, up, q, ono) =>
-        Execution(
-          ref,
-          ano,
-          ono,
-          ins,
-          Market.withName(eex.market),
-          BuySell.withName(bs),
-          up,
-          q,
-          eex.dateOfExecution
-        )
+      ).parMapN { (ano, ins, bs, up, q, ono) =>
+        ID.make[F, ExecutionReferenceNo]
+          .map { id =>
+            Execution(
+              id,
+              ano,
+              ono,
+              ins,
+              Market.withName(eex.market),
+              BuySell.withName(bs),
+              up,
+              q,
+              eex.dateOfExecution,
+              if (eex.executionRefNo.isEmpty()) None
+              else Some(eex.executionRefNo)
+            )
+          }
       }
-    }
-
-    private[model] def validateExecutionRefNo(
-        refNo: String
-    ): EitherNec[String, ExecutionReferenceNo] = {
-      validate[ExecutionReferenceNo](refNo)
     }
 
     private[model] def validateMarket(m: String): EitherNec[String, Market] = {
@@ -128,15 +154,5 @@ object execution {
         .toEitherNec
         .leftMap(_.map(_.toString))
     }
-
-    def generateExecutionReferenceNo(): ExecutionReferenceNo =
-      validateExecutionRefNo(UUID.randomUUID().toString)
-        .fold(
-          errs =>
-            throw new Exception(
-              s"Unable to generate reference no : ${errs.toString}"
-            ),
-          identity
-        )
   }
 }
