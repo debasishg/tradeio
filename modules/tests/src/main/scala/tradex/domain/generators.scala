@@ -3,10 +3,13 @@ package tradex.domain
 import java.util.UUID
 import java.time.LocalDateTime
 import model.account._
+import model.instrument._
+import model.order._
 import NewtypeRefinedOps._
 
 import eu.timepit.refined.scalacheck.string._
 import eu.timepit.refined.types.string.NonEmptyString
+import eu.timepit.refined.api.RefType
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import squants.market.USD
@@ -76,4 +79,41 @@ object generators {
   } yield Account(no, nm, oc._1, Some(oc._2), tp, bc, tc, sc)
 
   def accountGen: Gen[Account] = Gen.oneOf(tradingAccountGen, settlementAccountGen, bothAccountGen)
+
+  def isinGen: Gen[ISINCode] = {
+    val appleISINStr = "US0378331005"
+    val baeISINStr   = "GB0002634946"
+    val ibmISINStr   = "US4592001014"
+
+    val isins = List(appleISINStr, baeISINStr, ibmISINStr)
+      .map(str =>
+        RefType
+          .applyRef[ISINCodeString](str)
+          .map(ISINCode(_))
+          .fold(err => throw new Exception(err), identity)
+      )
+    Gen.oneOf(isins)
+  }
+
+  val unitPriceGen: Gen[UnitPrice] = {
+    val ups = List(BigDecimal(12.25), BigDecimal(51.25), BigDecimal(55.25))
+      .map(n =>
+        RefType
+          .applyRef[UnitPriceType](n)
+          .map(UnitPrice(_))
+          .fold(err => throw new Exception(err), identity)
+      )
+    Gen.oneOf(ups)
+  }
+
+  val quantityGen: Gen[Quantity] = {
+    val qtys = List(BigDecimal(100), BigDecimal(200), BigDecimal(300))
+      .map(n =>
+        RefType
+          .applyRef[QuantityType](n)
+          .map(Quantity(_))
+          .fold(err => throw new Exception(err), identity)
+      )
+    Gen.oneOf(qtys)
+  }
 }

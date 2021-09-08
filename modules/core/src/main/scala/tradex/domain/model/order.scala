@@ -31,11 +31,13 @@ object order {
   @derive(decoder, encoder, eqv, show)
   @newtype case class OrderNo(value: NonEmptyString)
 
+  type QuantityType = BigDecimal Refined NonNegative
   @derive(decoder, encoder, eqv, show)
   @newtype case class Quantity(value: BigDecimal Refined NonNegative)
 
+  type UnitPriceType = BigDecimal Refined Positive
   @derive(decoder, encoder, eqv, show)
-  @newtype case class UnitPrice(value: BigDecimal Refined Positive)
+  @newtype case class UnitPrice(value: UnitPriceType)
 
   @derive(decoder, encoder, eqv, show)
   sealed abstract class BuySell(override val entryName: String) extends EnumEntry
