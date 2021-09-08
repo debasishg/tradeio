@@ -2,8 +2,9 @@ package tradex.domain
 package model
 
 import java.time.LocalDateTime
+import java.util.UUID
 
-import cats.data.EitherNec
+import cats.Functor
 import cats.data.NonEmptyList
 import cats.syntax.all._
 
@@ -11,26 +12,21 @@ import enumeratum._
 
 import squants.market._
 
-import NewtypeRefinedOps._
 import account._
 import instrument._
 import order._
-import execution._
 import market._
-import java.{ util => ju }
 import io.estatico.newtype.macros.newtype
 import derevo.cats._
 import derevo.circe.magnolia._
 import derevo.derive
-import io.circe.refined._
-import eu.timepit.refined.cats._
-
-import eu.timepit.refined.types.string.NonEmptyString
+import optics.uuid
+import effects.GenUUID
 
 object trade {
-  // replace with UUID
-  @derive(decoder, encoder, eqv, show)
-  @newtype case class TradeReferenceNo(value: NonEmptyString)
+  @derive(decoder, encoder, eqv, show, uuid)
+  @newtype
+  @newtype case class TradeReferenceNo(value: UUID)
 
   @derive(decoder, encoder, eqv, show)
   sealed abstract class TaxFeeId(override val entryName: String) extends EnumEntry
@@ -119,40 +115,30 @@ object trade {
   )
 
   object Trade {
-    def trade(
-        accountNo: String,
-        isin: String,
-        refNo: String,
-        market: String,
-        buySell: String,
-        unitPrice: BigDecimal,
-        quantity: BigDecimal,
-        td: LocalDateTime = today,
-        vd: Option[LocalDateTime] = None,
-        taxFees: List[TradeTaxFee] = List.empty,
-        netAmt: Option[Money] = None
-    ): EitherNec[String, Trade] = {
-      (
-        validateTradeRefNo(refNo),
-        Account.validateAccountNo(accountNo),
-        Instrument.validateISINCode(isin),
-        Order.validateQuantity(quantity),
-        Order.validateUnitPrice(unitPrice),
-        Order.validateBuySell(buySell),
-        Execution.validateMarket(market)
-      ).mapN { (ref, a, i, q, u, bs, m) =>
-        val trd = Trade(a, i, ref, m, BuySell.withName(bs), u, q, td, vd)
-        println(
-          s"taxFees = $taxFees netAmount = $netAmt isdefined = ${netAmt.isDefined}"
-        )
-        if (taxFees.isEmpty && !netAmt.isDefined) {
-          val taxFees =
-            forTrade(trd).map(taxFeeCalculate(trd, _)).getOrElse(List.empty)
-          println(s"taxFees 1 = $taxFees")
-          val netAmt = netAmount(trd, taxFees)
-          trd.copy(taxFees = taxFees, netAmount = Option(netAmt))
-        } else trd
-      }
+    def trade[F[_]: Functor: GenUUID](
+        accountNo: AccountNo,
+        isin: ISINCode,
+        market: Market,
+        buySell: BuySell,
+        unitPrice: UnitPrice,
+        quantity: Quantity,
+        tradeDate: LocalDateTime = today,
+        valueDate: Option[LocalDateTime] = None
+    ): F[Trade] = {
+      ID.make[F, TradeReferenceNo]
+        .map { refNo =>
+          Trade(
+            accountNo,
+            isin,
+            refNo,
+            market,
+            buySell,
+            unitPrice,
+            quantity,
+            tradeDate,
+            valueDate
+          )
+        }
     }
 
     def withTaxFee(trade: Trade): Trade = {
@@ -163,21 +149,5 @@ object trade {
         trade.copy(taxFees = taxFees, netAmount = Option(netAmt))
       } else trade
     }
-
-    private[model] def validateTradeRefNo(
-        refNo: String
-    ): EitherNec[String, TradeReferenceNo] = {
-      validate[TradeReferenceNo](refNo)
-    }
-
-    def generateTradeReferenceNo(): TradeReferenceNo =
-      validateTradeRefNo(ju.UUID.randomUUID().toString)
-        .fold(
-          errs =>
-            throw new Exception(
-              s"Unable to generate reference no : ${errs.toString}"
-            ),
-          identity
-        )
   }
 }

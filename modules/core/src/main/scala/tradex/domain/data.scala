@@ -1,9 +1,10 @@
 package tradex.domain
 
-import java.util.UUID
 import cats.data.{ EitherNec, NonEmptyList }
 import cats.syntax.all._
 import cats.instances.list._
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 
 import NewtypeRefinedOps._
 import model.account._
@@ -46,9 +47,8 @@ object AppData {
 
   val o1 = order.fold(errs => throw new Exception(errs.toString), identity)
 
-  val e1 = Execution
-    .execution(
-      executionRefNo = UUID.randomUUID().toString(),
+  val e1: IO[Execution] = Execution
+    .execution[IO](
       accountNo = ano1String,
       orderNo = "o1",
       isin = appleISIN,
@@ -60,9 +60,8 @@ object AppData {
     )
     .fold(errs => throw new Exception(errs.toString), identity)
 
-  val e2 = Execution
-    .execution(
-      executionRefNo = UUID.randomUUID().toString(),
+  val e2: IO[Execution] = Execution
+    .execution[IO](
       accountNo = ano1String,
       orderNo = "o1",
       isin = baeISIN,
@@ -74,9 +73,8 @@ object AppData {
     )
     .fold(errs => throw new Exception(errs.toString), identity)
 
-  val e3 = Execution
-    .execution(
-      executionRefNo = UUID.randomUUID().toString(),
+  val e3: IO[Execution] = Execution
+    .execution[IO](
       accountNo = ano1String,
       orderNo = "o1",
       isin = baeISIN,
@@ -88,9 +86,8 @@ object AppData {
     )
     .fold(errs => throw new Exception(errs.toString), identity)
 
-  val e4 = Execution
-    .execution(
-      executionRefNo = UUID.randomUUID().toString(),
+  val e4: IO[Execution] = Execution
+    .execution[IO](
       accountNo = ano1String,
       orderNo = "o1",
       isin = appleISIN,
@@ -101,4 +98,6 @@ object AppData {
       dateOfExecution = today
     )
     .fold(errs => throw new Exception(errs.toString), identity)
+
+  val executions: List[Execution] = List(e1, e2, e3, e4).sequence.unsafeRunSync()
 }

@@ -57,14 +57,10 @@ object codecs {
     }(_.value.value)
 
   val executionRefNo: Codec[ExecutionReferenceNo] =
-    varchar.eimap[ExecutionReferenceNo] { u =>
-      validate[ExecutionReferenceNo](u).leftMap(_.fold)
-    }(_.value.value)
+    uuid.imap[ExecutionReferenceNo](ExecutionReferenceNo(_))(_.value)
 
   val tradeRefNo: Codec[TradeReferenceNo] =
-    varchar.eimap[TradeReferenceNo] { u =>
-      validate[TradeReferenceNo](u).leftMap(_.fold)
-    }(_.value.value)
+    uuid.imap[TradeReferenceNo](TradeReferenceNo(_))(_.value)
 
   val market: Codec[Market] =
     varchar.imap[Market](Market.withName(_))(_.entryName)

@@ -19,6 +19,7 @@ import model.execution._
 import model.trade._
 import NewtypeRefinedOps._
 import AppData._
+import effects.GenUUID
 
 object ExchangeApp extends IOApp.Simple {
   override def run: IO[Unit] = {
@@ -33,7 +34,7 @@ object ExchangeApp extends IOApp.Simple {
       // `bracket` that handles cancellations
       (
         feedOrder(o1),
-        feedExecutions(o1.no, NonEmptyList.of(e1, e2, e3, e4))
+        feedExecutions(o1.no, NonEmptyList.fromListUnsafe(executions))
       ).parTupled *>
         allocate(o1.no, NonEmptyList.of(ano2, ano3)).start
           .bracket { _.join }(_.cancel)
@@ -115,7 +116,7 @@ object Exchange {
 
   // create the FSM
   // the states of the FSM are abstracted within the creator
-  def create[F[_]: Concurrent](): F[TradingExchange[F]] = {
+  def create[F[_]: Concurrent: GenUUID](): F[TradingExchange[F]] = {
     sealed trait State
     // application state has a value
     case class Value(s: ApplicationState) extends State
@@ -346,15 +347,10 @@ object Exchange {
             currentState: ApplicationState
         ): F[Either[Throwable, ApplicationState]] =
           for {
-            r <- currentState
-              .copy(
-                trades = allocate(
-                  NonEmptyList.fromList(currentState.executions).get,
-                  accountNos
-                ).toList
-              )
-              .pure[F]
-              .attempt
+            r <- allocate(
+              NonEmptyList.fromList(currentState.executions).get,
+              accountNos
+            ).map(trds => currentState.copy(trades = trds.toList)).attempt
 
             _ <- state.set {
               r match {
@@ -365,28 +361,32 @@ object Exchange {
             _ <- d.complete(r)
           } yield r
 
-        private def allocate(
+        def allocate(
             executions: NonEmptyList[Execution],
             clientAccounts: NonEmptyList[AccountNo]
-        ): NonEmptyList[Trade] = {
-          executions.flatMap { execution =>
+        ): F[NonEmptyList[Trade]] = {
+
+          val anoExes: NonEmptyList[(AccountNo, Execution)] = for {
+            execution <- executions
+            accountNo <- clientAccounts
+          } yield (accountNo, execution)
+
+          val tradesNoTaxFee: F[NonEmptyList[Trade]] = anoExes.traverse { case (accountNo, execution) =>
             val q = execution.quantity.value.value / clientAccounts.size
             val qty = validate[Quantity](q)
               .fold(errs => throw new Exception(errs.toString), identity)
-            clientAccounts
-              .map { accountNo =>
-                val trd = Trade(
-                  accountNo,
-                  execution.isin,
-                  Trade.generateTradeReferenceNo(),
-                  execution.market,
-                  execution.buySell,
-                  execution.unitPrice,
-                  qty
-                )
-                Trade.withTaxFee(trd)
-              }
+
+            Trade.trade[F](
+              accountNo,
+              execution.isin,
+              execution.market,
+              execution.buySell,
+              execution.unitPrice,
+              qty
+            )
           }
+
+          tradesNoTaxFee.map(_.map(Trade.withTaxFee))
         }
       }
     }
