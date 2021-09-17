@@ -1,8 +1,9 @@
 package tradex.domain
 
 import java.util.UUID
-import java.time.LocalDateTime
+import java.time.{ Instant, LocalDateTime }
 import cats.effect.IO
+import cats.data.NonEmptyList
 import model.account._
 import model.instrument._
 import model.order._
@@ -152,4 +153,25 @@ object generators {
     td   <- Gen.oneOf(List(LocalDateTime.now, LocalDateTime.now.plusDays(2)))
     vd   <- Gen.const(None)
   } yield Trade.trade[IO](no, isin, mkt, bs, up, qty, td, vd).map(Trade.withTaxFee)
+
+  val frontOfficeOrderGen = for {
+    ano  <- accountNoGen
+    dt   <- Gen.oneOf(Instant.now, Instant.now.plus(2, java.time.temporal.ChronoUnit.DAYS))
+    isin <- isinGen
+    qty  <- quantityGen
+    up   <- unitPriceGen
+    bs   <- Gen.oneOf(BuySell.Buy, BuySell.Sell)
+  } yield FrontOfficeOrder(ano.value.value, dt, isin.value.value, qty.value.value, up.value.value, bs.entryName)
+
+  val generateTradeFrontOfficeInputGen = for {
+    orders         <- Gen.nonEmptyListOf(frontOfficeOrderGen)
+    mkt            <- Gen.oneOf(Market.NewYork, Market.Tokyo, Market.HongKong)
+    brkAccountNo   <- accountNoGen
+    clientAccounts <- Gen.nonEmptyListOf(accountNoGen)
+  } yield GenerateTradeFrontOfficeInput(
+    NonEmptyList.fromListUnsafe(orders),
+    mkt,
+    brkAccountNo,
+    NonEmptyList.fromListUnsafe(clientAccounts)
+  )
 }
