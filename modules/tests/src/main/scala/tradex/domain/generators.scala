@@ -2,9 +2,12 @@ package tradex.domain
 
 import java.util.UUID
 import java.time.LocalDateTime
+import cats.effect.IO
 import model.account._
 import model.instrument._
 import model.order._
+import model.trade._
+import model.market._
 import NewtypeRefinedOps._
 
 import eu.timepit.refined.scalacheck.string._
@@ -116,4 +119,37 @@ object generators {
       )
     Gen.oneOf(qtys)
   }
+
+  val tradeGen = for {
+    no   <- accountNoGen
+    isin <- isinGen
+    mkt  <- Gen.oneOf(Market.NewYork, Market.Tokyo, Market.HongKong)
+    bs   <- Gen.oneOf(BuySell.Buy, BuySell.Sell)
+    up   <- unitPriceGen
+    qty  <- quantityGen
+    td   <- Gen.oneOf(List(LocalDateTime.now, LocalDateTime.now.plusDays(2)))
+    vd   <- Gen.const(None)
+  } yield Trade.trade[IO](no, isin, mkt, bs, up, qty, td, vd)
+
+  val tradeForTokyoMarketGen = for {
+    no   <- accountNoGen
+    isin <- isinGen
+    mkt  <- Gen.const(Market.Tokyo)
+    bs   <- Gen.oneOf(BuySell.Buy, BuySell.Sell)
+    up   <- unitPriceGen
+    qty  <- quantityGen
+    td   <- Gen.oneOf(List(LocalDateTime.now, LocalDateTime.now.plusDays(2)))
+    vd   <- Gen.const(None)
+  } yield Trade.trade[IO](no, isin, mkt, bs, up, qty, td, vd)
+
+  val tradeWithTaxFeeGen = for {
+    no   <- accountNoGen
+    isin <- isinGen
+    mkt  <- Gen.oneOf(Market.NewYork, Market.Tokyo, Market.HongKong)
+    bs   <- Gen.const(BuySell.Buy)
+    up   <- unitPriceGen
+    qty  <- quantityGen
+    td   <- Gen.oneOf(List(LocalDateTime.now, LocalDateTime.now.plusDays(2)))
+    vd   <- Gen.const(None)
+  } yield Trade.trade[IO](no, isin, mkt, bs, up, qty, td, vd).map(Trade.withTaxFee)
 }
