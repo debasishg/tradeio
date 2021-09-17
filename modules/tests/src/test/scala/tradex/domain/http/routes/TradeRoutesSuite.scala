@@ -15,7 +15,7 @@ import model.market._
 import model.trade._
 import repository.TradeRepository
 import suite.HttpSuite
-import model.TradeSuite
+import generators._
 import cats.effect.unsafe.implicits.global
 
 object TradeRoutesSuite extends HttpSuite {
@@ -26,7 +26,7 @@ object TradeRoutesSuite extends HttpSuite {
   }
 
   test("GET all trades succeeds") {
-    forall(Gen.listOf(TradeSuite.tradeGen)) { trades =>
+    forall(Gen.listOf(tradeGen)) { trades =>
       val req = GET(uri"/trades")
       val ts  = trades.sequence.unsafeRunSync()
       val routes =
@@ -36,7 +36,7 @@ object TradeRoutesSuite extends HttpSuite {
   }
 
   test("GET trades for Tokyo Market succeeds") {
-    forall(Gen.listOf(TradeSuite.tradeForTokyoMarketGen)) { trades =>
+    forall(Gen.listOf(tradeForTokyoMarketGen)) { trades =>
       val req = GET(uri"/trades?market=Tokyo")
       val ts  = trades.sequence.unsafeRunSync()
       val routes =
