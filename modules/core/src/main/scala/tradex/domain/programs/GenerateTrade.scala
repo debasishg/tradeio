@@ -25,7 +25,7 @@ final case class GenerateTrade[F[_]: MonadThrowable] private (
     import trading._
     import accounting._
 
-    for {
+    val action = for {
       orders <- orders(frontOfficeInput.frontOfficeOrders)
       executions <- execute(
         orders,
@@ -35,6 +35,11 @@ final case class GenerateTrade[F[_]: MonadThrowable] private (
       trades   <- allocate(executions, frontOfficeInput.clientAccountNos)
       balances <- postBalance(trades)
     } yield (trades, balances)
+
+    action.adaptError {
+      case oe: Trading.TradingError => Trading.TradeGenerationError(oe.cause)
+      case e                        => Trading.TradeGenerationError(e.getMessage())
+    }
   }
 }
 

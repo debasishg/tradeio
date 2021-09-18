@@ -20,5 +20,5 @@ jobs:
         uses: olafurpg/setup-scala@v10
       - name: Compile and test
         run: |-
-          sbt clean scalafmtAll compile test
+          sbt clean scalafmtCheckAll compile test
 

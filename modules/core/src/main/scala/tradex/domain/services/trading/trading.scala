@@ -86,9 +86,10 @@ object Trading {
   sealed trait TradingError extends NoStackTrace {
     def cause: String
   }
-  case class OrderingError(cause: String)   extends TradingError
-  case class ExecutionError(cause: String)  extends TradingError
-  case class AllocationError(cause: String) extends TradingError
+  case class OrderingError(cause: String)        extends TradingError
+  case class ExecutionError(cause: String)       extends TradingError
+  case class AllocationError(cause: String)      extends TradingError
+  case class TradeGenerationError(cause: String) extends TradingError
 
   def make[F[+_]: MonadThrowable: GenUUID](
       accountRepository: AccountRepository[F],
@@ -117,12 +118,12 @@ object Trading {
           .fold(
             nec =>
               ev.raiseError(
-                new Throwable(nec.toNonEmptyList.toList.mkString("/"))
+                OrderingError(nec.toNonEmptyList.toList.mkString("/"))
               ),
             os => {
               if (os.isEmpty)
                 ev.raiseError(
-                  new Throwable("Empty order list received from csv")
+                  OrderingError("Empty order list received from csv")
                 )
               else {
                 val nlos = NonEmptyList.fromList(os).get
@@ -141,10 +142,11 @@ object Trading {
         val action = Order
           .create(frontOfficeOrders)
           .fold(
-            nec =>
+            nec => {
               ev.raiseError(
                 new Throwable(nec.toNonEmptyList.toList.mkString("/"))
-              ),
+              )
+            },
             os => {
               if (os.isEmpty)
                 ev.raiseError(

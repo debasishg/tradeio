@@ -42,6 +42,21 @@ object GenerateTradeSuite extends SimpleIOSuite with Checkers {
       }
     }
   }
+
+  test("Failed generation of trades with invalid account number from front office") {
+    forall(generateTradeFrontOfficeInputGen) { frontOfficeInput =>
+      val invalidInput = frontOfficeInput.copy(
+        frontOfficeOrders = frontOfficeInput.frontOfficeOrders.map(forder => forder.copy(accountNo = "123"))
+      )
+      genTrade
+        .generate(invalidInput)
+        .attempt
+        .map {
+          case Left(Trading.TradeGenerationError(_)) => success
+          case _                                     => failure("Should generate TradeGenerationError")
+        }
+    }
+  }
 }
 
 protected class TestAccountRepository extends AccountRepository[IO] {
