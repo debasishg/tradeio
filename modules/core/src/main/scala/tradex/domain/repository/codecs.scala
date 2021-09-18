@@ -18,42 +18,42 @@ import NewtypeRefinedOps._
 object codecs {
   val accountNo: Codec[AccountNo] =
     varchar.eimap[AccountNo] { s =>
-      validate[AccountNo](s).leftMap(_.fold)
+      validate[AccountNo](s).toEither.leftMap(_.fold)
     }(_.value.value)
 
   val accountName: Codec[AccountName] =
     varchar.eimap[AccountName] { s =>
-      validate[AccountName](s).leftMap(_.fold)
+      validate[AccountName](s).toEither.leftMap(_.fold)
     }(_.value.value)
 
   val instrumentName: Codec[InstrumentName] =
     varchar.eimap[InstrumentName] { s =>
-      validate[InstrumentName](s).leftMap(_.fold)
+      validate[InstrumentName](s).toEither.leftMap(_.fold)
     }(_.value.value)
 
   val isinCode: Codec[ISINCode] =
     varchar.eimap[ISINCode] { s =>
-      validate[ISINCode](s).leftMap(_.fold)
+      validate[ISINCode](s).toEither.leftMap(_.fold)
     }(_.value.value)
 
   val orderNo: Codec[OrderNo] =
     varchar.eimap[OrderNo] { s =>
-      validate[OrderNo](s).leftMap(_.fold)
+      validate[OrderNo](s).toEither.leftMap(_.fold)
     }(_.value.value)
 
   val unitPrice: Codec[UnitPrice] =
     numeric.eimap[UnitPrice] { s =>
-      validate[UnitPrice](s).leftMap(_.fold)
+      validate[UnitPrice](s).toEither.leftMap(_.fold)
     }(_.value.value)
 
   val quantity: Codec[Quantity] =
     numeric.eimap[Quantity] { s =>
-      validate[Quantity](s).leftMap(_.fold)
+      validate[Quantity](s).toEither.leftMap(_.fold)
     }(_.value.value)
 
   val lotSize: Codec[LotSize] =
     int4.eimap[LotSize] { s =>
-      validate[LotSize](s).leftMap(_.fold)
+      validate[LotSize](s).toEither.leftMap(_.fold)
     }(_.value.value)
 
   val executionRefNo: Codec[ExecutionReferenceNo] =
@@ -72,12 +72,12 @@ object codecs {
 
   val userName: Codec[UserName] =
     varchar.eimap[UserName] { u =>
-      validate[UserName](u).leftMap(_.fold)
+      validate[UserName](u).toEither.leftMap(_.fold)
     }(_.value.value)
 
   val encPassword: Codec[EncryptedPassword] =
     varchar.eimap[EncryptedPassword] { p =>
-      validate[EncryptedPassword](p).leftMap(_.fold)
+      validate[EncryptedPassword](p).toEither.leftMap(_.fold)
     }(_.value.value)
 
   val money: Codec[Money] = numeric.imap[Money](USD(_))(_.amount)

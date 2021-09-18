@@ -70,8 +70,11 @@ object GenerateTradeSuite extends SimpleIOSuite with Checkers {
         .generate(invalidInput)
         .attempt
         .map {
-          case Left(Trading.TradeGenerationError(_)) => success
-          case _                                     => failure("Should generate TradeGenerationError")
+          case Left(Trading.TradeGenerationError(cause)) => {
+            println(cause)
+            success
+          }
+          case _ => failure("Should generate TradeGenerationError")
         }
     }
   }

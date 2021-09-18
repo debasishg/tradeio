@@ -4,7 +4,7 @@ package model
 import java.util.UUID
 import javax.crypto.Cipher
 import scala.util.control.NoStackTrace
-import cats.data.EitherNec
+import cats.data.ValidatedNec
 import cats.syntax.all._
 
 import derevo.cats._
@@ -61,24 +61,24 @@ object user {
         id: UUID,
         name: String,
         password: String
-    ): EitherNec[String, User] = {
+    ): ValidatedNec[String, User] = {
       (
         validateUserName(name),
         validatePassword(password)
-      ).parMapN { (nm, pd) =>
+      ).mapN { (nm, pd) =>
         User(UserId(id), nm, pd)
       }
     }
 
     private[model] def validateUserName(
         name: String
-    ): EitherNec[String, UserName] =
+    ): ValidatedNec[String, UserName] =
       validate[UserName](name)
         .leftMap(_ :+ s"User Name cannot be blank")
 
     private[model] def validatePassword(
         name: String
-    ): EitherNec[String, EncryptedPassword] =
+    ): ValidatedNec[String, EncryptedPassword] =
       validate[EncryptedPassword](name)
         .leftMap(_ :+ s"User Password cannot be blank")
   }

@@ -28,8 +28,8 @@ package object domain {
       def apply[T, P](raw: T)(implicit
           c: Coercible[Refined[T, P], A],
           v: Validate[T, P]
-      ): EitherNec[String, A] =
-        refineV[P](raw).toEitherNec.map(_.coerce[A])
+      ): ValidatedNec[String, A] =
+        refineV[P](raw).toValidatedNec.map(_.coerce[A])
     }
 
     def validate[A]: NewtypeRefinedPartiallyApplied[A] =

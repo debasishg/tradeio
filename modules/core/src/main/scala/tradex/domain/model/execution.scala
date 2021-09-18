@@ -4,7 +4,7 @@ package model
 import java.util.UUID
 
 import cats.syntax.all._
-import cats.data.EitherNec
+import cats.data.ValidatedNec
 import cats.Functor
 
 import account._
@@ -90,7 +90,7 @@ object execution {
         unitPrice: BigDecimal,
         quantity: BigDecimal,
         dateOfExecution: LocalDateTime
-    ): EitherNec[String, F[Execution]] = {
+    ): ValidatedNec[String, F[Execution]] = {
       (
         Account.validateAccountNo(accountNo),
         Order.validateOrderNo(orderNo),
@@ -99,7 +99,7 @@ object execution {
         Order.validateBuySell(buySell),
         Order.validateUnitPrice(unitPrice),
         Order.validateQuantity(quantity)
-      ).parMapN { (ano, ono, isin, m, bs, up, qty) =>
+      ).mapN { (ano, ono, isin, m, bs, up, qty) =>
         ID.make[F, ExecutionReferenceNo]
           .map { id =>
             Execution(
@@ -120,7 +120,7 @@ object execution {
     // smart constructor from data received from exchange
     private[domain] def createExecution[F[_]: Functor: GenUUID](
         eex: ExchangeExecution
-    ): EitherNec[String, F[Execution]] = {
+    ): ValidatedNec[String, F[Execution]] = {
       (
         Account.validateAccountNo(eex.accountNo),
         Instrument.validateISINCode(eex.isin),
@@ -128,7 +128,7 @@ object execution {
         Order.validateUnitPrice(eex.unitPrice),
         Order.validateQuantity(eex.quantity),
         Order.validateOrderNo(eex.orderNo)
-      ).parMapN { (ano, ins, bs, up, q, ono) =>
+      ).mapN { (ano, ins, bs, up, q, ono) =>
         ID.make[F, ExecutionReferenceNo]
           .map { id =>
             Execution(
@@ -148,10 +148,10 @@ object execution {
       }
     }
 
-    private[model] def validateMarket(m: String): EitherNec[String, Market] = {
+    private[model] def validateMarket(m: String): ValidatedNec[String, Market] = {
       Market
         .withNameEither(m)
-        .toEitherNec
+        .toValidatedNec
         .leftMap(_.map(_.toString))
     }
   }

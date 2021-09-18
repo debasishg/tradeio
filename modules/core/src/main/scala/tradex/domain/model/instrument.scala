@@ -3,7 +3,7 @@ package model
 
 import java.time.LocalDateTime
 
-import cats.data.EitherNec
+import cats.data.ValidatedNec
 import cats.syntax.all._
 
 import squants.market._
@@ -77,16 +77,16 @@ object instrument {
   object Instrument {
     private[model] def validateISINCode(
         isin: String
-    ): EitherNec[String, ISINCode] = validate[ISINCode](isin)
+    ): ValidatedNec[String, ISINCode] = validate[ISINCode](isin)
 
     private[model] def validateInstrumentName(
         name: String
-    ): EitherNec[String, InstrumentName] =
+    ): ValidatedNec[String, InstrumentName] =
       validate[InstrumentName](name)
 
     private[model] def validateLotSize(
         size: Int
-    ): EitherNec[String, LotSize] = validate[LotSize](size)
+    ): ValidatedNec[String, LotSize] = validate[LotSize](size)
 
     private[domain] def instrument(
         isinCode: String,
@@ -98,7 +98,7 @@ object instrument {
         unitPrice: Option[UnitPrice],       // for Equity
         couponRate: Option[Money],          // for Fixed Income
         couponFrequency: Option[BigDecimal] // for Fixed Income
-    ): EitherNec[String, Instrument] = {
+    ): ValidatedNec[String, Instrument] = {
       (
         validateISINCode(isinCode),
         validateInstrumentName(name),

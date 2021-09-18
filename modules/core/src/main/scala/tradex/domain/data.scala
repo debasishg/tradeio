@@ -1,6 +1,7 @@
 package tradex.domain
 
-import cats.data.{ EitherNec, NonEmptyList }
+import cats.data.{ NonEmptyList, ValidatedNec }
+import cats.data.Validated._
 import cats.syntax.all._
 import cats.instances.list._
 import cats.effect.IO
@@ -34,16 +35,16 @@ object AppData {
     .toList
     .sequence
 
-  val order: EitherNec[String, Order] = lis
-    .map { lineItems =>
+  val order: ValidatedNec[String, Order] = lis match {
+    case Invalid(e) => e.toList.mkString("/").invalidNec
+    case Valid(lineItems) =>
       Order.makeOrder(
         "o1",
         today,
         ano1String,
         NonEmptyList.fromList(lineItems).get
       )
-    }
-    .fold(Left(_), identity)
+  }
 
   val o1 = order.fold(errs => throw new Exception(errs.toString), identity)
 

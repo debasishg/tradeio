@@ -4,7 +4,7 @@ package services.trading
 import java.io.InputStream
 
 import cats.Functor
-import cats.data.EitherNec
+import cats.data.{ EitherNec, ValidatedNec }
 import cats.effect._
 import cats.syntax.all._
 
@@ -25,7 +25,7 @@ private[trading] object executing {
     */
   def createExecutions(
       in: InputStream
-  ): IO[EitherNec[String, List[IO[Execution]]]] = {
+  ): IO[ValidatedNec[String, List[IO[Execution]]]] = {
     val acquire = IO {
       scala.io.Source.fromInputStream(in)
     }
@@ -40,9 +40,9 @@ private[trading] object executing {
     */
   def createExecutions[F[_]: Functor: GenUUID](
       exchangeCsv: String
-  ): EitherNec[String, List[F[Execution]]] = {
+  ): ValidatedNec[String, List[F[Execution]]] = {
     fromExchange(exchangeCsv) match {
-      case Left(errs)  => Left(errs)
+      case Left(errs)  => errs.toList.mkString("/").invalidNec
       case Right(eexs) => eexs.traverse(Execution.createExecution[F])
     }
   }
@@ -59,5 +59,6 @@ private[trading] object executing {
       .toValidatedNec
       .toEither
       .leftMap(_.map(_.toString))
+    // .toValidated
   }
 }

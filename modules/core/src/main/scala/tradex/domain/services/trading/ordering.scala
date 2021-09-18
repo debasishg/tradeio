@@ -5,7 +5,8 @@ import java.io.InputStream
 
 import cats.effect._
 import cats.syntax.all._
-import cats.data.{ EitherNec, NonEmptyList }
+import cats.data.{ NonEmptyList, ValidatedNec }
+import cats.data.Validated._
 
 import io.chrisdavenport.cormorant._
 import io.chrisdavenport.cormorant.generic.semiauto._
@@ -24,7 +25,7 @@ private[trading] object ordering {
     * The format is as follows:
     * accountNo,date,isin,qty,buySell
     */
-  def createOrders(in: InputStream): IO[EitherNec[String, List[Order]]] = {
+  def createOrders(in: InputStream): IO[ValidatedNec[String, List[Order]]] = {
     val acquire = IO {
       scala.io.Source.fromInputStream(in)
     }
@@ -39,15 +40,18 @@ private[trading] object ordering {
     * The format is as follows:
     * accountNo,date,isin,qty,buySell
     */
-  def createOrders(frontOfficeCsv: String): EitherNec[String, List[Order]] =
-    fromFrontOffice(frontOfficeCsv).flatMap(create)
+  def createOrders(frontOfficeCsv: String): ValidatedNec[String, List[Order]] =
+    fromFrontOffice(frontOfficeCsv) match {
+      case Invalid(e) => e.toList.mkString("/").invalidNec
+      case Valid(fos) => create(fos)
+    }
 
   /** Workhorse method that parses csv data and creates `FrontOfficeOrder`.
     * No domain validation is done here
     */
   private def fromFrontOffice(
       order: String
-  ): EitherNec[String, NonEmptyList[FrontOfficeOrder]] = {
+  ): ValidatedNec[String, NonEmptyList[FrontOfficeOrder]] = {
     parseComplete(order)
       .leftWiden[Error]
       .flatMap(_.readLabelled[FrontOfficeOrder].sequence)
@@ -55,5 +59,6 @@ private[trading] object ordering {
       .toEither
       .leftMap(_.map(_.toString))
       .map(l => NonEmptyList.fromList(l).get)
+      .toValidated
   }
 }
