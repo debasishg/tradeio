@@ -45,8 +45,26 @@ object GenerateTradeSuite extends SimpleIOSuite with Checkers {
 
   test("Failed generation of trades with invalid account number from front office") {
     forall(generateTradeFrontOfficeInputGen) { frontOfficeInput =>
+      // change account number to invalid ones
       val invalidInput = frontOfficeInput.copy(
         frontOfficeOrders = frontOfficeInput.frontOfficeOrders.map(forder => forder.copy(accountNo = "123"))
+      )
+      genTrade
+        .generate(invalidInput)
+        .attempt
+        .map {
+          case Left(Trading.TradeGenerationError(_)) => success
+          case _                                     => failure("Should generate TradeGenerationError")
+        }
+    }
+  }
+
+  test("Failed generation of trades with invalid arguments from front office") {
+    forall(generateTradeFrontOfficeInputGen) { frontOfficeInput =>
+      // change multiple parameters to invalid ones
+      val invalidInput = frontOfficeInput.copy(
+        frontOfficeOrders =
+          frontOfficeInput.frontOfficeOrders.map(forder => forder.copy(isin = "123", qty = BigDecimal.valueOf(-10)))
       )
       genTrade
         .generate(invalidInput)

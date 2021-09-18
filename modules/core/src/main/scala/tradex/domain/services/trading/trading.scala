@@ -144,13 +144,13 @@ object Trading {
           .fold(
             nec => {
               ev.raiseError(
-                new Throwable(nec.toNonEmptyList.toList.mkString("/"))
+                OrderingError(nec.toNonEmptyList.toList.mkString("/"))
               )
             },
             os => {
               if (os.isEmpty)
                 ev.raiseError(
-                  new Throwable("Empty order list received from csv")
+                  OrderingError("Empty order list received from csv")
                 )
               else {
                 val nlos = NonEmptyList.fromList(os).get
@@ -158,8 +158,9 @@ object Trading {
               }
             }
           )
-        action.adaptError { case e =>
-          OrderingError(Option(e.getMessage()).getOrElse("Unknown error"))
+        action.adaptError {
+          case oe: OrderingError => oe
+          case e                 => OrderingError(Option(e.getMessage()).getOrElse("Unknown error"))
         }
       }
 
