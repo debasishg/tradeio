@@ -127,12 +127,13 @@ object Trading {
                 )
               else {
                 val nlos = NonEmptyList.fromList(os).get
-                persistOrders(nlos) *> ev.pure(nlos)
+                persistOrders(nlos) >>= (_ => ev.pure(nlos))
               }
             }
           )
-        action.adaptError { case e =>
-          OrderingError(Option(e.getMessage()).getOrElse("Unknown error"))
+        action.adaptError {
+          case oe: OrderingError => oe
+          case e                 => OrderingError(Option(e.getMessage()).getOrElse("Unknown error"))
         }
       }
 
@@ -154,7 +155,7 @@ object Trading {
                 )
               else {
                 val nlos = NonEmptyList.fromList(os).get
-                persistOrders(nlos) *> ev.pure(nlos)
+                persistOrders(nlos) >>= (_ => ev.pure(nlos))
               }
             }
           )
@@ -188,9 +189,10 @@ object Trading {
           )
         }
 
-        val action = exes.map(persistExecutions(_)) *> exes
-        action.adaptError { case e =>
-          ExecutionError(Option(e.getMessage()).getOrElse("Unknown error"))
+        val action = exes.flatMap(persistExecutions(_)) >>= (_ => exes)
+        action.adaptError {
+          case oe: ExecutionError => oe
+          case e                  => ExecutionError(Option(e.getMessage()).getOrElse("Unknown error"))
         }
       }
 
@@ -221,9 +223,10 @@ object Trading {
 
         val trades = tradesNoTaxFee.map(_.map(Trade.withTaxFee))
 
-        val action = trades.map(persistTrades(_)) *> trades
-        action.adaptError { case e =>
-          AllocationError(Option(e.getMessage()).getOrElse("Unknown error"))
+        val action = trades.flatMap(persistTrades(_)) >>= (_ => trades)
+        action.adaptError {
+          case oe: AllocationError => oe
+          case e                   => AllocationError(Option(e.getMessage()).getOrElse("Unknown error"))
         }
       }
 
