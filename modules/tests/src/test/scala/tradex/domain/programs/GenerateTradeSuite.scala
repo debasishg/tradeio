@@ -54,7 +54,7 @@ object GenerateTradeSuite extends SimpleIOSuite with Checkers {
         .attempt
         .map {
           case Left(Trading.TradeGenerationError(_)) => success
-          case _                                     => failure("Should generate TradeGenerationError")
+          case _                                     => failure("Should fail due to invalid account number")
         }
     }
   }
@@ -62,6 +62,7 @@ object GenerateTradeSuite extends SimpleIOSuite with Checkers {
   test("Failed generation of trades with invalid arguments from front office") {
     forall(generateTradeFrontOfficeInputGen) { frontOfficeInput =>
       // change multiple parameters to invalid ones
+      // invalid isin and invalid quantity
       val invalidInput = frontOfficeInput.copy(
         frontOfficeOrders =
           frontOfficeInput.frontOfficeOrders.map(forder => forder.copy(isin = "123", qty = BigDecimal.valueOf(-10)))
@@ -70,11 +71,28 @@ object GenerateTradeSuite extends SimpleIOSuite with Checkers {
         .generate(invalidInput)
         .attempt
         .map {
-          case Left(Trading.TradeGenerationError(cause)) => {
-            println(cause)
-            success
-          }
-          case _ => failure("Should generate TradeGenerationError")
+          case Left(Trading.TradeGenerationError(_)) => success
+          case _                                     => failure("Should fail due to invalid isin and quantity")
+        }
+    }
+  }
+
+  test("Failed generation of trades when persistence fails") {
+    val testInvalidTrading =
+      Trading.make[IO](
+        testAccountRepository,
+        testExecutionRepository,
+        testOrderRepository,
+        new TestTradeRepositoryWithFailedStore
+      )
+    val genTradeInvalidStore = programs.GenerateTrade[IO](testInvalidTrading, testAccounting)
+    forall(generateTradeFrontOfficeInputGen) { frontOfficeInput =>
+      genTradeInvalidStore
+        .generate(frontOfficeInput)
+        .attempt
+        .map {
+          case Left(Trading.TradeGenerationError(_)) => success
+          case _                                     => failure("Should fail due to failure in trade persistence")
         }
     }
   }
@@ -114,4 +132,9 @@ protected class TestBalanceRepository extends BalanceRepository[IO] {
   def store(a: Balance): IO[Balance]            = IO(a)
   def query(date: LocalDate): IO[List[Balance]] = IO.pure(List.empty[Balance])
   def all: IO[List[Balance]]                    = IO.pure(List.empty[Balance])
+}
+
+protected class TestTradeRepositoryWithFailedStore extends TestTradeRepository {
+  override def store(trades: NonEmptyList[Trade]): IO[Unit] =
+    IO.raiseError(new Exception("Failure in persistence"))
 }
