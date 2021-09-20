@@ -20,8 +20,7 @@ private[trading] object executing {
   implicit val lr: LabelledRead[ExchangeExecution]  = deriveLabelledRead
   implicit val lw: LabelledWrite[ExchangeExecution] = deriveLabelledWrite
 
-  /** Create executions reading an input stream containing csv data from
-    * exchange.
+  /** Create executions reading an input stream containing csv data from exchange.
     */
   def createExecutions(
       in: InputStream
@@ -35,8 +34,7 @@ private[trading] object executing {
       .use(source => IO(createExecutions[IO](source.mkString)))
   }
 
-  /** Create executions reading a string containing newline separated csv data from
-    * exchange.
+  /** Create executions reading a string containing newline separated csv data from exchange.
     */
   def createExecutions[F[_]: Functor: GenUUID](
       exchangeCsv: String
@@ -47,8 +45,7 @@ private[trading] object executing {
     }
   }
 
-  /** Workhorse method that parses csv data and creates `ExchangeExecution`.
-    * No domain validation is done here
+  /** Workhorse method that parses csv data and creates `ExchangeExecution`. No domain validation is done here
     */
   private def fromExchange(
       executions: String

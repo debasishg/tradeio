@@ -80,8 +80,7 @@ object order {
 
   object Order {
 
-    /** Domain validation for `FrontOfficeOrder` is done here. Creates
-      * records after validation
+    /** Domain validation for `FrontOfficeOrder` is done here. Creates records after validation
       */
     private[domain] def create(
         frontOfficeOrders: NonEmptyList[FrontOfficeOrder]

@@ -80,12 +80,13 @@ object OrderRepository {
 
       /** Generic store API that handles both inserts and updates. The steps to be followed are:
         *
-        * 1. delete line-items (if any) corresponding to this order number
-        * 2. upsert order record
-        * 3. insert new line-items
+        *   1. delete line-items (if any) corresponding to this order number 2. upsert order record 3. insert new
+        *      line-items
         *
-        * @param ord the order to store
-        * @return the order with an effect
+        * @param ord
+        *   the order to store
+        * @return
+        *   the order with an effect
         */
       def store(ord: Order): F[Order] =
         postgres.use { session =>
