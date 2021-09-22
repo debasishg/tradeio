@@ -21,7 +21,7 @@ final class AccountRepositoryInterpreter[M[_]: Monad] private (
   def query(no: AccountNo): M[Option[Account]] =
     repo.get.map(_.get(no.value.value))
 
-  def store(a: Account): M[Account] =
+  def store(a: Account, upsert: Boolean = true): M[Account] =
     repo.update(_ + ((a.no.value.value, a))).map(_ => a)
 
   def query(openedOn: LocalDate): M[List[Account]] =

@@ -7,3 +7,7 @@ DROP TABLE trades;
 DROP TABLE balance;
 DROP TABLE instruments;
 DROP TABLE accounts;
+DROP TABLE users;
+DROP TYPE accountType;
+DROP TYPE instrumentType;
+DROP TYPE buySell;

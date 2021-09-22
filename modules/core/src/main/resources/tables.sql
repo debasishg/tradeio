@@ -1,4 +1,4 @@
-CREATE TYPE accountType AS ENUM ('trading', 'settlement', 'both');
+CREATE TYPE accountType AS ENUM ('Trading', 'Settlement', 'Both');
 
 CREATE TABLE IF NOT EXISTS accounts (
     no varchar NOT NULL PRIMARY KEY,
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS instruments (
     type instrumentType NOT NULL,
     dateOfIssue timestamp,
     dateOfMaturity timestamp,
-    lotSize smallint,
+    lotSize integer,
     unitPrice decimal,
     couponRate decimal,
     couponFrequency decimal

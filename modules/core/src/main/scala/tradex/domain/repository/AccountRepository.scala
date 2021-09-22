@@ -20,7 +20,7 @@ trait AccountRepository[F[_]] {
   def query(no: AccountNo): F[Option[Account]]
 
   /** store */
-  def store(a: Account): F[Account]
+  def store(a: Account, upsert: Boolean = true): F[Account]
 
   /** query by opened date */
   def query(openedOn: LocalDate): F[List[Account]]
@@ -49,11 +49,13 @@ object AccountRepository {
           }
         }
 
-      def store(a: Account): F[Account] =
+      def store(a: Account, upsert: Boolean = true): F[Account] =
         postgres.use { session =>
-          session.prepare(upsertAccount).use { cmd =>
-            cmd.execute(a).void.map(_ => a)
-          }
+          session
+            .prepare((if (upsert) upsertAccount else insertAccount))
+            .use { cmd =>
+              cmd.execute(a).void.map(_ => a)
+            }
         }
 
       def query(openedOn: LocalDate): F[List[Account]] =
