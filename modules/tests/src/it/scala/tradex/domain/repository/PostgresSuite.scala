@@ -10,6 +10,7 @@ import generators._
 import repository.AccountRepository
 
 import suite.ResourceSuite
+import java.time.LocalDate
 
 object PostgresSuite extends ResourceSuite {
 
@@ -70,6 +71,24 @@ object PostgresSuite extends ResourceSuite {
         y <- i.query(equity.isinCode)
         z <- i.store(equity).attempt
       } yield expect.all(x.isEmpty, y.count(_.isinCode === equity.isinCode) === 1, z.isRight)
+    }
+  }
+
+	test("Trades with tax/fees") { postgres =>
+    val t = TradeRepository.make[IO](postgres)
+    forall(tradeWithTaxFeeGen) {
+      _.flatMap { trd =>
+        for {
+          x <- t.all
+          _ <- t.store(trd)
+          y <- t.queryByMarket(trd.market)
+          z <- t.query(trd.accountNo, LocalDate.now())
+        } yield expect.all(x.isEmpty, 
+          y.count(_.market === trd.market) === 1, 
+          y.forall(_.netAmount.isDefined),
+          z.count(_.accountNo === trd.accountNo) === 1)
+        IO(success)
+      }
     }
   }
 }

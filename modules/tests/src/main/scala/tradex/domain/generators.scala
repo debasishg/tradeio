@@ -169,12 +169,6 @@ object generators {
     None
   )
 
-  /** isinCode: ISINCode, name: InstrumentName, instrumentType: InstrumentType, dateOfIssue: Option[LocalDateTime], //
-    * for non CCY dateOfMaturity: Option[LocalDateTime], // for Fixed Income lotSize: LotSize, unitPrice:
-    * Option[UnitPrice], // for Equity couponRate: Option[Money], // for Fixed Income couponFrequency:
-    * Option[BigDecimal] // for Fixed Income
-    */
-
   val tradeGen = for {
     no   <- accountNoGen
     isin <- isinGen
