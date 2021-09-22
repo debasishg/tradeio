@@ -1,4 +1,4 @@
-CREATE TYPE accountType AS ENUM ('trading', 'settlement', 'both');
+CREATE TYPE accountType AS ENUM ('Trading', 'Settlement', 'Both');
 
 CREATE TABLE IF NOT EXISTS accounts (
     no varchar NOT NULL PRIMARY KEY,

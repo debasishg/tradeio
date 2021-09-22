@@ -48,9 +48,9 @@ object account {
 
   @derive(decoder, encoder, eqv, show)
   object AccountType extends Enum[AccountType] {
-    case object Trading    extends AccountType("trading")
-    case object Settlement extends AccountType("settlement")
-    case object Both       extends AccountType("both")
+    case object Trading    extends AccountType("Trading")
+    case object Settlement extends AccountType("Settlement")
+    case object Both       extends AccountType("Both")
 
     val values = findValues
   }

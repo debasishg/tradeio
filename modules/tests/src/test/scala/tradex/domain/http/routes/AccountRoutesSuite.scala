@@ -67,7 +67,7 @@ object AccountRoutesSuite extends HttpSuite {
 
 protected class TestAccountRepository extends AccountRepository[IO] {
   def query(no: AccountNo): IO[Option[Account]]                      = IO.pure(none[Account])
-  def store(a: Account): IO[Account]                                 = ???
+  def store(a: Account, upsert: Boolean = true): IO[Account]         = ???
   def query(openedOn: LocalDate): IO[List[Account]]                  = IO.pure(List.empty[Account])
   def all: IO[List[Account]]                                         = IO.pure(List.empty[Account])
   def allClosed(closeDate: Option[LocalDate]): IO[List[Account]]     = IO.pure(List.empty[Account])
