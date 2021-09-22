@@ -46,8 +46,9 @@ object instrument {
   @derive(decoder, encoder, eqv, show)
   @newtype case class InstrumentName(value: NonEmptyString)
 
+  type LotSizeType = Int Refined Positive
   @derive(decoder, encoder, eqv, show)
-  @newtype case class LotSize(value: Int Refined Positive)
+  @newtype case class LotSize(value: LotSizeType)
 
   @derive(decoder, encoder, eqv, show)
   sealed abstract class InstrumentType(override val entryName: String) extends EnumEntry

@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS instruments (
     type instrumentType NOT NULL,
     dateOfIssue timestamp,
     dateOfMaturity timestamp,
-    lotSize smallint,
+    lotSize integer,
     unitPrice decimal,
     couponRate decimal,
     couponFrequency decimal

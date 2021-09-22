@@ -60,4 +60,16 @@ object PostgresSuite extends ResourceSuite {
       } yield expect.all(x.isEmpty, y.count(_.no === account.no) === 1, z.isRight)
     }
   }
+
+	test("Instruments with upsert") { postgres =>
+    val i = InstrumentRepository.make[IO](postgres)
+    forall(equityGen) { equity =>
+      for {
+        x <- i.query(equity.isinCode)
+        _ <- i.store(equity)
+        y <- i.query(equity.isinCode)
+        z <- i.store(equity).attempt
+      } yield expect.all(x.isEmpty, y.count(_.isinCode === equity.isinCode) === 1, z.isRight)
+    }
+  }
 }

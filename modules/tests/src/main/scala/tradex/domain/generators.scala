@@ -99,6 +99,27 @@ object generators {
     Gen.oneOf(isins)
   }
 
+  def isinNamePairGen: Gen[(ISINCode, InstrumentName)] = {
+    val apple = ("US0378331005", "apple")
+    val bae   = ("GB0002634946", "bae")
+    val ibm   = ("US4592001014", "ibm")
+
+    val isinNames = List(apple, bae, ibm)
+      .map(str =>
+        (
+          RefType
+            .applyRef[ISINCodeString](str._1)
+            .map(ISINCode(_))
+            .fold(err => throw new Exception(err), identity),
+          RefType
+            .applyRef[NonEmptyString](str._2)
+            .map(InstrumentName(_))
+            .fold(err => throw new Exception(err), identity)
+        )
+      )
+    Gen.oneOf(isinNames)
+  }
+
   val unitPriceGen: Gen[UnitPrice] = {
     val ups = List(BigDecimal(12.25), BigDecimal(51.25), BigDecimal(55.25))
       .map(n =>
@@ -108,6 +129,17 @@ object generators {
           .fold(err => throw new Exception(err), identity)
       )
     Gen.oneOf(ups)
+  }
+
+  val lotSizeGen: Gen[LotSize] = {
+    val ls = List(10, 100)
+      .map(n =>
+        RefType
+          .applyRef[LotSizeType](n)
+          .map(LotSize(_))
+          .fold(err => throw new Exception(err), identity)
+      )
+    Gen.oneOf(ls)
   }
 
   val quantityGen: Gen[Quantity] = {
@@ -120,6 +152,28 @@ object generators {
       )
     Gen.oneOf(qtys)
   }
+
+  val equityGen: Gen[Instrument] = for {
+    isinName <- isinNamePairGen
+    up       <- unitPriceGen
+    ls       <- lotSizeGen
+  } yield Instrument(
+    isinName._1,
+    isinName._2,
+    InstrumentType.Equity,
+    Some(LocalDateTime.now),
+    None,
+    ls,
+    Some(up),
+    None,
+    None
+  )
+
+  /** isinCode: ISINCode, name: InstrumentName, instrumentType: InstrumentType, dateOfIssue: Option[LocalDateTime], //
+    * for non CCY dateOfMaturity: Option[LocalDateTime], // for Fixed Income lotSize: LotSize, unitPrice:
+    * Option[UnitPrice], // for Equity couponRate: Option[Money], // for Fixed Income couponFrequency:
+    * Option[BigDecimal] // for Fixed Income
+    */
 
   val tradeGen = for {
     no   <- accountNoGen
