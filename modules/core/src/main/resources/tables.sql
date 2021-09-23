@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS lineItems (
 );
 
 CREATE TABLE IF NOT EXISTS executions (
-    executionRefNo varchar NOT NULL PRIMARY KEY,
+    executionRefNo uuid NOT NULL PRIMARY KEY,
     accountNo varchar NOT NULL references accounts(no),
     orderNo varchar NOT NULL references orders(no),
     isinCode varchar NOT NULL references instruments(isinCode),
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS taxFees (
 );
 
 CREATE TABLE IF NOT EXISTS trades (
-    tradeRefNo varchar NOT NULL PRIMARY KEY,
+    tradeRefNo uuid NOT NULL PRIMARY KEY,
     accountNo varchar NOT NULL references accounts(no),
     isinCode varchar NOT NULL references instruments(isinCode),
     market varchar NOT NULL,
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS trades (
 
 CREATE TABLE IF NOT EXISTS tradeTaxFees (
     tradeTaxFeeId serial PRIMARY KEY,
-    tradeRefNo varchar NOT NULL references trades(tradeRefNo),
+    tradeRefNo uuid NOT NULL references trades(tradeRefNo),
     taxFeeId varchar NOT NULL references taxFees(taxFeeId),
     amount decimal NOT NULL
 );
