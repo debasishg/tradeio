@@ -19,12 +19,12 @@ object PostgresSuite extends ResourceSuite {
 
   val listAll = listTables ++ List("taxfees")
 
-	val flushAll: List[Command[Void]] =
+  val flushAll: List[Command[Void]] =
     listAll.map { table =>
       sql"DELETE FROM #$table".command
     }
 
-	val flushTables: List[Command[Void]] =
+  val flushTables: List[Command[Void]] =
     listTables.map { table =>
       sql"DELETE FROM #$table".command
     }
@@ -67,7 +67,7 @@ object PostgresSuite extends ResourceSuite {
         }
       }
 
-	test("Accounts with no upsert") { postgres =>
+  test("Accounts with no upsert") { postgres =>
     val a = AccountRepository.make[IO](postgres)
     forall(accountGen) { account =>
       for {
@@ -79,7 +79,7 @@ object PostgresSuite extends ResourceSuite {
     }
   }
 
-	test("Accounts with upsert") { postgres =>
+  test("Accounts with upsert") { postgres =>
     val a = AccountRepository.make[IO](postgres)
     forall(accountGen) { account =>
       for {
@@ -91,7 +91,7 @@ object PostgresSuite extends ResourceSuite {
     }
   }
 
-	test("Instruments with upsert") { postgres =>
+  test("Instruments with upsert") { postgres =>
     val i = InstrumentRepository.make[IO](postgres)
     forall(equityGen) { equity =>
       for {
@@ -103,7 +103,7 @@ object PostgresSuite extends ResourceSuite {
     }
   }
 
-	test("Trades with tax/fees") { postgres =>
+  test("Trades with tax/fees") { postgres =>
     val a = AccountRepository.make[IO](postgres)
     val i = InstrumentRepository.make[IO](postgres)
     val t = TradeRepository.make[IO](postgres)
