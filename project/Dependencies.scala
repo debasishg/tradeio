@@ -103,9 +103,9 @@ object Dependencies {
 
   val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect)
 
-  val tradeioDependencies: Seq[ModuleID] = 
+  val tradeioDependencies: Seq[ModuleID] =
     commonDependencies ++ Seq(kindProjector, betterMonadicFor, semanticDB) ++
-      Seq(Misc.newtype, Misc.squants) ++ 
+      Seq(Misc.newtype, Misc.squants) ++
       Seq(Derevo.derevoCore, Derevo.derevoCats, Derevo.derevoCiris, Derevo.derevoCirceMagnolia) ++
       Seq(monocleCore) ++
       Seq(Refined.refinedCore, Refined.refinedCats, Refined.refinedShapeless) ++
@@ -126,7 +126,7 @@ object Dependencies {
   val weaverDiscipline  = "com.disneystreaming" %% "weaver-discipline"  % weaverVersion
   val weaverScalaCheck  = "com.disneystreaming" %% "weaver-scalacheck"  % weaverVersion
 
-  val testDependencies: Seq[ModuleID] = 
+  val testDependencies: Seq[ModuleID] =
     Seq(
       CompilerPlugin.kindProjector,
       CompilerPlugin.betterMonadicFor,

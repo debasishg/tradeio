@@ -14,7 +14,7 @@ import java.time.LocalDate
 
 object PostgresSuite extends ResourceSuite {
 
-  val listTables = 
+  val listTables =
     List("executions", "lineItems", "orders", "tradeTaxFees", "trades", "balance", "users", "instruments", "accounts")
 
   val listAll = listTables ++ List("taxfees")
@@ -29,7 +29,7 @@ object PostgresSuite extends ResourceSuite {
       sql"DELETE FROM #$table".command
     }
 
-  val insertTaxFees: Command[Void] = 
+  val insertTaxFees: Command[Void] =
     sql"""
       insert into taxFees (taxFeeId, description)
       values 
@@ -53,12 +53,12 @@ object PostgresSuite extends ResourceSuite {
       )
       .afterAll {
         _.use { s =>
-          flushAll.traverse_(s.execute) >> s.execute(insertTaxFees).map(_ => ()) 
+          flushAll.traverse_(s.execute) >> s.execute(insertTaxFees).map(_ => ())
         }
       }
       .beforeAll {
         _.use { s =>
-          flushAll.traverse_(s.execute) >> s.execute(insertTaxFees).map(_ => ()) 
+          flushAll.traverse_(s.execute) >> s.execute(insertTaxFees).map(_ => ())
         }
       }
       .beforeEach {
@@ -110,17 +110,17 @@ object PostgresSuite extends ResourceSuite {
 
     for {
       _ <- forall(tradingAccountGen) { acc =>
-               for {
-                 _ <- a.store(acc)
-                 fetched <- a.query(acc.no)
-               } yield expect.all(fetched.isDefined, fetched.count(_.no === acc.no) === 1)
-             }
+        for {
+          _       <- a.store(acc)
+          fetched <- a.query(acc.no)
+        } yield expect.all(fetched.isDefined, fetched.count(_.no === acc.no) === 1)
+      }
       _ <- forall(equityGen) { ins =>
-               for {
-                 _ <- i.store(ins)
-                 fetched <- i.query(ins.isinCode)
-               } yield expect.all(fetched.isDefined, fetched.count(_.isinCode === ins.isinCode) === 1)
-             }
+        for {
+          _       <- i.store(ins)
+          fetched <- i.query(ins.isinCode)
+        } yield expect.all(fetched.isDefined, fetched.count(_.isinCode === ins.isinCode) === 1)
+      }
       acc <- a.all
       ins <- i.queryByInstrumentType(InstrumentType.Equity)
       _ <- forall(tradeWithTaxFeeForAccountAndInstrumentGen(acc.head.no, ins.head.isinCode)) {
@@ -130,10 +130,12 @@ object PostgresSuite extends ResourceSuite {
             _ <- t.store(trd)
             y <- t.queryByMarket(trd.market)
             z <- t.query(trd.accountNo, LocalDate.now())
-          } yield expect.all(x.isEmpty, 
-            y.count(_.market === trd.market) === 1, 
+          } yield expect.all(
+            x.isEmpty,
+            y.count(_.market === trd.market) === 1,
             y.forall(_.netAmount.isDefined),
-            z.count(_.accountNo === trd.accountNo) === 1)
+            z.count(_.accountNo === trd.accountNo) === 1
+          )
         }
       }
     } yield expect.all(acc.nonEmpty, ins.nonEmpty)

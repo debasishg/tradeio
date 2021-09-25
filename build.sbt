@@ -1,6 +1,6 @@
-ThisBuild / scalaVersion := "2.13.6"
-ThisBuild / version := "0.0.1"
-ThisBuild / organization := "dev.tradex"
+ThisBuild / scalaVersion     := "2.13.6"
+ThisBuild / version          := "0.0.1"
+ThisBuild / organization     := "dev.tradex"
 ThisBuild / organizationName := "tradex"
 
 ThisBuild / evictionErrorLevel := Level.Warn
@@ -34,7 +34,6 @@ lazy val tests = (project in file("modules/tests"))
   )
   .dependsOn(core)
 
-
 lazy val commonSettings = Seq(
   scalafmtOnCompile := true,
   scalacOptions ++= List("-Ymacro-annotations", "-Yrangepos", "-Wconf:cat=unused:info"),
@@ -42,7 +41,7 @@ lazy val commonSettings = Seq(
 )
 
 lazy val consoleSettings = Seq(
-  Compile / console / scalacOptions --= Seq("-Ywarn-unused", "-Ywarn-unused-import"),
+  Compile / console / scalacOptions --= Seq("-Ywarn-unused", "-Ywarn-unused-import")
 )
 
 lazy val compilerOptions = {
