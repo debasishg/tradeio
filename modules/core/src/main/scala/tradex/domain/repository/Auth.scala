@@ -41,7 +41,7 @@ object UsersAuth {
       redis: RedisCommands[F, String, String]
   ): UsersAuth[F, CommonUser] =
     new UsersAuth[F, CommonUser] {
-      def findUser(token: JwtToken)(claim: JwtClaim): F[Option[CommonUser]] =
+      def findUser(token: JwtToken)(claim: JwtClaim): F[Option[CommonUser]] = {
         redis
           .get(token.value)
           .map {
@@ -49,6 +49,7 @@ object UsersAuth {
               decode[AUser](u).toOption.map(CommonUser.apply)
             }
           }
+      }
     }
 }
 
@@ -93,7 +94,8 @@ object Auth {
             }
         }
 
-      def logout(token: JwtToken, username: UserName): F[Unit] =
+      def logout(token: JwtToken, username: UserName): F[Unit] = {
         redis.del(token.show) *> redis.del(username.show).void
+      }
     }
 }

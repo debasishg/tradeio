@@ -14,7 +14,7 @@ object users {
   @newtype case class UserJwtAuth(value: JwtSymmetricAuth)
 
   @derive(decoder, encoder, show)
-  case class User(id: UserId, name: UserName)
+  case class User(userId: UserId, userName: UserName)
 
   @derive(decoder, encoder)
   case class UserWithPassword(
