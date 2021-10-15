@@ -75,6 +75,33 @@ object instrument {
       couponFrequency: Option[BigDecimal] // for Fixed Income
   )
 
+  @derive(decoder, encoder, show)
+  final case class CreateInstrument private (
+      isinCode: String,
+      name: String,
+      instrumentType: InstrumentType,
+      dateOfIssue: Option[LocalDateTime],    // for non CCY
+      dateOfMaturity: Option[LocalDateTime], // for Fixed Income
+      lotSize: Int,
+      unitPrice: Option[BigDecimal],      // for Equity
+      couponRate: Option[Money],          // for Fixed Income
+      couponFrequency: Option[BigDecimal] // for Fixed Income
+  ) {
+    def toDomain: ValidatedNec[String, Instrument] = {
+      Instrument.instrument(
+        isinCode,
+        name,
+        instrumentType,
+        dateOfIssue,
+        dateOfMaturity,
+        Some(lotSize),
+        unitPrice,
+        couponRate,
+        couponFrequency
+      )
+    }
+  }
+
   object Instrument {
     private[model] def validateISINCode(
         isin: String
@@ -89,6 +116,13 @@ object instrument {
         size: Int
     ): ValidatedNec[String, LotSize] = validate[LotSize](size)
 
+    private[model] def validateUnitPrice(
+        price: BigDecimal
+    ): ValidatedNec[String, UnitPrice] = {
+      validate[UnitPrice](price)
+        .leftMap(_ :+ s"Unit Price has to be positive: found $price")
+    }
+
     private[domain] def instrument(
         isinCode: String,
         name: String,
@@ -96,15 +130,16 @@ object instrument {
         dateOfIssue: Option[LocalDateTime],    // for non CCY
         dateOfMaturity: Option[LocalDateTime], // for Fixed Income
         lotSize: Option[Int],
-        unitPrice: Option[UnitPrice],       // for Equity
+        unitPrice: Option[BigDecimal],      // for Equity
         couponRate: Option[Money],          // for Fixed Income
         couponFrequency: Option[BigDecimal] // for Fixed Income
     ): ValidatedNec[String, Instrument] = {
       (
         validateISINCode(isinCode),
         validateInstrumentName(name),
-        validateLotSize(lotSize.getOrElse(0))
-      ).mapN { (isin, name, ls) =>
+        validateLotSize(lotSize.getOrElse(0)),
+        validateUnitPrice(unitPrice.getOrElse(ZERO_BIG_DECIMAL))
+      ).mapN { (isin, name, ls, uprice) =>
         Instrument(
           isin,
           name,
@@ -112,7 +147,7 @@ object instrument {
           dateOfIssue,
           dateOfMaturity,
           ls,
-          unitPrice,
+          Some(uprice),
           couponRate,
           couponFrequency
         )
