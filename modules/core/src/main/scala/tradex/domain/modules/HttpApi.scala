@@ -63,14 +63,17 @@ sealed abstract class HttpApi[F[+_]: Async] private (
       services.accounting
     ).routes(usersMiddleware)
 
+  // admin routes
   private val adminAccountRoutes =
     AdminAccountRoutes[F](services.accountRepository).routes(adminMiddleware)
+  private val adminInstrumentRoutes =
+    AdminInstrumentRoutes[F](services.instrumentRepository).routes(adminMiddleware)
 
   private val openRoutes: HttpRoutes[F] =
     accountRoutes <+> balanceRoutes <+> tradeRoutes <+> healthRoutes <+> generateTradeRoutes <+>
       loginRoutes <+> logoutRoutes <+> userRoutes
 
-  private val adminRoutes: HttpRoutes[F] = adminAccountRoutes
+  private val adminRoutes: HttpRoutes[F] = adminAccountRoutes <+> adminInstrumentRoutes
 
   private val routes: HttpRoutes[F] = Router(
     version.v1            -> openRoutes,
