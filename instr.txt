@@ -1,0 +1,46 @@
+users.json :
+{
+    "username":"aarush",
+    "password":"toughgraff"
+}
+
+// login
+$ /usr/bin/curl -X POST \
+-H "Content-Type: application/json" \
+http://localhost:8080/v1/auth/login \
+--data "@/Users/debasishghosh/users.json"
+
+> {"access_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzYwMjY2ODMsImlhdCI6MTYzNDIyNjY4Myw4OWZhNjM4My00M2NjLTRmOTctOWQyNi1jOTBjNmMyYmUxOWF9.dJ_vHRih4uiOg6go5lyFYBbvtq6ESGw4CEq8BBvZEKk"}⏎
+
+// logout
+$ /usr/bin/curl --request POST \
+--url http://localhost:8080/v1/auth/logout \
+--header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzYwMjY2ODMsImlhdCI6MTYzNDIyNjY4Myw4OWZhNjM4My00M2NjLTRmOTctOWQyNi1jOTBjNmMyYmUxOWF9.dJ_vHRih4uiOg6go5lyFYBbvtq6ESGw4CEq8BBvZEKk'
+
+// adding new users
+newusers.json :
+{
+    "username":"debasish",
+    "password":"toughgraff"
+}
+
+$ /usr/bin/curl --request POST \
+--url http://localhost:8080/v1/auth/users \
+--header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzYwMjg0MzgsImlhdCI6MTYzNDIyODQzOCxhMzQ4N2Q4Yy0yYzc3LTQ4ZTEtOGQ2ZC04NjEzZGQxYjg0MzZ9.DFWzI6K1fRTE0xj378W7E7YMhA7on5lB2hHdvG7Jvnk' \
+--data "@/Users/debasishghosh/newusers.json"
+
+Running the above with users.json or using any existing user will give a 409 : Conflict
+
+// addming new account
+accounts.json :
+{"no":"ibm-123","name":"ibm-account-no-123","openDate":"2021-10-15T15:38:18.524748","closeDate":null,"baseCcy":"USD","tradingCcy":"USD","settlementCcy":null,"accountType":{"Trading":{}}}
+
+## use the admin token value for authorization : the admin token value
+## is already set in the environment
+
+$ /usr/bin/curl --request POST \
+--url http://localhost:8080/v1/admin/accounts \
+--header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1dWlkIjogIjAwNGI0NDU3LTcxYzMtNDQzOS1hMWIyLTAzODIwMjYzYjU5YyJ9.L97BnPScSAKY-BLkYu8G_n8h1U4LDOURUen14O22hD4' \
+--data "@/Users/debasishghosh/accounts.json"
+
+{"account":{"no":"ibm-123","name":"ibm-account-no-123","dateOfOpen":"2021-10-15T15:38:18.524748","dateOfClose":null,"accountType":{"Trading":{}},"baseCurrency":"USD","tradingCurrency":"USD","settlementCurrency":null}}

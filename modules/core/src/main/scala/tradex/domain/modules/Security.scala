@@ -55,6 +55,7 @@ object Security {
       crypto <- Crypto.make[F](cfg.passwordSalt.value)
       users = UserRepository.make[F](postgres)
       _ <- users.store(UserName("aarush"), crypto.encrypt(Password("toughgraff")))
+      _ <- users.store(UserName("admin"), crypto.encrypt(Password("toughgraff")))
       auth      = Auth.make[F](cfg.tokenExpiration, tokens, users, redis, crypto)
       adminAuth = UsersAuth.admin[F](adminToken, adminUser)
       usersAuth = UsersAuth.common[F](redis)
