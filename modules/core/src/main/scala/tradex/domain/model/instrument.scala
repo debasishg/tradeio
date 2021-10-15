@@ -30,6 +30,9 @@ import model.order.UnitPrice
 
 import _root_.shapeless.::
 import _root_.shapeless.HNil
+import tradex.domain.model.instrument.InstrumentType.CCY
+import tradex.domain.model.instrument.InstrumentType.Equity
+import tradex.domain.model.instrument.InstrumentType.FixedIncome
 
 object instrument {
   // instrument
@@ -133,6 +136,69 @@ object instrument {
         unitPrice: Option[BigDecimal],      // for Equity
         couponRate: Option[Money],          // for Fixed Income
         couponFrequency: Option[BigDecimal] // for Fixed Income
+    ): ValidatedNec[String, Instrument] = instrumentType match {
+      case CCY         => ccy(isinCode, name, dateOfIssue)
+      case Equity      => equity(isinCode, name, dateOfIssue, lotSize, unitPrice)
+      case FixedIncome => fixedIncome(isinCode, name, dateOfIssue, dateOfMaturity, lotSize, couponRate, couponFrequency)
+    }
+
+    private[domain] def ccy(
+        isinCode: String,
+        name: String,
+        dateOfIssue: Option[LocalDateTime] // for non CCY
+    ): ValidatedNec[String, Instrument] = {
+      (
+        validateISINCode(isinCode),
+        validateInstrumentName(name)
+      ).mapN { (isin, name) =>
+        Instrument(
+          isin,
+          name,
+          InstrumentType.CCY,
+          dateOfIssue,
+          None,
+          LotSize(1),
+          None,
+          None,
+          None
+        )
+      }
+    }
+
+    private[domain] def fixedIncome(
+        isinCode: String,
+        name: String,
+        dateOfIssue: Option[LocalDateTime],    // for non CCY
+        dateOfMaturity: Option[LocalDateTime], // for Fixed Income
+        lotSize: Option[Int],
+        couponRate: Option[Money],          // for Fixed Income
+        couponFrequency: Option[BigDecimal] // for Fixed Income
+    ): ValidatedNec[String, Instrument] = {
+      (
+        validateISINCode(isinCode),
+        validateInstrumentName(name),
+        validateLotSize(lotSize.getOrElse(0))
+      ).mapN { (isin, name, ls) =>
+        Instrument(
+          isin,
+          name,
+          InstrumentType.FixedIncome,
+          dateOfIssue,
+          dateOfMaturity,
+          ls,
+          None,
+          couponRate,
+          couponFrequency
+        )
+      }
+    }
+
+    private[domain] def equity(
+        isinCode: String,
+        name: String,
+        dateOfIssue: Option[LocalDateTime], // for non CCY
+        lotSize: Option[Int],
+        unitPrice: Option[BigDecimal] // for Equity
     ): ValidatedNec[String, Instrument] = {
       (
         validateISINCode(isinCode),
@@ -143,13 +209,13 @@ object instrument {
         Instrument(
           isin,
           name,
-          instrumentType,
+          InstrumentType.Equity,
           dateOfIssue,
-          dateOfMaturity,
+          None,
           ls,
           Some(uprice),
-          couponRate,
-          couponFrequency
+          None,
+          None
         )
       }
     }
