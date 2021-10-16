@@ -3,6 +3,7 @@ package http.routes
 
 import java.time.LocalDate
 import org.scalacheck.Gen
+import cats.data.NonEmptyList
 import cats.effect._
 import cats.syntax.all._
 import org.http4s.Method._
@@ -68,6 +69,7 @@ object AccountRoutesSuite extends HttpSuite {
 protected class TestAccountRepository extends AccountRepository[IO] {
   def query(no: AccountNo): IO[Option[Account]]                      = IO.pure(none[Account])
   def store(a: Account, upsert: Boolean = true): IO[Account]         = ???
+  def store(as: NonEmptyList[Account]): IO[Unit]                     = IO.pure(())
   def query(openedOn: LocalDate): IO[List[Account]]                  = IO.pure(List.empty[Account])
   def all: IO[List[Account]]                                         = IO.pure(List.empty[Account])
   def allClosed(closeDate: Option[LocalDate]): IO[List[Account]]     = IO.pure(List.empty[Account])

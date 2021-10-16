@@ -3,6 +3,7 @@ package repository
 
 import java.time.LocalDate
 
+import cats.data.NonEmptyList
 import cats.syntax.all._
 import cats.effect._
 
@@ -21,6 +22,9 @@ trait AccountRepository[F[_]] {
 
   /** store */
   def store(a: Account, upsert: Boolean = true): F[Account]
+
+  /** store many accounts */
+  def store(accounts: NonEmptyList[Account]): F[Unit]
 
   /** query by opened date */
   def query(openedOn: LocalDate): F[List[Account]]
@@ -57,6 +61,14 @@ object AccountRepository {
               cmd.execute(a).void.map(_ => a)
             }
         }
+
+      def store(accounts: NonEmptyList[Account]): F[Unit] = {
+        val accs       = accounts.toList
+        val insertMany = insertAccounts(accs)
+        postgres.use { session =>
+          session.prepare(insertMany).use(_.execute(accs)).void
+        }
+      }
 
       def query(openedOn: LocalDate): F[List[Account]] =
         postgres.use { session =>
@@ -195,6 +207,12 @@ private object AccountRepositorySQL {
     sql"""
         INSERT INTO accounts
         VALUES $accountEncoder
+       """.command
+
+  def insertAccounts(accounts: List[Account]): Command[accounts.type] =
+    sql"""
+        INSERT INTO accounts
+        VALUES ${accountEncoder.values.list(accounts)}
        """.command
 
   val updateAccount: Command[Account] =

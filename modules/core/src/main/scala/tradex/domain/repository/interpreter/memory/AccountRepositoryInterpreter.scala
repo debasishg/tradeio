@@ -7,6 +7,7 @@ import java.time.LocalDate
 import scala.collection.immutable.Map
 
 import cats._
+import cats.data.NonEmptyList
 import cats.syntax.all._
 import cats.effect.Ref
 import cats.effect.Sync
@@ -23,6 +24,9 @@ final class AccountRepositoryInterpreter[M[_]: Monad] private (
 
   def store(a: Account, upsert: Boolean = true): M[Account] =
     repo.update(_ + ((a.no.value.value, a))).map(_ => a)
+
+  def store(accounts: NonEmptyList[Account]): M[Unit] =
+    accounts.toList.foreach(acc => store(acc)).pure[M]
 
   def query(openedOn: LocalDate): M[List[Account]] =
     repo.get.map(_.values.filter(_.dateOfOpen.toLocalDate == openedOn).toList)

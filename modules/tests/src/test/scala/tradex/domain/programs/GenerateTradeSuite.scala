@@ -101,6 +101,7 @@ object GenerateTradeSuite extends SimpleIOSuite with Checkers {
 protected class TestAccountRepository extends AccountRepository[IO] {
   def query(no: AccountNo): IO[Option[Account]]                      = IO.pure(none[Account])
   def store(a: Account, upsert: Boolean = true): IO[Account]         = IO(a)
+  def store(as: NonEmptyList[Account]): IO[Unit]                     = IO.pure(())
   def query(openedOn: LocalDate): IO[List[Account]]                  = IO.pure(List.empty[Account])
   def all: IO[List[Account]]                                         = IO.pure(List.empty[Account])
   def allClosed(closeDate: Option[LocalDate]): IO[List[Account]]     = IO.pure(List.empty[Account])
