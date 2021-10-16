@@ -24,6 +24,7 @@ trait AccountRepository[F[_]] {
   def store(a: Account, upsert: Boolean = true): F[Account]
 
   /** store many accounts */
+  /* However if any of the inserts fail, the entire transaction is rolled back */
   def store(accounts: NonEmptyList[Account]): F[Unit]
 
   /** query by opened date */
@@ -209,11 +210,10 @@ private object AccountRepositorySQL {
         VALUES $accountEncoder
        """.command
 
-  def insertAccounts(accounts: List[Account]): Command[accounts.type] =
-    sql"""
-        INSERT INTO accounts
-        VALUES ${accountEncoder.values.list(accounts)}
-       """.command
+  def insertAccounts(accounts: List[Account]): Command[accounts.type] = {
+    val accountEncoderMany = accountEncoder.list(accounts)
+    sql"INSERT INTO accounts VALUES $accountEncoderMany".command
+  }
 
   val updateAccount: Command[Account] =
     sql"""

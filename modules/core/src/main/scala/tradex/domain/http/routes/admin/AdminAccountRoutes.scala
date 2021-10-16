@@ -7,6 +7,7 @@ import http.auth.users.AdminUser
 import repository.AccountRepository
 
 import cats.MonadThrow
+import cats.data.NonEmptyList
 import cats.syntax.all._
 import io.circe.JsonObject
 import io.circe.syntax._
@@ -23,24 +24,28 @@ final case class AdminAccountRoutes[F[_]: JsonDecoder: MonadThrow](
 
   private val httpRoutes: AuthedRoutes[AdminUser, F] =
     AuthedRoutes.of {
-      // Create new account
+      // Create new accounts
+      // If one create fails, the entire transaction is rolled back
       case ar @ POST -> Root as _ =>
-        ar.req.decodeR[CreateAccount] { account =>
-          account.toDomain.fold(
-            // domain validation failed
-            exs => BadRequest(exs.toList.mkString("/")),
-            tac =>
-              accountRepository
-                .store(tac)
-                .flatMap { acc =>
-                  Created(JsonObject.singleton("account", acc.asJson))
-                }
-                .recoverWith {
-                  case th: Throwable => {
-                    InternalServerError(th.getMessage())
+        ar.req.decodeR[List[CreateAccount]] { accounts =>
+          accounts
+            .map(_.toDomain)
+            .sequence
+            .fold(
+              // domain validation failed
+              exs => BadRequest(exs.toList.mkString("/")),
+              tacs =>
+                accountRepository
+                  .store(NonEmptyList.fromList(tacs).get)
+                  .flatMap { _ =>
+                    Created(JsonObject.singleton("accounts", "Ok".asJson))
                   }
-                }
-          )
+                  .recoverWith {
+                    case th: Throwable => {
+                      InternalServerError(th.getMessage())
+                    }
+                  }
+            )
         }
     }
 

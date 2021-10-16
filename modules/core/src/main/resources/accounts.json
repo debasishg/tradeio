@@ -1,2 +1,4 @@
-{"no":"ibm-123","name":"ibm-account-no-123","openDate":"2021-10-15T15:38:18.524748","closeDate":null,"baseCcy":"USD","tradingCcy":"USD","settlementCcy":null,"accountType":{"Trading":{}}}
-
+[
+  {"no":"ibm-234","name":"ibm-account-no-234","openDate":"2021-10-15T15:38:18.524748","closeDate":null,"baseCcy":"USD","tradingCcy":"USD","settlementCcy":null,"accountType":{"Trading":{}}},
+  {"no":"nri-654","name":"nri-account-no-654","openDate":"2021-10-15T15:38:18.524748","closeDate":null,"baseCcy":"USD","tradingCcy":"JPY","settlementCcy":null,"accountType":{"Trading":{}}}
+]
