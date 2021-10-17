@@ -206,6 +206,24 @@ object generators {
     None
   )
 
+  val createEquityGen: Gen[CreateInstrument] = {
+    for {
+      isinName <- isinNamePairGen
+      up       <- unitPriceGen
+      ls       <- lotSizeGen
+    } yield CreateInstrument(
+      isinName._1.value.value,
+      isinName._2.value.value,
+      InstrumentType.Equity,
+      Some(LocalDateTime.now),
+      None,
+      ls.value.value,
+      Some(up.value.value),
+      None,
+      None
+    )
+  }
+
   val tradeGen = for {
     no   <- accountNoGen
     isin <- isinGen
