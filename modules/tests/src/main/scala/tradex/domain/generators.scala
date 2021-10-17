@@ -9,6 +9,8 @@ import model.instrument._
 import model.order._
 import model.trade._
 import model.market._
+import model.user._
+import http.auth.users.{ User => AuthUser, _ }
 import NewtypeRefinedOps._
 
 import eu.timepit.refined.scalacheck.string._
@@ -33,6 +35,24 @@ object generators {
   def idGen[A](f: UUID => A): Gen[A] =
     Gen.uuid.map(f)
 
+  val userIdGen: Gen[UserId] =
+    idGen(UserId.apply)
+
+  val userNameGen: Gen[UserName] =
+    nesGen(s => UserName.apply(NonEmptyString.unsafeFrom(s)))
+
+  val userGen: Gen[AuthUser] =
+    for {
+      i <- userIdGen
+      n <- userNameGen
+    } yield AuthUser(i, n)
+
+  val adminUserGen: Gen[AdminUser] =
+    userGen.map(AdminUser(_))
+
+  val commonUserGen: Gen[CommonUser] =
+    userGen.map(CommonUser(_))
+
   val accountNoStringGen: Gen[String] =
     Gen
       .chooseNum(5, 12)
@@ -46,6 +66,13 @@ object generators {
   )
 
   val accountNameGen: Gen[AccountName] = arbitrary[NonEmptyString].map(AccountName(_))
+
+  val accountNameStringGen: Gen[String] =
+    Gen
+      .chooseNum(10, 15)
+      .flatMap { n =>
+        Gen.buildableOfN[String, Char](n, Gen.alphaChar)
+      }
 
   def openCloseDateGen: Gen[(LocalDateTime, LocalDateTime)] = for {
     o <- Gen.oneOf(List(LocalDateTime.now, LocalDateTime.now.plusDays(2)))
@@ -83,6 +110,16 @@ object generators {
   } yield Account(no, nm, oc._1, Some(oc._2), tp, bc, tc, sc)
 
   def accountGen: Gen[Account] = Gen.oneOf(tradingAccountGen, settlementAccountGen, bothAccountGen)
+
+  def tradingCreateAccountGen: Gen[CreateAccount] = for {
+    no <- accountNoStringGen
+    nm <- accountNameStringGen
+    oc <- openCloseDateGen
+    tp <- Gen.const(AccountType.Trading)
+    bc <- Gen.const(USD)
+    tc <- Gen.oneOf(List(USD, JPY)).map(Some(_))
+    sc <- Gen.const(None)
+  } yield CreateAccount(no, nm, Some(oc._1), None, bc, tc, sc, tp)
 
   def isinGen: Gen[ISINCode] = {
     val appleISINStr = "US0378331005"
