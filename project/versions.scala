@@ -28,7 +28,7 @@ object Versions {
   val javaxCryptoVersion      = "1.0.1"
   val redis4catsVersion       = "1.0.0"
   val organizeImportsVersion  = "0.5.0"
-  val weaverVersion           = "0.7.6"
+  val weaverVersion           = "0.7.7"
   val betterMonadicForVersion = "0.3.1"
   val semanticDBVersion       = "4.4.28"
 }
