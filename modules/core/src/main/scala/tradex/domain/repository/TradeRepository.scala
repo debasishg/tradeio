@@ -134,8 +134,8 @@ private object TradeRepositorySQL {
   val buySell = enum(BuySell, Type("buysell"))
 
   val tradeTaxFeeDecoder: Decoder[Trade] =
-    (accountNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp ~ timestamp.opt ~ money.opt ~ taxFeeId ~ money ~ tradeRefNo)
-      .map { case ano ~ isin ~ mkt ~ bs ~ up ~ qty ~ td ~ vdOpt ~ naOpt ~ tx ~ amt ~ ref =>
+    (accountNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp ~ timestamp.opt ~ userId.opt ~ money.opt ~ taxFeeId ~ money ~ tradeRefNo)
+      .map { case ano ~ isin ~ mkt ~ bs ~ up ~ qty ~ td ~ vdOpt ~ uidOpt ~ naOpt ~ tx ~ amt ~ ref =>
         (
           Trade(
             ano,
@@ -147,6 +147,7 @@ private object TradeRepositorySQL {
             qty,
             td,
             vdOpt,
+            uidOpt,
             List(TradeTaxFee(tx, amt)),
             naOpt
           )
@@ -154,9 +155,9 @@ private object TradeRepositorySQL {
       }
 
   val tradeEncoder: Encoder[Trade] =
-    (tradeRefNo ~ accountNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp ~ timestamp.opt ~ money.opt).values
+    (tradeRefNo ~ accountNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp ~ timestamp.opt ~ userId.opt ~ money.opt).values
       .contramap((t: Trade) =>
-        t.refNo ~ t.accountNo ~ t.isin ~ t.market ~ t.buySell ~ t.unitPrice ~ t.quantity ~ t.tradeDate ~ t.valueDate ~ t.netAmount
+        t.refNo ~ t.accountNo ~ t.isin ~ t.market ~ t.buySell ~ t.unitPrice ~ t.quantity ~ t.tradeDate ~ t.valueDate ~ t.userId ~ t.netAmount
       )
 
   def taxFeeEncoder(refNo: TradeReferenceNo): Encoder[TradeTaxFee] =
@@ -176,6 +177,7 @@ private object TradeRepositorySQL {
         quantity,
         tradeDate,
         valueDate,
+        userId,
         netAmount
       )
       VALUES $tradeEncoder
@@ -206,6 +208,7 @@ private object TradeRepositorySQL {
           , quantity
           , tradeDate
           , valueDate
+          , userId
           , netAmount
         )
         VALUES $enc""".command
@@ -221,6 +224,7 @@ private object TradeRepositorySQL {
                t.quantity, 
                t.tradeDate, 
                t.valueDate, 
+               t.userId,
                t.netAmount,
                f.taxFeeId,
                f.amount,
@@ -241,6 +245,7 @@ private object TradeRepositorySQL {
                t.quantity, 
                t.tradeDate, 
                t.valueDate, 
+               t.userId,
                t.netAmount,
                f.taxFeeId,
                f.amount,
@@ -260,6 +265,7 @@ private object TradeRepositorySQL {
                t.quantity, 
                t.tradeDate, 
                t.valueDate, 
+               t.userId,
                t.netAmount,
                f.taxFeeId,
                f.amount,

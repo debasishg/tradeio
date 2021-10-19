@@ -15,6 +15,7 @@ import model.market._
 import model.order._
 import model.trade._
 import model.balance._
+import model.user._
 
 import services.trading._
 import services.accounting._
@@ -32,7 +33,8 @@ final class Programs[F[_]: MonadThrowable] private (
 ) {
   def generateTrade(
       trading: Trading[F],
-      accounting: Accounting[F]
+      accounting: Accounting[F],
+      userId: UserId
   ): F[(NonEmptyList[Trade], NonEmptyList[Balance])] = {
     import trading._
     import accounting._
@@ -44,7 +46,7 @@ final class Programs[F[_]: MonadThrowable] private (
     for {
       orders     <- orders(csvOrder)
       executions <- execute(orders, Market.NewYork, brokerAccountNo)
-      trades     <- allocate(executions, clientAccountNos)
+      trades     <- allocate(executions, clientAccountNos, userId)
       balances   <- postBalance(trades)
     } yield (trades, balances)
   }

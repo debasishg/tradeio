@@ -11,6 +11,7 @@ import io.chrisdavenport.cormorant.implicits._
 import model.order._
 import model.trade._
 import model.balance._
+import model.user.UserId
 
 import services.trading._
 import services.accounting._
@@ -20,7 +21,8 @@ final case class GenerateTrade[F[_]: MonadThrowable] private (
     accounting: Accounting[F]
 ) {
   def generate(
-      frontOfficeInput: GenerateTradeFrontOfficeInput
+      frontOfficeInput: GenerateTradeFrontOfficeInput,
+      userId: UserId
   ): F[(NonEmptyList[Trade], NonEmptyList[Balance])] = {
     import trading._
     import accounting._
@@ -32,7 +34,7 @@ final case class GenerateTrade[F[_]: MonadThrowable] private (
         frontOfficeInput.market,
         frontOfficeInput.brokerAccountNo
       )
-      trades   <- allocate(executions, frontOfficeInput.clientAccountNos)
+      trades   <- allocate(executions, frontOfficeInput.clientAccountNos, userId)
       balances <- postBalance(trades)
     } yield (trades, balances)
 

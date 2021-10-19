@@ -13,6 +13,7 @@ import model.order._
 import model.market._
 import model.execution._
 import model.balance._
+import model.user._
 import generators._
 import services.trading.Trading
 import services.accounting.Accounting
@@ -31,10 +32,11 @@ object GenerateTradeSuite extends SimpleIOSuite with Checkers {
   val testAccounting = Accounting.make[IO](testBalanceRepository)
 
   val genTrade = programs.GenerateTrade[IO](testTrading, testAccounting)
+  val userId   = UserId(java.util.UUID.randomUUID())
 
   test("Successful generation of trades") {
     forall(generateTradeFrontOfficeInputGen) { frontOfficeInput =>
-      genTrade.generate(frontOfficeInput).flatMap { case (trades, balances) =>
+      genTrade.generate(frontOfficeInput, userId).flatMap { case (trades, balances) =>
         expect.apply(trades.size > 0)
         expect.apply(balances.size > 0)
         expect.eql(trades.size, balances.size)
@@ -50,7 +52,7 @@ object GenerateTradeSuite extends SimpleIOSuite with Checkers {
         frontOfficeOrders = frontOfficeInput.frontOfficeOrders.map(forder => forder.copy(accountNo = "123"))
       )
       genTrade
-        .generate(invalidInput)
+        .generate(invalidInput, userId)
         .attempt
         .map {
           case Left(Trading.TradeGenerationError(_)) => success
@@ -68,7 +70,7 @@ object GenerateTradeSuite extends SimpleIOSuite with Checkers {
           frontOfficeInput.frontOfficeOrders.map(forder => forder.copy(isin = "123", qty = BigDecimal.valueOf(-10)))
       )
       genTrade
-        .generate(invalidInput)
+        .generate(invalidInput, userId)
         .attempt
         .map {
           case Left(Trading.TradeGenerationError(_)) => success
@@ -88,7 +90,7 @@ object GenerateTradeSuite extends SimpleIOSuite with Checkers {
     val genTradeInvalidStore = programs.GenerateTrade[IO](testInvalidTrading, testAccounting)
     forall(generateTradeFrontOfficeInputGen) { frontOfficeInput =>
       genTradeInvalidStore
-        .generate(frontOfficeInput)
+        .generate(frontOfficeInput, userId)
         .attempt
         .map {
           case Left(Trading.TradeGenerationError(_)) => success

@@ -30,13 +30,11 @@ final case class GenerateTradeRoutes[F[_]: MonadThrow: JsonDecoder](
       ar.req
         .decodeR[trade.GenerateTradeFrontOfficeInput] { tradeParam =>
           GenerateTrade(trading, accounting)
-            .generate(tradeParam)
+            .generate(tradeParam, user.value.userId)
             .flatMap(Created(_))
             .recoverWith {
               case e: TradingError => BadRequest(e.cause)
-              case th: Throwable => {
-                BadRequest(th.getMessage())
-              }
+              case th: Throwable   => BadRequest(th.getMessage())
             }
         }
     }

@@ -233,7 +233,8 @@ object generators {
     qty  <- quantityGen
     td   <- Gen.oneOf(List(LocalDateTime.now, LocalDateTime.now.plusDays(2)))
     vd   <- Gen.const(None)
-  } yield Trade.trade[IO](no, isin, mkt, bs, up, qty, td, vd)
+    uid  <- userIdGen
+  } yield Trade.trade[IO](no, isin, mkt, bs, up, qty, td, vd, Some(uid))
 
   val tradeForTokyoMarketGen = for {
     no   <- accountNoGen
@@ -244,7 +245,8 @@ object generators {
     qty  <- quantityGen
     td   <- Gen.oneOf(List(LocalDateTime.now, LocalDateTime.now.plusDays(2)))
     vd   <- Gen.const(None)
-  } yield Trade.trade[IO](no, isin, mkt, bs, up, qty, td, vd)
+    uid  <- userIdGen
+  } yield Trade.trade[IO](no, isin, mkt, bs, up, qty, td, vd, Some(uid))
 
   val tradeWithTaxFeeGen = for {
     no   <- accountNoGen
@@ -255,7 +257,8 @@ object generators {
     qty  <- quantityGen
     td   <- Gen.oneOf(List(LocalDateTime.now, LocalDateTime.now.plusDays(2)))
     vd   <- Gen.const(None)
-  } yield Trade.trade[IO](no, isin, mkt, bs, up, qty, td, vd).map(Trade.withTaxFee)
+    uid  <- userIdGen
+  } yield Trade.trade[IO](no, isin, mkt, bs, up, qty, td, vd, Some(uid)).map(Trade.withTaxFee)
 
   def tradeWithTaxFeeForAccountAndInstrumentGen(no: AccountNo, isin: ISINCode) = for {
     mkt <- Gen.oneOf(Market.NewYork, Market.Tokyo, Market.HongKong)
@@ -264,7 +267,8 @@ object generators {
     qty <- quantityGen
     td  <- Gen.oneOf(List(LocalDateTime.now, LocalDateTime.now.plusDays(2)))
     vd  <- Gen.const(None)
-  } yield Trade.trade[IO](no, isin, mkt, bs, up, qty, td, vd).map(Trade.withTaxFee)
+    uid <- userIdGen
+  } yield Trade.trade[IO](no, isin, mkt, bs, up, qty, td, vd, Some(uid)).map(Trade.withTaxFee)
 
   val frontOfficeOrderGen = for {
     ano  <- accountNoGen

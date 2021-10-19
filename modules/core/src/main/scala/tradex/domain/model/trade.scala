@@ -16,6 +16,7 @@ import account._
 import instrument._
 import order._
 import market._
+import user.UserId
 import io.estatico.newtype.macros.newtype
 import derevo.cats._
 import derevo.circe.magnolia._
@@ -104,6 +105,7 @@ object trade {
       quantity: Quantity,
       tradeDate: LocalDateTime = today,
       valueDate: Option[LocalDateTime] = None,
+      userId: Option[UserId] = None,
       taxFees: List[TradeTaxFee] = List.empty,
       netAmount: Option[Money] = None
   )
@@ -123,7 +125,8 @@ object trade {
         unitPrice: UnitPrice,
         quantity: Quantity,
         tradeDate: LocalDateTime = today,
-        valueDate: Option[LocalDateTime] = None
+        valueDate: Option[LocalDateTime] = None,
+        userId: Option[UserId] = None
     ): F[Trade] = {
       ID.make[F, TradeReferenceNo]
         .map { refNo =>
@@ -136,7 +139,8 @@ object trade {
             unitPrice,
             quantity,
             tradeDate,
-            valueDate
+            valueDate,
+            userId
           )
         }
     }

@@ -7,6 +7,7 @@ import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import dev.profunktor.redis4cats.log4cats._
 
+import model.user._
 import resources.AppResources
 import repository._
 import services.trading._
@@ -34,7 +35,8 @@ object Main extends IOApp.Simple {
                       TradeRepository.make[IO](res.postgres)
                     ),
                     Accounting
-                      .make[IO](BalanceRepository.make[IO](res.postgres))
+                      .make[IO](BalanceRepository.make[IO](res.postgres)),
+                    UserId(java.util.UUID.randomUUID())
                   )
                 }
             }

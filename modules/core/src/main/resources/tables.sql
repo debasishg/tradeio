@@ -69,7 +69,8 @@ CREATE TABLE IF NOT EXISTS trades (
     quantity decimal NOT NULL,
     tradeDate timestamp NOT NULL,
     valueDate timestamp,
-    netAmount decimal
+    netAmount decimal,
+    userId uuid NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS tradeTaxFees (

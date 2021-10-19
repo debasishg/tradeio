@@ -12,6 +12,7 @@ import model.account._
 import model.execution._
 import model.order.{ FrontOfficeOrder, Order, Quantity }
 import model.trade._
+import model.user._
 import model.market.Market
 import scala.util.control.NoStackTrace
 import repository._
@@ -89,7 +90,8 @@ trait Trading[F[_]] {
     */
   def allocate(
       executions: NonEmptyList[Execution],
-      clientAccounts: NonEmptyList[AccountNo]
+      clientAccounts: NonEmptyList[AccountNo],
+      userId: UserId
   ): F[NonEmptyList[Trade]]
 }
 
@@ -209,7 +211,8 @@ object Trading {
 
       def allocate(
           executions: NonEmptyList[Execution],
-          clientAccounts: NonEmptyList[AccountNo]
+          clientAccounts: NonEmptyList[AccountNo],
+          userId: UserId
       ): F[NonEmptyList[Trade]] = {
 
         val anoExes: NonEmptyList[(AccountNo, Execution)] = for {
