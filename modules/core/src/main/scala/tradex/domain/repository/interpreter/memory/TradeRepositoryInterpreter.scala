@@ -19,7 +19,7 @@ import model.account._
 
 // Constructor private for the interpreter to prevent the Ref from leaking
 // access through smart constructor below
-final class TradeRepositoryInterpreter[M[_]: Monad] private (
+class TradeRepositoryInterpreter[M[_]: Monad] protected (
     repo: Ref[M, Map[(String, ISINCode, TradeReferenceNo), Trade]]
 ) extends TradeRepository[M] {
   def query(accountNo: AccountNo, date: LocalDate): M[List[Trade]] =
