@@ -9,15 +9,14 @@ import scala.collection.immutable.Map
 import cats._
 import cats.data.NonEmptyList
 import cats.syntax.all._
-import cats.effect.Ref
-import cats.effect.Sync
+import cats.effect._
 
 import model.instrument.ISINCode
 import model.trade._
 import model.market._
 import model.account._
 
-// Constructor private for the interpreter to prevent the Ref from leaking
+// Constructor protected for the interpreter to prevent the Ref from leaking
 // access through smart constructor below
 class TradeRepositoryInterpreter[M[_]: Monad] protected (
     repo: Ref[M, Map[(String, ISINCode, TradeReferenceNo), Trade]]

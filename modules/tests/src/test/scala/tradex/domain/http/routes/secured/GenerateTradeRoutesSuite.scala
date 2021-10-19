@@ -18,7 +18,6 @@ import generators._
 
 import model.instrument._
 import model.trade._
-
 import services.trading._
 import services.accounting._
 import repository.interpreter.memory._
