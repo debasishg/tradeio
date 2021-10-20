@@ -13,7 +13,6 @@ import model.order._
 import model.market._
 import model.execution._
 import model.balance._
-import model.user._
 import generators._
 import services.trading.Trading
 import services.accounting.Accounting
@@ -32,10 +31,14 @@ object GenerateTradeSuite extends SimpleIOSuite with Checkers {
   val testAccounting = Accounting.make[IO](testBalanceRepository)
 
   val genTrade = programs.GenerateTrade[IO](testTrading, testAccounting)
-  val userId   = UserId(java.util.UUID.randomUUID())
 
   test("Successful generation of trades") {
-    forall(generateTradeFrontOfficeInputGen) { frontOfficeInput =>
+    val gen = for {
+      g <- generateTradeFrontOfficeInputGen
+      u <- userIdGen
+    } yield (g, u)
+
+    forall(gen) { case (frontOfficeInput, userId) =>
       genTrade.generate(frontOfficeInput, userId).flatMap { case (trades, balances) =>
         expect.apply(trades.size > 0)
         expect.apply(balances.size > 0)
@@ -46,7 +49,12 @@ object GenerateTradeSuite extends SimpleIOSuite with Checkers {
   }
 
   test("Failed generation of trades with invalid account number from front office") {
-    forall(generateTradeFrontOfficeInputGen) { frontOfficeInput =>
+    val gen = for {
+      g <- generateTradeFrontOfficeInputGen
+      u <- userIdGen
+    } yield (g, u)
+
+    forall(gen) { case (frontOfficeInput, userId) =>
       // change account number to invalid ones
       val invalidInput = frontOfficeInput.copy(
         frontOfficeOrders = frontOfficeInput.frontOfficeOrders.map(forder => forder.copy(accountNo = "123"))
@@ -62,7 +70,12 @@ object GenerateTradeSuite extends SimpleIOSuite with Checkers {
   }
 
   test("Failed generation of trades with invalid arguments from front office") {
-    forall(generateTradeFrontOfficeInputGen) { frontOfficeInput =>
+    val gen = for {
+      g <- generateTradeFrontOfficeInputGen
+      u <- userIdGen
+    } yield (g, u)
+
+    forall(gen) { case (frontOfficeInput, userId) =>
       // change multiple parameters to invalid ones
       // invalid isin and invalid quantity
       val invalidInput = frontOfficeInput.copy(
@@ -88,7 +101,13 @@ object GenerateTradeSuite extends SimpleIOSuite with Checkers {
         new TestTradeRepositoryWithFailedStore
       )
     val genTradeInvalidStore = programs.GenerateTrade[IO](testInvalidTrading, testAccounting)
-    forall(generateTradeFrontOfficeInputGen) { frontOfficeInput =>
+
+    val gen = for {
+      g <- generateTradeFrontOfficeInputGen
+      u <- userIdGen
+    } yield (g, u)
+
+    forall(gen) { case (frontOfficeInput, userId) =>
       genTradeInvalidStore
         .generate(frontOfficeInput, userId)
         .attempt

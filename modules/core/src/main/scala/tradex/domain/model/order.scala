@@ -3,7 +3,6 @@ package model
 
 import java.time.LocalDateTime
 import java.time.Instant
-import java.util.UUID
 
 import cats.data.NonEmptyList
 import cats.data.ValidatedNec
@@ -79,6 +78,7 @@ object order {
   )
 
   object Order {
+    private def makeOrderNo(accountNo: String, date: Instant): String = s"$accountNo-${date.hashCode}"
 
     /** Domain validation for `FrontOfficeOrder` is done here. Creates records after validation
       */
@@ -88,7 +88,7 @@ object order {
       frontOfficeOrders.toList
         .groupBy(_.accountNo)
         .map { case (ano, forders) =>
-          makeOrder(UUID.randomUUID.toString, today, ano, forders)
+          makeOrder(makeOrderNo(ano, Instant.now), today, ano, forders)
         }
         .toList
         .sequence
