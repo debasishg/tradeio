@@ -234,7 +234,9 @@ object generators {
     td   <- Gen.oneOf(List(LocalDateTime.now, LocalDateTime.now.plusDays(2)))
     vd   <- Gen.const(None)
     uid  <- userIdGen
-  } yield Trade.trade[IO](no, isin, mkt, bs, up, qty, td, vd, Some(uid))
+  } yield Trade
+    .trade[IO](no, isin, mkt, bs, up, qty, td, vd, Some(uid))
+    .map(_.fold(e => throw new Exception(e.toString), identity))
 
   val tradeForTokyoMarketGen = for {
     no   <- accountNoGen
@@ -246,7 +248,9 @@ object generators {
     td   <- Gen.oneOf(List(LocalDateTime.now, LocalDateTime.now.plusDays(2)))
     vd   <- Gen.const(None)
     uid  <- userIdGen
-  } yield Trade.trade[IO](no, isin, mkt, bs, up, qty, td, vd, Some(uid))
+  } yield Trade
+    .trade[IO](no, isin, mkt, bs, up, qty, td, vd, Some(uid))
+    .map(_.fold(e => throw new Exception(e.toString), identity))
 
   val tradeWithTaxFeeGen = for {
     no   <- accountNoGen
@@ -258,7 +262,23 @@ object generators {
     td   <- Gen.oneOf(List(LocalDateTime.now, LocalDateTime.now.plusDays(2)))
     vd   <- Gen.const(None)
     uid  <- userIdGen
-  } yield Trade.trade[IO](no, isin, mkt, bs, up, qty, td, vd, Some(uid)).map(Trade.withTaxFee)
+  } yield Trade
+    .trade[IO](no, isin, mkt, bs, up, qty, td, vd, Some(uid))
+    .map(_.fold(e => throw new Exception(e.toString), t => Trade.withTaxFee(t)))
+
+  val tradeWithInvalidTradeValueDateGen = for {
+    no   <- accountNoGen
+    isin <- isinGen
+    mkt  <- Gen.oneOf(Market.NewYork, Market.Tokyo, Market.HongKong)
+    bs   <- Gen.oneOf(BuySell.Buy, BuySell.Sell)
+    up   <- unitPriceGen
+    qty  <- quantityGen
+    td   <- Gen.oneOf(List(LocalDateTime.now, LocalDateTime.now.plusDays(2)))
+    vd   <- Gen.const(LocalDateTime.now.minusDays(10))
+    uid  <- userIdGen
+  } yield Trade
+    .trade[IO](no, isin, mkt, bs, up, qty, td, Some(vd), Some(uid))
+    .map(_.fold(e => throw new Exception(e.toString), identity))
 
   def tradeWithTaxFeeForAccountAndInstrumentGen(no: AccountNo, isin: ISINCode) = for {
     mkt <- Gen.oneOf(Market.NewYork, Market.Tokyo, Market.HongKong)
@@ -268,7 +288,9 @@ object generators {
     td  <- Gen.oneOf(List(LocalDateTime.now, LocalDateTime.now.plusDays(2)))
     vd  <- Gen.const(None)
     uid <- userIdGen
-  } yield Trade.trade[IO](no, isin, mkt, bs, up, qty, td, vd, Some(uid)).map(Trade.withTaxFee)
+  } yield Trade
+    .trade[IO](no, isin, mkt, bs, up, qty, td, vd, Some(uid))
+    .map(_.fold(e => throw new Exception(e.toString), t => Trade.withTaxFee(t)))
 
   val frontOfficeOrderGen = for {
     ano  <- accountNoGen

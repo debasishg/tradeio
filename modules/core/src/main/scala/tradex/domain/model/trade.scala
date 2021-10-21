@@ -6,6 +6,7 @@ import java.util.UUID
 
 import cats.Functor
 import cats.data.NonEmptyList
+import cats.data.ValidatedNec
 import cats.syntax.all._
 
 import enumeratum._
@@ -127,22 +128,34 @@ object trade {
         tradeDate: LocalDateTime = today,
         valueDate: Option[LocalDateTime] = None,
         userId: Option[UserId] = None
-    ): F[Trade] = {
+    ): F[ValidatedNec[String, Trade]] = {
       ID.make[F, TradeReferenceNo]
         .map { refNo =>
-          Trade(
-            accountNo,
-            isin,
-            refNo,
-            market,
-            buySell,
-            unitPrice,
-            quantity,
-            tradeDate,
-            valueDate,
-            userId
-          )
+          validateTradeValueDate(tradeDate, valueDate).map { case (td, maybeVd) =>
+            Trade(
+              accountNo,
+              isin,
+              refNo,
+              market,
+              buySell,
+              unitPrice,
+              quantity,
+              td,
+              maybeVd,
+              userId
+            )
+          }
         }
+    }
+
+    private def validateTradeValueDate(
+        td: LocalDateTime,
+        vd: Option[LocalDateTime]
+    ): ValidatedNec[String, (LocalDateTime, Option[LocalDateTime])] = {
+      vd.map { v =>
+        if (v.isBefore(td)) s"Value date $v cannot be earlier than trade date $td".invalidNec
+        else (td, vd).validNec
+      }.getOrElse((td, vd).validNec)
     }
 
     def withTaxFee(trade: Trade): Trade = {

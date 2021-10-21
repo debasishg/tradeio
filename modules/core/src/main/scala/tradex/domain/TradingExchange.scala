@@ -376,14 +376,16 @@ object Exchange {
             val qty = validate[Quantity](q)
               .fold(errs => throw new Exception(errs.toString), identity)
 
-            Trade.trade[F](
-              accountNo,
-              execution.isin,
-              execution.market,
-              execution.buySell,
-              execution.unitPrice,
-              qty
-            )
+            Trade
+              .trade[F](
+                accountNo,
+                execution.isin,
+                execution.market,
+                execution.buySell,
+                execution.unitPrice,
+                qty
+              )
+              .map(_.fold(errs => throw new Exception(errs.toString), identity))
           }
 
           tradesNoTaxFee.map(_.map(Trade.withTaxFee))

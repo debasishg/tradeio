@@ -10,7 +10,7 @@ import generators._
 
 object TradeSuite extends SimpleIOSuite with Checkers {
 
-  test("Trade Generation") {
+  test("Trade Generation succeeds") {
     forall(tradeGen) {
       _.flatMap { trd =>
         expect.eql(BuySell.Buy, trd.buySell) or expect.eql(BuySell.Sell, trd.buySell)
@@ -22,7 +22,7 @@ object TradeSuite extends SimpleIOSuite with Checkers {
     }
   }
 
-  test("Trade with TaxFee and Net Amount Generation") {
+  test("Trade with TaxFee and Net Amount Generation succeeds") {
     forall(tradeWithTaxFeeGen) {
       _.flatMap { trd =>
         expect.eql(BuySell.Buy, trd.buySell)
@@ -31,6 +31,14 @@ object TradeSuite extends SimpleIOSuite with Checkers {
         expect(trd.taxFees.isEmpty).failFast
         IO(success)
       }
+    }
+  }
+
+  test("Trade Generation fails due to invalid trade date / value date combination") {
+    forall(tradeWithInvalidTradeValueDateGen) {
+      _.flatMap { _ =>
+        IO(failure("Should fail with trade date / value date validation failure"))
+      }.handleError(th => expect.all(th.getMessage().contains("cannot be earlier than")))
     }
   }
 }
