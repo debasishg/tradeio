@@ -301,8 +301,17 @@ object generators {
     bs   <- Gen.oneOf(BuySell.Buy, BuySell.Sell)
   } yield FrontOfficeOrder(ano.value.value, dt, isin.value.value, qty.value.value, up.value.value, bs.entryName)
 
-  val generateTradeFrontOfficeInputGen = for {
-    orders         <- Gen.nonEmptyListOf(frontOfficeOrderGen)
+  val frontOfficeOrderWithInvalidQuantityGen = for {
+    ano  <- accountNoGen
+    dt   <- Gen.oneOf(Instant.now, Instant.now.plus(2, java.time.temporal.ChronoUnit.DAYS))
+    isin <- isinGen
+    qty  <- quantityGen
+    up   <- unitPriceGen
+    bs   <- Gen.oneOf(BuySell.Buy, BuySell.Sell)
+  } yield FrontOfficeOrder(ano.value.value, dt, isin.value.value, -qty.value.value, up.value.value, bs.entryName)
+
+  def generateTradeFrontOfficeInputGen(foOrderGen: Gen[FrontOfficeOrder]) = for {
+    orders         <- Gen.nonEmptyListOf(foOrderGen)
     mkt            <- Gen.oneOf(Market.NewYork, Market.Tokyo, Market.HongKong)
     brkAccountNo   <- accountNoGen
     clientAccounts <- Gen.nonEmptyListOf(accountNoGen)

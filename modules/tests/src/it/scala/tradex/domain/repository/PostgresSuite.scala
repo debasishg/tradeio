@@ -191,10 +191,70 @@ object PostgresSuite extends ResourceSuite {
             case Left(th: Throwable) => failure(th.getMessage())
             case Right((trades, balances)) => {
               expect.all(trades.size > 0, balances.size > 0)
-              expect.eql(trades.toList.map(_.netAmount.get.amount).sum, balances.toList.map(_.amount.amount).sum)
+              val totalTradedAmount = trades.toList.map(_.netAmount.get.amount).sum
+              val totalBalanceChange = balances.toList.map(_.amount.amount).sum
+              expect.eql(totalTradedAmount, totalBalanceChange)
               success
             }
           }
+      }
+    }
+  }
+
+  test("Generation of trades with input from front office fails") { postgres =>
+    val a = AccountRepository.make[IO](postgres)
+    val i = InstrumentRepository.make[IO](postgres)
+    val e = ExecutionRepository.make[IO](postgres)
+    val o = OrderRepository.make[IO](postgres)
+    val t = TradeRepository.make[IO](postgres)
+    val b = BalanceRepository.make[IO](postgres)
+
+    val accountsInstruments: IO[(List[AccountNo], List[ISINCode])] = for {
+      _ <- forall(tradingAccountGen) { acc =>
+        for {
+          _       <- a.store(acc)
+          fetched <- a.query(acc.no)
+        } yield expect.all(fetched.isDefined, fetched.count(_.no === acc.no) === 1)
+      }
+      _ <- forall(equityGen) { ins =>
+        for {
+          _       <- i.store(ins)
+          fetched <- i.query(ins.isinCode)
+        } yield expect.all(fetched.isDefined, fetched.count(_.isinCode === ins.isinCode) === 1)
+      }
+      acc <- a.all
+      ins <- i.queryByInstrumentType(InstrumentType.Equity)
+    } yield (acc.map(_.no), ins.map(_.isinCode))
+
+    val testTrading =
+      Trading.make[IO](a, e, o, t)
+
+    val testAccounting = Accounting.make[IO](b)
+
+    val genTrade = programs.GenerateTrade[IO](testTrading, testAccounting)
+
+    accountsInstruments.flatMap { ais =>
+      val gen = for {
+        u <- commonUserGen
+        t <- generateTradeFrontOfficeInputGenWithAccountAndInstrument(ais._1, ais._2)
+      } yield (u, t)
+
+      forall(gen) { case (user, foTrades) => {
+        val invalidInput = foTrades.copy(
+          frontOfficeOrders =
+            foTrades.frontOfficeOrders.map(forder => forder.copy(isin = "123", qty = BigDecimal.valueOf(-10)))
+        )
+        genTrade
+          .generate(invalidInput, user.value.userId)
+          .attempt
+          .map {
+            case Left(err: Trading.TradingError) => 
+              expect.all(err.cause.contains("Quantity has to be positive"))
+              success
+            case Left(th: Throwable) => failure(th.getMessage())
+            case Right(_) => failure("Trade generation must fail owing to invalid input")
+          }
+        }
       }
     }
   }

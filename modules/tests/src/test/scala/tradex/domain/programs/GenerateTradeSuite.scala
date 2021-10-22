@@ -34,7 +34,7 @@ object GenerateTradeSuite extends SimpleIOSuite with Checkers {
 
   test("Successful generation of trades") {
     val gen = for {
-      g <- generateTradeFrontOfficeInputGen
+      g <- generateTradeFrontOfficeInputGen(frontOfficeOrderGen)
       u <- userIdGen
     } yield (g, u)
 
@@ -50,7 +50,7 @@ object GenerateTradeSuite extends SimpleIOSuite with Checkers {
 
   test("Failed generation of trades with invalid account number from front office") {
     val gen = for {
-      g <- generateTradeFrontOfficeInputGen
+      g <- generateTradeFrontOfficeInputGen(frontOfficeOrderGen)
       u <- userIdGen
     } yield (g, u)
 
@@ -71,7 +71,7 @@ object GenerateTradeSuite extends SimpleIOSuite with Checkers {
 
   test("Failed generation of trades with invalid arguments from front office") {
     val gen = for {
-      g <- generateTradeFrontOfficeInputGen
+      g <- generateTradeFrontOfficeInputGen(frontOfficeOrderGen)
       u <- userIdGen
     } yield (g, u)
 
@@ -103,7 +103,7 @@ object GenerateTradeSuite extends SimpleIOSuite with Checkers {
     val genTradeInvalidStore = programs.GenerateTrade[IO](testInvalidTrading, testAccounting)
 
     val gen = for {
-      g <- generateTradeFrontOfficeInputGen
+      g <- generateTradeFrontOfficeInputGen(frontOfficeOrderGen)
       u <- userIdGen
     } yield (g, u)
 

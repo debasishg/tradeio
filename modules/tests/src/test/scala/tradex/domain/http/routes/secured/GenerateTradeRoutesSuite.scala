@@ -46,7 +46,7 @@ object GenerateTradeRoutesSuite extends HttpSuite {
 
     val gen = for {
       u <- commonUserGen
-      t <- generateTradeFrontOfficeInputGen
+      t <- generateTradeFrontOfficeInputGen(frontOfficeOrderGen)
     } yield (u, t)
 
     forall(gen) { case (user, foTrades) =>
@@ -79,7 +79,7 @@ object GenerateTradeRoutesSuite extends HttpSuite {
 
     val gen = for {
       u <- commonUserGen
-      t <- generateTradeFrontOfficeInputGen
+      t <- generateTradeFrontOfficeInputGen(frontOfficeOrderGen)
     } yield (u, t)
 
     forall(gen) { case (user, foTrades) =>
