@@ -42,18 +42,15 @@ object ExchangeApp extends IOApp.Simple {
 
     tradeGen
       .flatMap { f =>
-        IO {
-          f.fold(
-            println("Trade generation canceled"),
-            th => th.printStackTrace(),
-            iots =>
-              iots
-                .flatMap { ts =>
-                  IO(ts.foreach(println))
-                }
-                .unsafeRunSync()
-          )
-        }
+        f.fold(
+          IO.println("Trade generation canceled"),
+          th => IO.raiseError(th),
+          iots =>
+            iots
+              .flatMap { ts =>
+                IO(ts.foreach(println))
+              }
+        )
       }
       .unsafeRunSync()
 
