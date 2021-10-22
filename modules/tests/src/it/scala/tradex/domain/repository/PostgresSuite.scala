@@ -191,6 +191,7 @@ object PostgresSuite extends ResourceSuite {
             case Left(th: Throwable) => failure(th.getMessage())
             case Right((trades, balances)) => {
               expect.all(trades.size > 0, balances.size > 0)
+              expect.eql(trades.toList.map(_.netAmount.get.amount).sum, balances.toList.map(_.amount.amount).sum)
               success
             }
           }
