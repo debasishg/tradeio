@@ -7,7 +7,10 @@ import skunk._
 import skunk.implicits._
 import natchez.Trace.Implicits.noop
 import generators._
+import model.account._
 import model.instrument._
+import services.trading._
+import services.accounting._
 
 import suite.ResourceSuite
 import java.time.LocalDate
@@ -103,7 +106,7 @@ object PostgresSuite extends ResourceSuite {
     }
   }
 
-  test("Trades with tax/fees") { postgres =>
+  test("Generate trades with tax/fees") { postgres =>
     val a = AccountRepository.make[IO](postgres)
     val i = InstrumentRepository.make[IO](postgres)
     val t = TradeRepository.make[IO](postgres)
@@ -139,5 +142,59 @@ object PostgresSuite extends ResourceSuite {
         }
       }
     } yield expect.all(acc.nonEmpty, ins.nonEmpty)
+  }
+
+  test("Generate trades with input from front office") { postgres =>
+    val a = AccountRepository.make[IO](postgres)
+    val i = InstrumentRepository.make[IO](postgres)
+    val e = ExecutionRepository.make[IO](postgres)
+    val o = OrderRepository.make[IO](postgres)
+    val t = TradeRepository.make[IO](postgres)
+    val b = BalanceRepository.make[IO](postgres)
+
+    val accountsInstruments: IO[(List[AccountNo], List[ISINCode])] = for {
+      _ <- forall(tradingAccountGen) { acc =>
+        for {
+          _       <- a.store(acc)
+          fetched <- a.query(acc.no)
+        } yield expect.all(fetched.isDefined, fetched.count(_.no === acc.no) === 1)
+      }
+      _ <- forall(equityGen) { ins =>
+        for {
+          _       <- i.store(ins)
+          fetched <- i.query(ins.isinCode)
+        } yield expect.all(fetched.isDefined, fetched.count(_.isinCode === ins.isinCode) === 1)
+      }
+      acc <- a.all
+      ins <- i.queryByInstrumentType(InstrumentType.Equity)
+    } yield (acc.map(_.no), ins.map(_.isinCode))
+
+    val testTrading =
+      Trading.make[IO](a, e, o, t)
+
+    val testAccounting = Accounting.make[IO](b)
+
+    val genTrade = programs.GenerateTrade[IO](testTrading, testAccounting)
+
+    accountsInstruments.flatMap { ais =>
+      val gen = for {
+        u <- commonUserGen
+        t <- generateTradeFrontOfficeInputGenWithAccountAndInstrument(ais._1, ais._2)
+      } yield (u, t)
+
+      forall(gen) { case (user, foTrades) =>
+        genTrade
+          .generate(foTrades, user.value.userId)
+          .attempt
+          .map {
+            case Left(err: Trading.TradingError) => failure(s"Trade Generation Error: ${err.cause}")
+            case Left(th: Throwable) => failure(th.getMessage())
+            case Right((trades, balances)) => {
+              expect.all(trades.size > 0, balances.size > 0)
+              success
+            }
+          }
+      }
+    }
   }
 }

@@ -312,4 +312,25 @@ object generators {
     brkAccountNo,
     NonEmptyList.fromListUnsafe(clientAccounts)
   )
+
+  def frontOfficeOrderGenWithAccountAndInstrument(accs: List[AccountNo], ins: List[ISINCode]) = for {
+    ano  <- Gen.oneOf(accs)
+    dt   <- Gen.oneOf(Instant.now, Instant.now.plus(2, java.time.temporal.ChronoUnit.DAYS))
+    isin <- Gen.oneOf(ins)
+    qty  <- quantityGen
+    up   <- unitPriceGen
+    bs   <- Gen.oneOf(BuySell.Buy, BuySell.Sell)
+  } yield FrontOfficeOrder(ano.value.value, dt, isin.value.value, qty.value.value, up.value.value, bs.entryName)
+
+  def generateTradeFrontOfficeInputGenWithAccountAndInstrument(accs: List[AccountNo], ins: List[ISINCode]) = for {
+    orders       <- Gen.nonEmptyListOf(frontOfficeOrderGenWithAccountAndInstrument(accs, ins))
+    mkt          <- Gen.oneOf(Market.NewYork, Market.Tokyo, Market.HongKong)
+    brkAccountNo <- Gen.oneOf(accs)
+  } yield GenerateTradeFrontOfficeInput(
+    NonEmptyList.fromListUnsafe(orders),
+    mkt,
+    brkAccountNo,
+    NonEmptyList.fromListUnsafe(accs)
+  )
+
 }

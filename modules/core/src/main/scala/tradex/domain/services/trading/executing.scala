@@ -56,6 +56,5 @@ private[trading] object executing {
       .toValidatedNec
       .toEither
       .leftMap(_.map(_.toString))
-    // .toValidated
   }
 }

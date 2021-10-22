@@ -22,7 +22,7 @@ import effects.GenUUID
 object execution {
   @derive(decoder, encoder, eqv, show, uuid)
   @newtype
-  @newtype case class ExecutionReferenceNo(value: UUID)
+  case class ExecutionReferenceNo(value: UUID)
 
   // primary domain entity for execution from exchange
   @derive(decoder, encoder, eqv, show)

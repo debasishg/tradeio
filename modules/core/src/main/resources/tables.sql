@@ -51,7 +51,8 @@ CREATE TABLE IF NOT EXISTS executions (
     buySellFlag buySell NOT NULL,
     unitPrice decimal NOT NULL,
     quantity decimal NOT NULL,
-    dateOfExecution timestamp NOT NULL
+    dateOfExecution timestamp NOT NULL,
+    exchangeExecutionRefNo varchar
 );
 
 CREATE TABLE IF NOT EXISTS taxFees (
