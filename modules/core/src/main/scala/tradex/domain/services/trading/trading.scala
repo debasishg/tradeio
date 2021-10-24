@@ -111,7 +111,7 @@ object Trading {
       tradeRepository: TradeRepository[F]
   ): Trading[F] =
     new Trading[F] {
-      private final val ev = implicitly[MonadThrowable[F]]
+      private final val F = implicitly[MonadThrowable[F]]
 
       def getAccountsOpenedOn(openDate: LocalDate): F[List[Account]] =
         accountRepository.query(openDate)
@@ -130,17 +130,17 @@ object Trading {
           .createOrders(csvOrder)
           .fold(
             nec =>
-              ev.raiseError(
+              F.raiseError(
                 OrderingError(nec.toNonEmptyList.toList.mkString("/"))
               ),
             os => {
               if (os.isEmpty)
-                ev.raiseError(
+                F.raiseError(
                   OrderingError("Empty order list received from csv")
                 )
               else {
                 val nlos = NonEmptyList.fromList(os).get
-                persistOrders(nlos) >>= (_ => ev.pure(nlos))
+                persistOrders(nlos) >>= (_ => F.pure(nlos))
               }
             }
           )
@@ -157,18 +157,18 @@ object Trading {
           .create(frontOfficeOrders)
           .fold(
             nec => {
-              ev.raiseError(
+              F.raiseError(
                 OrderingError(nec.toNonEmptyList.toList.mkString("/"))
               )
             },
             os => {
               if (os.isEmpty)
-                ev.raiseError(
+                F.raiseError(
                   OrderingError("Empty order list received from csv")
                 )
               else {
                 val nlos = NonEmptyList.fromList(os).get
-                persistOrders(nlos) >>= (_ => ev.pure(nlos))
+                persistOrders(nlos) >>= (_ => F.pure(nlos))
               }
             }
           )

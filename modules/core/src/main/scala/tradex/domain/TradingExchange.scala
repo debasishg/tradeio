@@ -27,7 +27,7 @@ object ExchangeApp extends IOApp.Simple {
       import exchange._
 
       // `parTupled` gives a safe way to execute on fibers
-      // it starts, joins fibers and handles cancellation
+      // it starts, joins fibers and handles cancelation
       // gracefully
       // once we have order and executions we can then start
       // executing allocations on another fiber. Here we use
