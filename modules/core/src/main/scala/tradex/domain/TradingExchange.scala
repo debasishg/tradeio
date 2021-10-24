@@ -43,7 +43,7 @@ object ExchangeApp extends IOApp.Simple {
     tradeGen
       .flatMap { f =>
         f.fold(
-          IO.println("Trade generation canceled"),
+          IO.println("Trade generation canceled") *> MonadCancel[IO].canceled,
           th => IO.raiseError(th),
           iots =>
             iots
