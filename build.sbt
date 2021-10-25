@@ -5,6 +5,8 @@ ThisBuild / organizationName := "tradex"
 
 ThisBuild / evictionErrorLevel := Level.Warn
 ThisBuild / scalafixDependencies += Dependencies.organizeImports
+ThisBuild / cancelable := true
+ThisBuild / fork in run := true
 
 resolvers += Resolver.sonatypeRepo("snapshots")
 val scalafixCommonSettings = inConfig(IntegrationTest)(scalafixConfigSettings(IntegrationTest))

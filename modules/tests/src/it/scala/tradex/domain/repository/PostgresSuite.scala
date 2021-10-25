@@ -1,7 +1,9 @@
 package tradex.domain
 package repository
 
+import cats.data.NonEmptyList
 import cats.effect._
+import cats.effect.std.Queue
 import cats.syntax.all._
 import skunk._
 import skunk.implicits._
@@ -9,11 +11,15 @@ import natchez.Trace.Implicits.noop
 import generators._
 import model.account._
 import model.instrument._
+import model.trade._
+import model.user._
+import model.balance._
 import services.trading._
 import services.accounting._
 
 import suite.ResourceSuite
 import java.time.LocalDate
+import org.scalacheck.Gen
 
 object PostgresSuite extends ResourceSuite {
 
@@ -144,7 +150,7 @@ object PostgresSuite extends ResourceSuite {
     } yield expect.all(acc.nonEmpty, ins.nonEmpty)
   }
 
-  test("Generate trades with input from front office") { postgres =>
+  test("Generation of trades with input from front office succeeds") { postgres =>
     val a = AccountRepository.make[IO](postgres)
     val i = InstrumentRepository.make[IO](postgres)
     val e = ExecutionRepository.make[IO](postgres)
@@ -255,6 +261,92 @@ object PostgresSuite extends ResourceSuite {
             case Right(_) => failure("Trade generation must fail owing to invalid input")
           }
         }
+      }
+    }
+  }
+
+  test("Concurrent generation of trades with input from front office succeeds") { postgres =>
+    val a = AccountRepository.make[IO](postgres)
+    val i = InstrumentRepository.make[IO](postgres)
+    val e = ExecutionRepository.make[IO](postgres)
+    val o = OrderRepository.make[IO](postgres)
+    val t = TradeRepository.make[IO](postgres)
+    val b = BalanceRepository.make[IO](postgres)
+
+    val accountsInstruments: IO[(List[AccountNo], List[ISINCode])] = for {
+      _ <- forall(tradingAccountGen) { acc =>
+        for {
+          _       <- a.store(acc)
+          fetched <- a.query(acc.no)
+        } yield expect.all(fetched.isDefined, fetched.count(_.no === acc.no) === 1)
+      }
+      _ <- forall(equityGen) { ins =>
+        for {
+          _       <- i.store(ins)
+          fetched <- i.query(ins.isinCode)
+        } yield expect.all(fetched.isDefined, fetched.count(_.isinCode === ins.isinCode) === 1)
+      }
+      acc <- a.all
+      ins <- i.queryByInstrumentType(InstrumentType.Equity)
+    } yield (acc.map(_.no), ins.map(_.isinCode))
+
+    val testTrading =
+      Trading.make[IO](a, e, o, t)
+
+    val testAccounting = Accounting.make[IO](b)
+
+    val genTrade = programs.GenerateTrade[IO](testTrading, testAccounting)
+		val userId = UserId(java.util.UUID.randomUUID())
+    val console = IO.consoleForIO
+
+    def producer(
+        id: Int,
+        foTradesR: Ref[IO, List[GenerateTradeFrontOfficeInput]],
+        queue: Queue[IO, GenerateTradeFrontOfficeInput]
+    ): IO[Unit] =
+      for {
+        i <- foTradesR.modify { l => 
+          if (l.isEmpty) (l, None)
+          else (l.tail, Some(l.head))
+        }
+        _ <- i.map(e => queue.offer(e)).getOrElse(IO.unit)
+        _ <- producer(id, foTradesR, queue)
+      } yield ()
+  
+    def consumer(id: Int, queue: Queue[IO, GenerateTradeFrontOfficeInput]): IO[Unit] =
+      for {
+        i <- queue.take
+        t <- generateTrade(id, i, userId)
+        _ = println(t._1.toList)
+        _ <- consumer(id, queue)
+      } yield ()
+  
+    def generateTrade(id: Int, fi: GenerateTradeFrontOfficeInput, userId: UserId): IO[(NonEmptyList[Trade], NonEmptyList[Balance])] = {
+			println(s"Generating trade for consumer $id")
+			genTrade.generate(fi, userId)
+		} 
+
+    accountsInstruments.flatMap { ais =>
+      val gen = for {
+        u <- commonUserGen
+        t <- Gen.listOfN(10, generateTradeFrontOfficeInputGenWithAccountAndInstrument(ais._1, ais._2))
+      } yield (u, t)
+
+      forall(gen) { case (user, foTrades) =>
+        println(s"Processing list of ${foTrades.size} inputs")
+        for {
+          queue     <- Queue.bounded[IO, GenerateTradeFrontOfficeInput](100)
+          foTradesR <- Ref.of[IO, List[GenerateTradeFrontOfficeInput]](foTrades)
+          producers = List.range(1, 3).map(producer(_, foTradesR, queue)) // 2 producers
+          consumers = List.range(1, 3).map(consumer(_, queue))            // 2 consumers
+          _ <- (producers ++ consumers).parSequence
+            .as(
+              ExitCode.Success
+            ) // Run producers and consumers in parallel until done (likely by user cancelling with CTRL-C)
+            .handleErrorWith { t =>
+              console.errorln(s"Error caught: ${t.getMessage}").as(ExitCode.Error)
+            }
+        } yield success
       }
     }
   }
