@@ -20,10 +20,14 @@ final case class GenerateTrade[F[_]: MonadThrowable] private (
     trading: Trading[F],
     accounting: Accounting[F]
 ) {
+  val F = implicitly[MonadThrowable[F]]
   def generate(
       frontOfficeInput: GenerateTradeFrontOfficeInput,
       userId: UserId
-  ): F[(NonEmptyList[Trade], NonEmptyList[Balance])] = {
+  ): F[(NonEmptyList[Trade], NonEmptyList[Balance])] = F.uncancelable { _ =>
+    // making this operation uncancelable
+    // Is this the proper thinking ?
+    // Note database transactions are involved - hence cancelations can be tricky
     import trading._
     import accounting._
 

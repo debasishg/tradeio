@@ -2,9 +2,9 @@ package tradex
 
 import java.time.LocalDateTime
 
-import cats._
 import cats.data._
 import cats.syntax.all._
+import cats.effect.MonadCancel
 
 import squants.market._
 
@@ -13,7 +13,7 @@ import eu.timepit.refined.api._
 import eu.timepit.refined.auto._
 
 package object domain {
-  type MonadThrowable[F[_]] = MonadError[F, Throwable]
+  type MonadThrowable[F[_]] = MonadCancel[F, Throwable]
 
   def today                  = LocalDateTime.now
   final val ZERO_BIG_DECIMAL = BigDecimal(0)
