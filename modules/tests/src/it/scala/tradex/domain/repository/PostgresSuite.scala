@@ -23,7 +23,6 @@ import java.time.LocalDate
 import org.scalacheck.Gen
 
 object PostgresSuite extends ResourceSuite {
-  // override def maxParallelism = 1
 
   val listTables =
     List("executions", "lineItems", "orders", "tradeTaxFees", "trades", "balance", "users", "instruments", "accounts")
@@ -298,9 +297,9 @@ object PostgresSuite extends ResourceSuite {
     val testAccounting = Accounting.make[IO](b)
 
     val genTrade = programs.GenerateTrade[IO](testTrading, testAccounting)
-		val userId = UserId(java.util.UUID.randomUUID())
     val console = IO.consoleForIO
 
+    // the producer can exit when the list is exhausted
     def producer(
         id: Int,
         foTradesR: Ref[IO, List[GenerateTradeFrontOfficeInput]],
@@ -315,23 +314,17 @@ object PostgresSuite extends ResourceSuite {
         _ <- i.map(_ => producer(id, foTradesR, queue)).getOrElse(IO.unit)
       } yield ()
   
-    def consumer(id: Int, queue: Queue[IO, GenerateTradeFrontOfficeInput]): IO[Unit] =
+    // using `tryTake` instead of `take` since not getting an element means
+    // the producer has exhausted the list it was handed to and the concumer
+    // can exit
+    def consumer(id: Int, queue: Queue[IO, GenerateTradeFrontOfficeInput], userId: UserId): IO[Unit] =
       for {
         i <- queue.tryTake
-        _ <- i.map(e => generateTrade(id, e, userId)).getOrElse(IO.unit)
-        _ <- i.map(_ => consumer(id, queue)).getOrElse(IO.unit)
+        _ <- i.map(e => generateTrade(e, userId)).getOrElse(IO.unit)
+        _ <- i.map(_ => consumer(id, queue, userId)).getOrElse(IO.unit)
       } yield ()
 
-      /*
-    def consumer(id: Int, queue: Queue[IO, GenerateTradeFrontOfficeInput]): IO[Unit] =
-      for {
-        i <- queue.take
-        _ <- generateTrade(id, i, userId)
-        _ <- consumer(id, queue)
-      } yield ()
-      */
-  
-    def generateTrade(id: Int, fi: GenerateTradeFrontOfficeInput, 
+    def generateTrade(fi: GenerateTradeFrontOfficeInput, 
       userId: UserId): IO[(NonEmptyList[Trade], NonEmptyList[Balance])] = {
 			genTrade.generate(fi, userId)
 		} 
@@ -339,15 +332,21 @@ object PostgresSuite extends ResourceSuite {
     accountsInstruments.flatMap { ais =>
       val gen = for {
         u <- commonUserGen
-        t <- Gen.listOfN(2, generateTradeFrontOfficeInputGenWithAccountAndInstrument(ais._1, ais._2))
+        t <- Gen.listOfN(4, generateTradeFrontOfficeInputGenWithAccountAndInstrument(ais._1, ais._2))
       } yield (u, t)
 
+      // 2 producers and 2 consumers per list of `GenerateTradeFrontOfficeInput`
+      // generated
       forall(gen) { case (user, foTrades) =>
         for {
           queue     <- Queue.bounded[IO, GenerateTradeFrontOfficeInput](100)
           foTradesR <- Ref.of[IO, List[GenerateTradeFrontOfficeInput]](foTrades)
-          producers = List.range(1, 2).map(producer(_, foTradesR, queue)) // 2 producers
-          consumers = List.range(1, 2).map(consumer(_, queue))            // 2 consumers
+          // can use 1 producer / consumer as well
+          // p = producer(1, foTradesR, queue) 
+          // c = consumer(1, queue, user.value.userId)
+          // _ <- (p, c).parTupled
+          producers = List.range(1, 3).map(producer(_, foTradesR, queue))            // 2 producers
+          consumers = List.range(1, 3).map(consumer(_, queue, user.value.userId))    // 2 consumers
           _ <- (producers ++ consumers).parSequence
             .as(
               ExitCode.Success
