@@ -326,8 +326,8 @@ object PostgresSuite extends ResourceSuite {
 
     def generateTrade(fi: GenerateTradeFrontOfficeInput, 
       userId: UserId): IO[(NonEmptyList[Trade], NonEmptyList[Balance])] = {
-			genTrade.generate(fi, userId)
-		} 
+      genTrade.generate(fi, userId)
+    } 
 
     accountsInstruments.flatMap { ais =>
       val gen = for {
