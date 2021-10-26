@@ -332,7 +332,7 @@ object generators {
   } yield FrontOfficeOrder(ano.value.value, dt, isin.value.value, qty.value.value, up.value.value, bs.entryName)
 
   def generateTradeFrontOfficeInputGenWithAccountAndInstrument(accs: List[AccountNo], ins: List[ISINCode]) = for {
-    orders       <- Gen.nonEmptyListOf(frontOfficeOrderGenWithAccountAndInstrument(accs, ins))
+    orders       <- Gen.listOfN(3, frontOfficeOrderGenWithAccountAndInstrument(accs, ins)) suchThat (_.nonEmpty == true)
     mkt          <- Gen.oneOf(Market.NewYork, Market.Tokyo, Market.HongKong)
     brkAccountNo <- Gen.oneOf(accs)
   } yield GenerateTradeFrontOfficeInput(

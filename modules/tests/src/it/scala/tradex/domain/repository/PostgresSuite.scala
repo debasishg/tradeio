@@ -1,6 +1,7 @@
 package tradex.domain
 package repository
 
+import scala.concurrent.duration._
 import cats.data.NonEmptyList
 import cats.effect._
 import cats.effect.std.Queue
@@ -22,6 +23,7 @@ import java.time.LocalDate
 import org.scalacheck.Gen
 
 object PostgresSuite extends ResourceSuite {
+  // override def maxParallelism = 1
 
   val listTables =
     List("executions", "lineItems", "orders", "tradeTaxFees", "trades", "balance", "users", "instruments", "accounts")
@@ -62,7 +64,7 @@ object PostgresSuite extends ResourceSuite {
       )
       .afterAll {
         _.use { s =>
-          flushAll.traverse_(s.execute) >> s.execute(insertTaxFees).map(_ => ())
+          Temporal[IO].sleep(1.minute) >> flushAll.traverse_(s.execute) >> s.execute(insertTaxFees).map(_ => ())
         }
       }
       .beforeAll {
@@ -310,39 +312,46 @@ object PostgresSuite extends ResourceSuite {
           else (l.tail, Some(l.head))
         }
         _ <- i.map(e => queue.offer(e)).getOrElse(IO.unit)
-        _ <- producer(id, foTradesR, queue)
+        _ <- i.map(_ => producer(id, foTradesR, queue)).getOrElse(IO.unit)
       } yield ()
   
     def consumer(id: Int, queue: Queue[IO, GenerateTradeFrontOfficeInput]): IO[Unit] =
       for {
+        i <- queue.tryTake
+        _ <- i.map(e => generateTrade(id, e, userId)).getOrElse(IO.unit)
+        _ <- i.map(_ => consumer(id, queue)).getOrElse(IO.unit)
+      } yield ()
+
+      /*
+    def consumer(id: Int, queue: Queue[IO, GenerateTradeFrontOfficeInput]): IO[Unit] =
+      for {
         i <- queue.take
-        t <- generateTrade(id, i, userId)
-        _ = println(t._1.toList)
+        _ <- generateTrade(id, i, userId)
         _ <- consumer(id, queue)
       } yield ()
+      */
   
-    def generateTrade(id: Int, fi: GenerateTradeFrontOfficeInput, userId: UserId): IO[(NonEmptyList[Trade], NonEmptyList[Balance])] = {
-			println(s"Generating trade for consumer $id")
+    def generateTrade(id: Int, fi: GenerateTradeFrontOfficeInput, 
+      userId: UserId): IO[(NonEmptyList[Trade], NonEmptyList[Balance])] = {
 			genTrade.generate(fi, userId)
 		} 
 
     accountsInstruments.flatMap { ais =>
       val gen = for {
         u <- commonUserGen
-        t <- Gen.listOfN(10, generateTradeFrontOfficeInputGenWithAccountAndInstrument(ais._1, ais._2))
+        t <- Gen.listOfN(2, generateTradeFrontOfficeInputGenWithAccountAndInstrument(ais._1, ais._2))
       } yield (u, t)
 
       forall(gen) { case (user, foTrades) =>
-        println(s"Processing list of ${foTrades.size} inputs")
         for {
           queue     <- Queue.bounded[IO, GenerateTradeFrontOfficeInput](100)
           foTradesR <- Ref.of[IO, List[GenerateTradeFrontOfficeInput]](foTrades)
-          producers = List.range(1, 3).map(producer(_, foTradesR, queue)) // 2 producers
-          consumers = List.range(1, 3).map(consumer(_, queue))            // 2 consumers
+          producers = List.range(1, 2).map(producer(_, foTradesR, queue)) // 2 producers
+          consumers = List.range(1, 2).map(consumer(_, queue))            // 2 consumers
           _ <- (producers ++ consumers).parSequence
             .as(
               ExitCode.Success
-            ) // Run producers and consumers in parallel until done (likely by user cancelling with CTRL-C)
+            ) 
             .handleErrorWith { t =>
               console.errorln(s"Error caught: ${t.getMessage}").as(ExitCode.Error)
             }
