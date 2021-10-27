@@ -266,6 +266,8 @@ object PostgresSuite extends ResourceSuite {
     }
   }
 
+  // set up producers that takes input from the generator which is protected through a `Ref`
+  // set up consumers that consume from the queue protected by a `Ref`
   test("Concurrent generation of trades with input from front office succeeds") { postgres =>
     val a = AccountRepository.make[IO](postgres)
     val i = InstrumentRepository.make[IO](postgres)
@@ -348,9 +350,7 @@ object PostgresSuite extends ResourceSuite {
           producers = List.range(1, 3).map(producer(_, foTradesR, queue))            // 2 producers
           consumers = List.range(1, 3).map(consumer(_, queue, user.value.userId))    // 2 consumers
           _ <- (producers ++ consumers).parSequence
-            .as(
-              ExitCode.Success
-            ) 
+            .as(ExitCode.Success) 
             .handleErrorWith { t =>
               console.errorln(s"Error caught: ${t.getMessage}").as(ExitCode.Error)
             }
