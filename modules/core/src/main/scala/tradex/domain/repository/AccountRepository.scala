@@ -102,7 +102,7 @@ object AccountRepository {
     }
 }
 
-private object AccountRepositorySQL {
+private[repository] object AccountRepositorySQL {
   // A codec that maps Postgres type `accountType` to Scala type `AccountType`
   val accountType = enum(AccountType, Type("accounttype"))
 
@@ -168,6 +168,13 @@ private object AccountRepositorySQL {
         SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
         FROM accounts AS a
         WHERE a.no = $accountNo
+       """.query(accountDecoder)
+
+  val selectByAccountNamePattern: Query[String, Account] =
+    sql"""
+        SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
+        FROM accounts AS a
+        WHERE a.name LIKE $varchar
        """.query(accountDecoder)
 
   val selectByOpenedDate: Query[LocalDate, Account] =
