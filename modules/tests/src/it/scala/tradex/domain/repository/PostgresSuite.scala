@@ -195,10 +195,10 @@ object PostgresSuite extends ResourceSuite {
           .attempt
           .map {
             case Left(err: Trading.TradingError) => failure(s"Trade Generation Error: ${err.cause}")
-            case Left(th: Throwable) => failure(th.getMessage())
+            case Left(th: Throwable)             => failure(th.getMessage())
             case Right((trades, balances)) => {
               expect.all(trades.size > 0, balances.size > 0)
-              val totalTradedAmount = trades.toList.map(_.netAmount.get.amount).sum
+              val totalTradedAmount  = trades.toList.map(_.netAmount.get.amount).sum
               val totalBalanceChange = balances.toList.map(_.amount.amount).sum
               expect.eql(totalTradedAmount, totalBalanceChange)
               success
@@ -246,21 +246,22 @@ object PostgresSuite extends ResourceSuite {
         t <- generateTradeFrontOfficeInputGenWithAccountAndInstrument(ais._1, ais._2)
       } yield (u, t)
 
-      forall(gen) { case (user, foTrades) => {
-        val invalidInput = foTrades.copy(
-          frontOfficeOrders =
-            foTrades.frontOfficeOrders.map(forder => forder.copy(isin = "123", qty = BigDecimal.valueOf(-10)))
-        )
-        genTrade
-          .generate(invalidInput, user.value.userId)
-          .attempt
-          .map {
-            case Left(err: Trading.TradingError) => 
-              expect.all(err.cause.contains("Quantity has to be positive"))
-              success
-            case Left(th: Throwable) => failure(th.getMessage())
-            case Right(_) => failure("Trade generation must fail owing to invalid input")
-          }
+      forall(gen) {
+        case (user, foTrades) => {
+          val invalidInput = foTrades.copy(
+            frontOfficeOrders =
+              foTrades.frontOfficeOrders.map(forder => forder.copy(isin = "123", qty = BigDecimal.valueOf(-10)))
+          )
+          genTrade
+            .generate(invalidInput, user.value.userId)
+            .attempt
+            .map {
+              case Left(err: Trading.TradingError) =>
+                expect.all(err.cause.contains("Quantity has to be positive"))
+                success
+              case Left(th: Throwable) => failure(th.getMessage())
+              case Right(_)            => failure("Trade generation must fail owing to invalid input")
+            }
         }
       }
     }
@@ -299,7 +300,7 @@ object PostgresSuite extends ResourceSuite {
     val testAccounting = Accounting.make[IO](b)
 
     val genTrade = programs.GenerateTrade[IO](testTrading, testAccounting)
-    val console = IO.consoleForIO
+    val console  = IO.consoleForIO
 
     // the producer can exit when the list is exhausted
     def producer(
@@ -308,14 +309,14 @@ object PostgresSuite extends ResourceSuite {
         queue: Queue[IO, GenerateTradeFrontOfficeInput]
     ): IO[Unit] =
       for {
-        i <- foTradesR.modify { l => 
+        i <- foTradesR.modify { l =>
           if (l.isEmpty) (l, None)
           else (l.tail, Some(l.head))
         }
         _ <- i.map(e => queue.offer(e)).getOrElse(IO.unit)
         _ <- i.map(_ => producer(id, foTradesR, queue)).getOrElse(IO.unit)
       } yield ()
-  
+
     // using `tryTake` instead of `take` since not getting an element means
     // the producer has exhausted the list it was handed to and the concumer
     // can exit
@@ -326,10 +327,12 @@ object PostgresSuite extends ResourceSuite {
         _ <- i.map(_ => consumer(id, queue, userId)).getOrElse(IO.unit)
       } yield ()
 
-    def generateTrade(fi: GenerateTradeFrontOfficeInput, 
-      userId: UserId): IO[(NonEmptyList[Trade], NonEmptyList[Balance])] = {
+    def generateTrade(
+        fi: GenerateTradeFrontOfficeInput,
+        userId: UserId
+    ): IO[(NonEmptyList[Trade], NonEmptyList[Balance])] = {
       genTrade.generate(fi, userId)
-    } 
+    }
 
     accountsInstruments.flatMap { ais =>
       val gen = for {
@@ -344,13 +347,13 @@ object PostgresSuite extends ResourceSuite {
           queue     <- Queue.bounded[IO, GenerateTradeFrontOfficeInput](100)
           foTradesR <- Ref.of[IO, List[GenerateTradeFrontOfficeInput]](foTrades)
           // can use 1 producer / consumer as well
-          // p = producer(1, foTradesR, queue) 
+          // p = producer(1, foTradesR, queue)
           // c = consumer(1, queue, user.value.userId)
           // _ <- (p, c).parTupled
-          producers = List.range(1, 3).map(producer(_, foTradesR, queue))            // 2 producers
-          consumers = List.range(1, 3).map(consumer(_, queue, user.value.userId))    // 2 consumers
+          producers = List.range(1, 3).map(producer(_, foTradesR, queue))         // 2 producers
+          consumers = List.range(1, 3).map(consumer(_, queue, user.value.userId)) // 2 consumers
           _ <- (producers ++ consumers).parSequence
-            .as(ExitCode.Success) 
+            .as(ExitCode.Success)
             .handleErrorWith { t =>
               console.errorln(s"Error caught: ${t.getMessage}").as(ExitCode.Error)
             }
