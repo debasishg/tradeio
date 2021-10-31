@@ -20,16 +20,19 @@ object DBUtils {
       }
 
   // demonstrates usage of a cursor
-  def executeQueryWithCursor(session: Session[IO], namePattern: String, fetchSize: Option[Int] = None): IO[Unit] = {
-    def fetchWith(cursor: Cursor[IO, Account]): IO[Unit] = {
+  def queryByNamePatternPaged[A](
+      session: Session[IO],
+      namePattern: String,
+      cont: List[Account] => Paginated[A],
+      fetchSize: Option[Int] = None
+  ): IO[Int] = {
+    def fetchWith(cursor: Cursor[IO, Account], pageCount: Int): IO[Int] = {
       val fetchCount = fetchSize.getOrElse(defaultFetchCount)
       cursor.fetch(fetchCount).flatMap { case (as, more) =>
-        as.foreach(a => println(a.no))
-        println("-" * 20)
-        if (more) fetchWith(cursor)
-        else IO.unit
+        if (cont(as).more && more) fetchWith(cursor, pageCount + 1)
+        else IO(pageCount)
       }
     }
-    queryByNamePattern(session, namePattern).use(fetchWith)
+    queryByNamePattern(session, namePattern).use(c => fetchWith(c, 0))
   }
 }

@@ -118,8 +118,11 @@ object PostgresSuite extends ResourceSuite {
       // execute query with cursor
       _ <- postgres.use { session => 
              for {
-               _ <- DBUtils.executeQueryWithCursor(session, "%")
-             } yield expect(true)
+               // continue till end of data set
+               pages <- DBUtils.queryByNamePatternPaged(session, "%", (as) => DBUtils.Paginated(as.map(_.no), true))
+               // abort after first page
+               singlePage <- DBUtils.queryByNamePatternPaged(session, "%", (as) => DBUtils.Paginated(as.map(_.no), false))
+             } yield expect.all(pages > 0, singlePage === 1)
            }
     } yield expect(true)
   }
