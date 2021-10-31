@@ -101,6 +101,29 @@ object PostgresSuite extends ResourceSuite {
     }
   }
 
+  test("Account query with open session") { postgres =>
+    val a = AccountRepository.make[IO](postgres)
+    val gen = for {
+      as <- Gen.listOfN(100, tradingAccountGen) suchThat(_.nonEmpty)
+    } yield as
+    for {
+      // store accounts
+      _ <- forall(gen) { accounts =>
+             for {
+               _ <- a.store(NonEmptyList.fromListUnsafe(accounts))
+             } yield expect.apply(true)
+           }
+      accs <- a.all
+      _ = println(s"accounts = ${accs.size}")
+      // execute query with cursor
+      _ <- postgres.use { session => 
+             for {
+               _ <- DBUtils.executeQueryWithCursor(session, "%")
+             } yield expect(true)
+           }
+    } yield expect(true)
+  }
+
   test("Instruments with upsert") { postgres =>
     val i = InstrumentRepository.make[IO](postgres)
     forall(equityGen) { equity =>
