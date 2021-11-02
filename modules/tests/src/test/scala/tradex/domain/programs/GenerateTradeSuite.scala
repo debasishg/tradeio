@@ -5,6 +5,7 @@ import java.time.LocalDate
 import cats.effect.IO
 import cats.syntax.all._
 import cats.data.NonEmptyList
+import fs2.Stream
 import weaver.SimpleIOSuite
 import weaver.scalacheck.Checkers
 import model.account._
@@ -124,6 +125,7 @@ protected class TestAccountRepository extends AccountRepository[IO] {
   def store(a: Account, upsert: Boolean = true): IO[Account]         = IO(a)
   def store(as: NonEmptyList[Account]): IO[Unit]                     = IO.pure(())
   def query(openedOn: LocalDate): IO[List[Account]]                  = IO.pure(List.empty[Account])
+  def query(namePattern: String): Stream[IO, Account]                = Stream.empty
   def all: IO[List[Account]]                                         = IO.pure(List.empty[Account])
   def allClosed(closeDate: Option[LocalDate]): IO[List[Account]]     = IO.pure(List.empty[Account])
   def allAccountsOfType(accountType: AccountType): IO[List[Account]] = IO.pure(List.empty[Account])
