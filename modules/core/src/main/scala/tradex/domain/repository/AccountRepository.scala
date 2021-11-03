@@ -7,6 +7,8 @@ import cats.data.NonEmptyList
 import cats.syntax.all._
 import cats.effect._
 
+import fs2.Stream
+
 import skunk._
 import skunk.data.Type
 import skunk.codec.all._
@@ -29,6 +31,10 @@ trait AccountRepository[F[_]] {
 
   /** query by opened date */
   def query(openedOn: LocalDate): F[List[Account]]
+
+  /** select by name pattern */
+  /** returns an `fs2.Stream` */
+  def query(namePattern: String): Stream[F, Account]
 
   /** all accounts */
   def all: F[List[Account]]
@@ -77,6 +83,14 @@ object AccountRepository {
             ps.stream(openedOn, 1024).compile.toList
           }
         }
+
+      def query(namePattern: String): Stream[F, Account] = {
+        for {
+          s <- Stream.resource(postgres)
+          p <- Stream.resource(s.prepare(selectByAccountNamePattern))
+          t <- p.stream(namePattern, 1024)
+        } yield t
+      }
 
       def all: F[List[Account]] = postgres.use(_.execute(selectAll))
 

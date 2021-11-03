@@ -67,6 +67,9 @@ object generators {
 
   val accountNameGen: Gen[AccountName] = arbitrary[NonEmptyString].map(AccountName(_))
 
+  def accountNameStartingWithPatternGen(pattern: String): Gen[AccountName] =
+    arbitrary[NonEmptyString].map(ns => AccountName(NonEmptyString.unsafeFrom(pattern + ns)))
+
   val accountNameStringGen: Gen[String] =
     Gen
       .chooseNum(10, 15)
@@ -79,9 +82,9 @@ object generators {
     c <- Gen.oneOf(List(LocalDateTime.now.plusDays(10), LocalDateTime.now.plusDays(20)))
   } yield (o, c)
 
-  def tradingAccountGen: Gen[Account] = for {
+  def tradingAccountGen(nameGen: Gen[AccountName] = accountNameGen): Gen[Account] = for {
     no <- accountNoGen
-    nm <- accountNameGen
+    nm <- nameGen
     oc <- openCloseDateGen
     tp <- Gen.const(AccountType.Trading)
     bc <- Gen.const(USD)
@@ -109,7 +112,7 @@ object generators {
     sc <- Gen.oneOf(List(USD, JPY)).map(Some(_))
   } yield Account(no, nm, oc._1, Some(oc._2), tp, bc, tc, sc)
 
-  def accountGen: Gen[Account] = Gen.oneOf(tradingAccountGen, settlementAccountGen, bothAccountGen)
+  def accountGen: Gen[Account] = Gen.oneOf(tradingAccountGen(), settlementAccountGen, bothAccountGen)
 
   def tradingCreateAccountGen: Gen[CreateAccount] = for {
     no <- accountNoStringGen

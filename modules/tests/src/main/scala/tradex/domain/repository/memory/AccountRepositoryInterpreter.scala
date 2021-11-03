@@ -13,6 +13,7 @@ import cats.effect.Ref
 import cats.effect.Sync
 
 import model.account._
+import fs2.Stream
 
 // Constructor private for the interpreter to prevent the Ref from leaking
 // access through smart constructor below
@@ -30,6 +31,8 @@ final class AccountRepositoryInterpreter[M[_]: Monad] private (
 
   def query(openedOn: LocalDate): M[List[Account]] =
     repo.get.map(_.values.filter(_.dateOfOpen.toLocalDate == openedOn).toList)
+
+  def query(namePattern: String): Stream[M, Account] = ???
 
   def all: M[List[Account]] = repo.get.map(_.values.toList)
 
