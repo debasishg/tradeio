@@ -101,10 +101,22 @@ object PostgresSuite extends ResourceSuite {
     }
   }
 
+  /*
+  test("Account query returning stream") { postgres =>
+    val a = AccountRepository.make[IO](postgres)
+    forall(Gen.listOfN(2, tradingAccountGen(accountNameStartingWithPatternGen("xyz")))) { accounts =>
+      for {
+        _ <- a.store(NonEmptyList.fromListUnsafe(accounts))
+        y <- a.query("xyz%").compile.toList
+      } yield expect.all(y.size > 0)
+    }
+  }
+  */
+
   test("Account query with open session") { postgres =>
     val a = AccountRepository.make[IO](postgres)
     val gen = for {
-      as <- Gen.listOfN(100, tradingAccountGen) suchThat(_.nonEmpty)
+      as <- Gen.listOfN(100, tradingAccountGen()) suchThat(_.nonEmpty)
     } yield as
     for {
       // store accounts
@@ -145,7 +157,7 @@ object PostgresSuite extends ResourceSuite {
     val t = TradeRepository.make[IO](postgres)
 
     for {
-      _ <- forall(tradingAccountGen) { acc =>
+      _ <- forall(tradingAccountGen()) { acc =>
         for {
           _       <- a.store(acc)
           fetched <- a.query(acc.no)
@@ -186,7 +198,7 @@ object PostgresSuite extends ResourceSuite {
     val b = BalanceRepository.make[IO](postgres)
 
     val accountsInstruments: IO[(List[AccountNo], List[ISINCode])] = for {
-      _ <- forall(tradingAccountGen) { acc =>
+      _ <- forall(tradingAccountGen()) { acc =>
         for {
           _       <- a.store(acc)
           fetched <- a.query(acc.no)
@@ -243,7 +255,7 @@ object PostgresSuite extends ResourceSuite {
     val b = BalanceRepository.make[IO](postgres)
 
     val accountsInstruments: IO[(List[AccountNo], List[ISINCode])] = for {
-      _ <- forall(tradingAccountGen) { acc =>
+      _ <- forall(tradingAccountGen()) { acc =>
         for {
           _       <- a.store(acc)
           fetched <- a.query(acc.no)
@@ -304,7 +316,7 @@ object PostgresSuite extends ResourceSuite {
     val b = BalanceRepository.make[IO](postgres)
 
     val accountsInstruments: IO[(List[AccountNo], List[ISINCode])] = for {
-      _ <- forall(tradingAccountGen) { acc =>
+      _ <- forall(tradingAccountGen()) { acc =>
         for {
           _       <- a.store(acc)
           fetched <- a.query(acc.no)

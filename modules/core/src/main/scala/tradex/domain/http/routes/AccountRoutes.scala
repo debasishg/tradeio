@@ -29,9 +29,10 @@ final case class AccountRoutes[F[_]: Concurrent](
       }
   }
 
-  private val httpNameRoutes: HttpRoutes[F] = HttpRoutes.of[F] { case GET -> Root =>
+  object AccountNameParam extends OptionalQueryParamDecoderMatcher[String]("name")
+  private val httpNameRoutes: HttpRoutes[F] = HttpRoutes.of[F] { case GET -> Root :? AccountNameParam(name) =>
     val accounts = accountRepository
-      .query("%")
+      .query(name.getOrElse("%"))
       .compile
       .toList
 

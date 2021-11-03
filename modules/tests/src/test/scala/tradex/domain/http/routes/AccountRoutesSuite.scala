@@ -71,8 +71,16 @@ object AccountRoutesSuite extends HttpSuite {
     }
   }
 
-  test("GET accounts by name succeeds") {
-    forall(Gen.listOfN(2, accountGen)) { accounts =>
+  test("GET accounts by specific name pattern succeeds") {
+    forall(Gen.listOfN(2, tradingAccountGen(accountNameStartingWithPatternGen("xyz")))) { accounts =>
+      val req    = GET(uri"/accountsbyname?:name=xyz")
+      val routes = AccountRoutes[IO](dataAccounts(accounts)).routes
+      expectHttpBodyAndStatus(routes, req)(accounts, Status.Ok)
+    }
+  }
+
+  test("GET accounts by name without specific pattern succeeds") {
+    forall(Gen.listOfN(2, tradingAccountGen(accountNameStartingWithPatternGen("xyz")))) { accounts =>
       val req    = GET(uri"/accountsbyname")
       val routes = AccountRoutes[IO](dataAccounts(accounts)).routes
       expectHttpBodyAndStatus(routes, req)(accounts, Status.Ok)
