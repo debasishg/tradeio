@@ -111,31 +111,31 @@ object PostgresSuite extends ResourceSuite {
       } yield expect.all(y.size > 0)
     }
   }
-  */
+   */
 
   test("Account query with open session") { postgres =>
     val a = AccountRepository.make[IO](postgres)
     val gen = for {
-      as <- Gen.listOfN(100, tradingAccountGen()) suchThat(_.nonEmpty)
+      as <- Gen.listOfN(100, tradingAccountGen()) suchThat (_.nonEmpty)
     } yield as
     for {
       // store accounts
       _ <- forall(gen) { accounts =>
-             for {
-               _ <- a.store(NonEmptyList.fromListUnsafe(accounts))
-             } yield expect.apply(true)
-           }
+        for {
+          _ <- a.store(NonEmptyList.fromListUnsafe(accounts))
+        } yield expect.apply(true)
+      }
       accs <- a.all
       _ = println(s"accounts = ${accs.size}")
       // execute query with cursor
-      _ <- postgres.use { session => 
-             for {
-               // continue till end of data set
-               pages <- DBUtils.queryByNamePatternPaged(session, "%", (as) => DBUtils.Paginated(as.map(_.no), true))
-               // abort after first page
-               singlePage <- DBUtils.queryByNamePatternPaged(session, "%", (as) => DBUtils.Paginated(as.map(_.no), false))
-             } yield expect.all(pages > 0, singlePage === 1)
-           }
+      _ <- postgres.use { session =>
+        for {
+          // continue till end of data set
+          pages <- DBUtils.queryByNamePatternPaged(session, "%", (as) => DBUtils.Paginated(as.map(_.no), true))
+          // abort after first page
+          singlePage <- DBUtils.queryByNamePatternPaged(session, "%", (as) => DBUtils.Paginated(as.map(_.no), false))
+        } yield expect.all(pages > 0, singlePage === 1)
+      }
     } yield expect(true)
   }
 
