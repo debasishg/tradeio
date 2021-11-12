@@ -20,7 +20,7 @@ trait BalanceRepository[F[_]] {
   def query(no: AccountNo): F[Option[Balance]]
 
   /** store */
-  def store(a: Balance): F[Balance]
+  def store(b: Balance): F[Balance]
 
   /** store many balances */
   // def store(balances: NonEmptyList[Balance]): M[Unit]
@@ -87,7 +87,7 @@ private object BalanceRepositorySQL {
     sql"""
         SELECT b.accountNo, b.amount, b.asOf, b.currency
         FROM balance AS b
-        WHERE DATE(a.asOf) <= $date
+        WHERE DATE(b.asOf) <= $date
        """.query(decoder)
 
   val selectAll: Query[Void, Balance] =
