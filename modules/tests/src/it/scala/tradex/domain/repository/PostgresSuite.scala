@@ -191,7 +191,7 @@ object PostgresSuite extends ResourceSuite {
     } yield expect.all(acc.nonEmpty, ins.nonEmpty)
   }
 
-  test("Generation of trades with input from front office succeeds") { postgres =>
+  test("Trades generated with input from front office persists with proper balance updates") { postgres =>
     val a = AccountRepository.make[IO](postgres)
     val i = InstrumentRepository.make[IO](postgres)
     val e = ExecutionRepository.make[IO](postgres)
@@ -248,7 +248,6 @@ object PostgresSuite extends ResourceSuite {
               val totalBalanceChange =
                 balances.toList.map(_.amount).foldMap(identity)
               expect.eql(totalTradedAmount, totalBalanceChange)
-              success
             }
           }
       }
@@ -305,7 +304,6 @@ object PostgresSuite extends ResourceSuite {
             .map {
               case Left(err: Trading.TradingError) =>
                 expect.all(err.cause.contains("Quantity has to be positive"))
-                success
               case Left(th: Throwable) => failure(th.getMessage())
               case Right(_)            => failure("Trade generation must fail owing to invalid input")
             }
