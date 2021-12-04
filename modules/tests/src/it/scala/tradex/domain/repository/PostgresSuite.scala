@@ -21,6 +21,8 @@ import services.accounting._
 import suite.ResourceSuite
 import java.time.LocalDate
 import org.scalacheck.Gen
+import squants.market._
+import model._
 
 object PostgresSuite extends ResourceSuite {
 
@@ -219,7 +221,8 @@ object PostgresSuite extends ResourceSuite {
 
     val testAccounting = Accounting.make[IO](b)
 
-    val genTrade = programs.GenerateTrade[IO](testTrading, testAccounting)
+    val genTrade   = programs.GenerateTrade[IO](testTrading, testAccounting)
+    val ZERO_MONEY = Money(BigDecimal(0))
 
     accountsInstruments.flatMap { ais =>
       val gen = for {
@@ -236,8 +239,14 @@ object PostgresSuite extends ResourceSuite {
             case Left(th: Throwable)             => failure(th.getMessage())
             case Right((trades, balances)) => {
               expect.all(trades.size > 0, balances.size > 0)
-              val totalTradedAmount  = trades.toList.map(_.netAmount.get.amount).sum
-              val totalBalanceChange = balances.toList.map(_.amount.amount).sum
+              val totalTradedAmount =
+                trades.toList
+                  .map(_.netAmount)
+                  .sequence
+                  .map(_.foldMap(identity))
+                  .getOrElse(ZERO_MONEY)
+              val totalBalanceChange =
+                balances.toList.map(_.amount).foldMap(identity)
               expect.eql(totalTradedAmount, totalBalanceChange)
               success
             }
