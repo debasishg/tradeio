@@ -103,18 +103,6 @@ object PostgresSuite extends ResourceSuite {
     }
   }
 
-  /*
-  test("Account query returning stream") { postgres =>
-    val a = AccountRepository.make[IO](postgres)
-    forall(Gen.listOfN(2, tradingAccountGen(accountNameStartingWithPatternGen("xyz")))) { accounts =>
-      for {
-        _ <- a.store(NonEmptyList.fromListUnsafe(accounts))
-        y <- a.query("xyz%").compile.toList
-      } yield expect.all(y.size > 0)
-    }
-  }
-   */
-
   test("Account query with open session") { postgres =>
     val a = AccountRepository.make[IO](postgres)
     val gen = for {
@@ -127,8 +115,6 @@ object PostgresSuite extends ResourceSuite {
           _ <- a.store(NonEmptyList.fromListUnsafe(accounts))
         } yield expect.apply(true)
       }
-      accs <- a.all
-      _ = println(s"accounts = ${accs.size}")
       // execute query with cursor
       _ <- postgres.use { session =>
         for {
@@ -241,8 +227,7 @@ object PostgresSuite extends ResourceSuite {
               expect.all(trades.size > 0, balances.size > 0)
               val totalTradedAmount =
                 trades.toList
-                  .map(_.netAmount)
-                  .sequence
+                  .traverse(_.netAmount)
                   .map(_.foldMap(identity))
                   .getOrElse(ZERO_MONEY)
               val totalBalanceChange =
