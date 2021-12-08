@@ -47,7 +47,7 @@ object Accounting {
           )
         action.adaptError { case e =>
           Accounting.AccountingError(
-            Option(e.getMessage()).getOrElse("Unknown error")
+            Option(e.getMessage()).getOrElse("Unknown error in posting balance for accounting")
           )
         }
       }
@@ -58,7 +58,7 @@ object Accounting {
       def getBalance(accountNo: AccountNo): F[Option[Balance]] = {
         balanceRepository.query(accountNo).adaptError { case e =>
           Accounting.AccountingError(
-            Option(e.getMessage()).getOrElse("Unknown error")
+            Option(e.getMessage()).getOrElse("Unknown error in fetching balance")
           )
         }
       }
@@ -66,7 +66,7 @@ object Accounting {
       def getBalanceByDate(date: LocalDate): F[List[Balance]] = {
         balanceRepository.query(date).adaptError { case e =>
           Accounting.AccountingError(
-            Option(e.getMessage()).getOrElse("Unknown error")
+            Option(e.getMessage()).getOrElse("Unknown error in fetching balance by date")
           )
         }
       }

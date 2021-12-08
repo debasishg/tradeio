@@ -146,7 +146,7 @@ object Trading {
           )
         action.adaptError {
           case oe: OrderingError => oe
-          case e                 => OrderingError(Option(e.getMessage()).getOrElse("Unknown error"))
+          case e                 => OrderingError(Option(e.getMessage()).getOrElse("Unknown error in orders"))
         }
       }
 
@@ -174,7 +174,7 @@ object Trading {
           )
         action.adaptError {
           case oe: OrderingError => oe
-          case e                 => OrderingError(Option(e.getMessage()).getOrElse("Unknown error"))
+          case e => OrderingError(Option(e.getMessage()).getOrElse("Unknown error in processing front office orders"))
         }
       }
 
@@ -205,7 +205,7 @@ object Trading {
         val action = exes.flatMap(persistExecutions(_)) >>= (_ => exes)
         action.adaptError {
           case oe: ExecutionError => oe
-          case e                  => ExecutionError(Option(e.getMessage()).getOrElse("Unknown error"))
+          case e => ExecutionError(Option(e.getMessage()).getOrElse("Unknown error in execution processing"))
         }
       }
 
@@ -245,7 +245,7 @@ object Trading {
         val action = trades.flatMap(persistTrades(_)) >>= (_ => trades)
         action.adaptError {
           case oe: AllocationError => oe
-          case e                   => AllocationError(Option(e.getMessage()).getOrElse("Unknown error"))
+          case e => AllocationError(Option(e.getMessage()).getOrElse("Unknown error in allocating trades"))
         }
       }
 
