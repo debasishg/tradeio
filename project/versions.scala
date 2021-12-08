@@ -23,7 +23,7 @@ object Versions {
   val monocleVersion          = "3.1.0"
   val derevoVersion           = "0.12.8"
   val circeVersion            = "0.14.1"
-  val http4sVersion           = "1.0.0-M23"
+  val http4sVersion           = "1.0.0-M30"
   val http4sJwtAuthVersion    = "1.0.0"
   val javaxCryptoVersion      = "1.0.1"
   val redis4catsVersion       = "1.0.0"
