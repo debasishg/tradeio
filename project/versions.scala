@@ -18,7 +18,7 @@ object Versions {
   val cirisVersion            = "2.3.2"
   val cormorantVersion        = "0.3.0"
   val fs2Version              = "3.0.4"
-  val log4catsVersion         = "2.2.0"
+  val log4catsVersion         = "2.3.2"
   val logbackVersion          = "1.2.11"
   val monocleVersion          = "3.1.0"
   val derevoVersion           = "0.13.0"
