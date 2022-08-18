@@ -30,5 +30,5 @@ object Versions {
   val organizeImportsVersion  = "0.6.0"
   val weaverVersion           = "0.7.11"
   val betterMonadicForVersion = "0.3.1"
-  val semanticDBVersion       = "4.4.35"
+  val semanticDBVersion       = "4.5.13"
 }
