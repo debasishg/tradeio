@@ -14,7 +14,7 @@ object Versions {
   val newtypeVersion          = "0.4.4"
   val refinedVersion          = "0.9.28"
   val squantsVersion          = "1.8.3"
-  val skunkVersion            = "0.3.1"
+  val skunkVersion            = "0.3.2"
   val cirisVersion            = "2.3.2"
   val cormorantVersion        = "0.3.0"
   val fs2Version              = "3.0.4"
