@@ -24,7 +24,7 @@ object Versions {
   val derevoVersion           = "0.13.0"
   val circeVersion            = "0.14.1"
   val http4sVersion           = "1.0.0-M23"
-  val http4sJwtAuthVersion    = "1.0.0"
+  val http4sJwtAuthVersion    = "1.2.0"
   val javaxCryptoVersion      = "1.0.1"
   val redis4catsVersion       = "1.1.1"
   val organizeImportsVersion  = "0.6.0"
