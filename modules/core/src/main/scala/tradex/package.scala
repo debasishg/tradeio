@@ -18,7 +18,7 @@ package object domain {
   def today                  = LocalDateTime.now
   final val ZERO_BIG_DECIMAL = BigDecimal(0)
 
-  implicit val moneyContext = defaultMoneyContext
+  implicit val moneyContext: MoneyContext = defaultMoneyContext
 
   object NewtypeRefinedOps {
     import io.estatico.newtype.Coercible

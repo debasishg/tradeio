@@ -10,9 +10,10 @@ import dev.profunktor.redis4cats.log4cats._
 
 import eu.timepit.refined.auto._
 import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.SelfAwareStructuredLogger
 
 object MainS extends IOApp.Simple {
-  implicit val logger = Slf4jLogger.getLogger[IO]
+  implicit val logger: SelfAwareStructuredLogger[IO] = Slf4jLogger.getLogger[IO]
 
   override def run: IO[Unit] =
     config.load[IO].flatMap { cfg =>

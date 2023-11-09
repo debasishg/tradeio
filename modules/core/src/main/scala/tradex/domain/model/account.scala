@@ -1,6 +1,7 @@
 package tradex.domain
 package model
 
+import scala.language.postfixOps
 import java.time.LocalDateTime
 
 import cats.data.ValidatedNec
