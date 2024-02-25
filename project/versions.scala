@@ -3,7 +3,7 @@ object Versions {
   val catsEffectVersion       = "3.5.2"
   val catsMtlVersion          = "1.4.0"
   val macroParadiseVersion    = "2.1.1"
-  val kindProjectorVersion    = "0.13.2"
+  val kindProjectorVersion    = "0.13.3"
   val scalaVersion            = "2.13.12"
   val zioVersion              = "1.0.0-RC20"
   val zioLoggingVersion       = "0.2.6"
