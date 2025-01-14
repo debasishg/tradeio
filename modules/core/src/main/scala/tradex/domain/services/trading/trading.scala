@@ -79,7 +79,7 @@ trait Trading[F[_]] {
       brokerAccountNo: AccountNo
   ): F[NonEmptyList[Execution]]
 
-  /** Allocate the `Execution` equally between the client accounts generating a list of `Trade`s.
+  /** Allocate the `Execution` equally between the client accounts generating a list of `Trade` s.
     *
     * @param executions
     *   the executions to allocate
