@@ -50,7 +50,7 @@ object GenerateTradeRoutesSuite extends HttpSuite {
     } yield (u, t)
 
     forall(gen) { case (user, foTrades) =>
-      val req = POST(foTrades, uri"/generatetrade")
+      val req    = POST(foTrades, uri"/generatetrade")
       val routes = for {
         t <- trading
         a <- accounting
@@ -83,7 +83,7 @@ object GenerateTradeRoutesSuite extends HttpSuite {
     } yield (u, t)
 
     forall(gen) { case (user, foTrades) =>
-      val req = POST(foTrades, uri"/generatetrade")
+      val req    = POST(foTrades, uri"/generatetrade")
       val routes = for {
         t <- trading
         a <- accounting
