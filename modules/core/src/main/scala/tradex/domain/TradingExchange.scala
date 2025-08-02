@@ -91,7 +91,7 @@ object Exchange {
       }
       order
         .map { ord =>
-          val lis = ord.items
+          val lis   = ord.items
           val liMap = lis.foldLeft(Map.empty[String, BigDecimal]) { (a, li) =>
             Monoid.combineAll(
               List(a, Map(li.instrument.value.value -> li.quantity.value.value))
@@ -292,7 +292,7 @@ object Exchange {
                   Updating(newV) ->
                     (for {
                       currAppState <- inFlight.get.rethrow
-                      r <- updateStateAndGenerateTrades(
+                      r            <- updateStateAndGenerateTrades(
                         newV,
                         clientAccountNos,
                         currAppState
@@ -369,7 +369,7 @@ object Exchange {
           } yield (accountNo, execution)
 
           val tradesNoTaxFee: F[NonEmptyList[Trade]] = anoExes.traverse { case (accountNo, execution) =>
-            val q = execution.quantity.value.value / clientAccounts.size
+            val q   = execution.quantity.value.value / clientAccounts.size
             val qty = validate[Quantity](q)
               .fold(errs => throw new Exception(errs.toString), identity)
 
