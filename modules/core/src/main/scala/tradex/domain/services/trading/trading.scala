@@ -221,7 +221,7 @@ object Trading {
         } yield (accountNo, execution)
 
         val tradesNoTaxFee: F[NonEmptyList[Trade]] = anoExes.traverse { case (accountNo, execution) =>
-          val q = execution.quantity.value.value / clientAccounts.size
+          val q   = execution.quantity.value.value / clientAccounts.size
           val qty = validate[Quantity](q)
             .fold(errs => throw new Exception(errs.toString), identity)
 

@@ -32,7 +32,7 @@ final case class GenerateTrade[F[_]: MonadThrowable] private (
     import accounting._
 
     val action = for {
-      orders <- orders(frontOfficeInput.frontOfficeOrders)
+      orders     <- orders(frontOfficeInput.frontOfficeOrders)
       executions <- execute(
         orders,
         frontOfficeInput.market,
