@@ -15,7 +15,7 @@ import model.execution._
 object AppData {
   val ano1String = "ibm-123"
   val ano2String = "ibm-124"
-  val ano1 = validate[AccountNo]("ibm-123")
+  val ano1       = validate[AccountNo]("ibm-123")
     .fold(errs => throw new Exception(errs.toString), identity)
   val ano2 = validate[AccountNo]("ibm-124")
     .fold(errs => throw new Exception(errs.toString), identity)
@@ -36,7 +36,7 @@ object AppData {
     .sequence
 
   val order: ValidatedNec[String, Order] = lis match {
-    case Invalid(e) => e.toList.mkString("/").invalidNec
+    case Invalid(e)       => e.toList.mkString("/").invalidNec
     case Valid(lineItems) =>
       Order.makeOrder(
         "o1",

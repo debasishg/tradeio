@@ -27,8 +27,8 @@ object TradeRoutesSuite extends HttpSuite {
 
   test("GET all trades succeeds") {
     forall(Gen.listOf(tradeGen)) { trades =>
-      val req = GET(uri"/trades")
-      val ts  = trades.sequence.unsafeRunSync()
+      val req    = GET(uri"/trades")
+      val ts     = trades.sequence.unsafeRunSync()
       val routes =
         TradeRoutes[IO](dataTrades(ts)).routes
       expectHttpBodyAndStatus(routes, req)(ts, Status.Ok)
@@ -37,8 +37,8 @@ object TradeRoutesSuite extends HttpSuite {
 
   test("GET trades for Tokyo Market succeeds") {
     forall(Gen.listOf(tradeForTokyoMarketGen)) { trades =>
-      val req = GET(uri"/trades?market=Tokyo")
-      val ts  = trades.sequence.unsafeRunSync()
+      val req    = GET(uri"/trades?market=Tokyo")
+      val ts     = trades.sequence.unsafeRunSync()
       val routes =
         TradeRoutes[IO](dataTrades(ts)).routes
       expectHttpBodyAndStatus(routes, req)(ts, Status.Ok)
