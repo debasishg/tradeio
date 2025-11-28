@@ -104,7 +104,7 @@ object PostgresSuite extends ResourceSuite {
   }
 
   test("Account query with open session") { postgres =>
-    val a = AccountRepository.make[IO](postgres)
+    val a   = AccountRepository.make[IO](postgres)
     val gen = for {
       as <- Gen.listOfN(100, tradingAccountGen()) suchThat (_.nonEmpty)
     } yield as
@@ -159,7 +159,7 @@ object PostgresSuite extends ResourceSuite {
       }
       acc <- a.all
       ins <- i.queryByInstrumentType(InstrumentType.Equity)
-      _ <- forall(tradeWithTaxFeeForAccountAndInstrumentGen(acc.head.no, ins.head.isinCode)) {
+      _   <- forall(tradeWithTaxFeeForAccountAndInstrumentGen(acc.head.no, ins.head.isinCode)) {
         _.flatMap { trd =>
           for {
             x <- t.all
@@ -223,7 +223,7 @@ object PostgresSuite extends ResourceSuite {
           .map {
             case Left(err: Trading.TradingError) => failure(s"Trade Generation Error: ${err.cause}")
             case Left(th: Throwable)             => failure(th.getMessage())
-            case Right((trades, balances)) => {
+            case Right((trades, balances))       => {
               expect.all(trades.size > 0, balances.size > 0)
               val totalTradedAmount =
                 trades.toList
