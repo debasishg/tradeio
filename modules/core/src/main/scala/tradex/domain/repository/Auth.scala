@@ -67,7 +67,7 @@ object Auth {
       def newUser(username: UserName, password: Password): F[JwtToken] =
         users.query(username).flatMap {
           case Some(_) => UserNameInUse(username).raiseError[F, JwtToken]
-          case None =>
+          case None    =>
             for {
               i <- users.store(username, crypto.encrypt(password))
               t <- tokens.create
@@ -85,7 +85,7 @@ object Auth {
           case Some(user) =>
             redis.get(username.show).flatMap {
               case Some(t) => JwtToken(t).pure[F]
-              case None =>
+              case None    =>
                 tokens.create.flatTap { t =>
                   redis
                     .setEx(t.value, user.asJson.noSpaces, TokenExpiration) *>

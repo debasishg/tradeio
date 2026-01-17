@@ -28,7 +28,7 @@ object Accounting {
       balanceRepository: BalanceRepository[F]
   ): Accounting[F] =
     new Accounting[F] {
-      private final val F = implicitly[MonadThrowable[F]]
+      private final val F                       = implicitly[MonadThrowable[F]]
       def postBalance(trade: Trade): F[Balance] = {
         val action = trade.netAmount
           .map { amt =>
