@@ -25,7 +25,7 @@ object market {
     case object HongKong  extends Market("Hong Kong")
     case object Other     extends Market("Other")
 
-    val values = findValues
+    val values                                  = findValues
     implicit val marketEncoder: Encoder[Market] =
       Encoder[String].contramap(_.entryName)
 
