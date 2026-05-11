@@ -40,7 +40,7 @@ sealed abstract class HttpApi[F[+_]: Async] private (
     )
 
   // Auth routes
-  private val loginRoutes = LoginRoutes[F](security.auth).routes
+  private val loginRoutes  = LoginRoutes[F](security.auth).routes
   private val logoutRoutes =
     LogoutRoutes[F](security.auth).routes(usersMiddleware)
   private val userRoutes = UserRoutes[F](security.auth).routes
